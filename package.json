@@ -1,0 +1,15 @@
+{
+  "name": "@intuition-box/caveat-enforcers-registry",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Open registry for ERC-7710 caveat enforcer deployments and evidence.",
+  "packageManager": "pnpm@11.1.2",
+  "scripts": {
+    "check": "node scripts/check-docs.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  }
+}
