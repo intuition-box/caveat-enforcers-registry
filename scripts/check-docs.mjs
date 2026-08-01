@@ -6,6 +6,7 @@ const requiredFiles = [
   "SECURITY.md",
   "docs/PRODUCT.md",
   "docs/SCHEMA.md",
+  "docs/COMPOSABILITY.md",
   "docs/INTEGRATION.md",
 ];
 

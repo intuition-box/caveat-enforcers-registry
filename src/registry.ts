@@ -1,9 +1,6 @@
-export type RegistryEntry = {
-  id: string;
-  label: string;
-  createdAt: string;
-  image?: string | null;
-};
+import type { EnforcerRecord } from "./types";
+
+export type RegistryEntry = EnforcerRecord & { image?: string | null };
 
 export type RegistryState =
   | { kind: "ready"; entries: RegistryEntry[] }
@@ -89,8 +86,22 @@ export async function loadRegistry(): Promise<RegistryState> {
         payload.data?.triples.map((triple) => ({
           id: triple.subject?.term_id ?? triple.subject_id,
           label: triple.subject?.label ?? "Unnamed deployment",
+          description:
+            "Onchain registry deployment. Open the detail view to inspect its claims.",
+          domain: "Unclassified",
+          operation: "Claim pending",
+          chain: "Chain claim pending",
+          audit: "No audit claim",
+          stake: 0,
+          stakeLabel: "Awaiting signal",
+          state: "live" as const,
           image: triple.subject?.image,
           createdAt: triple.created_at,
+          deployment: triple.subject_id,
+          source: "Source claim pending",
+          terms: "Terms schema claim pending.",
+          claims: [],
+          usage: [],
         })) ?? [],
     };
   } catch {
