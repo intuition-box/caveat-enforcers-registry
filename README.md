@@ -37,6 +37,7 @@ This repository is in its foundation phase. It defines the public product contra
 - [Product requirements](docs/PRODUCT.md)
 - [Registry schema](docs/SCHEMA.md)
 - [Composability guide](docs/COMPOSABILITY.md)
+- [Brand direction](docs/BRAND-DIRECTION.md)
 - [Integration rules](docs/INTEGRATION.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)

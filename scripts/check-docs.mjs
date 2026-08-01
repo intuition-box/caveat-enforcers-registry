@@ -7,6 +7,7 @@ const requiredFiles = [
   "docs/PRODUCT.md",
   "docs/SCHEMA.md",
   "docs/COMPOSABILITY.md",
+  "docs/BRAND-DIRECTION.md",
   "docs/INTEGRATION.md",
 ];
 

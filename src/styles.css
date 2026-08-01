@@ -2,7 +2,7 @@
   color: #f1f1e9;
   background: #101111;
   font-family:
-    Inter,
+    "Inter Variable",
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -19,6 +19,22 @@
   --line: rgba(241, 241, 233, 0.17);
   --lime: #d9ff54;
   --red: #ff8477;
+}
+
+h1,
+h2,
+h3,
+.brand {
+  font-family:
+    "Space Grotesk Variable", "Inter Variable", ui-sans-serif, system-ui,
+    sans-serif;
+}
+
+code,
+pre,
+.mono,
+[data-mono="true"] {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 * {
@@ -97,27 +113,8 @@ main {
   width: 23px;
   height: 23px;
   display: block;
-  position: relative;
-  border: 2px solid var(--lime);
-  border-radius: 50%;
-  box-shadow: 0 0 20px rgba(217, 255, 84, 0.2);
-}
-.mark::before,
-.mark::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-}
-.mark::before {
-  inset: 4px;
-  border: 1px solid var(--lime);
-}
-.mark::after {
-  width: 3px;
-  height: 3px;
-  top: 8px;
-  left: 8px;
-  background: var(--lime);
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(217, 255, 84, 0.2));
 }
 .nav-links {
   display: flex;
@@ -315,6 +312,17 @@ h2 em {
   border: 1px dashed rgba(241, 241, 233, 0.15);
   border-radius: 50%;
   transform: rotate(23deg);
+}
+.hero-art {
+  position: absolute;
+  inset: 7%;
+  width: 86%;
+  height: 86%;
+  object-fit: cover;
+  opacity: 0.52;
+  mix-blend-mode: screen;
+  filter: grayscale(0.5) contrast(1.08);
+  border-radius: 50%;
 }
 .orbit {
   position: absolute;
@@ -739,8 +747,19 @@ h2 em {
 .compose-diagram {
   min-height: 260px;
   position: relative;
+  isolation: isolate;
   border: 1px solid var(--line);
   background: var(--panel);
+}
+.compose-diagram img {
+  z-index: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.56;
+  filter: grayscale(0.72) contrast(1.1);
 }
 .compose-diagram::before {
   content: "";
@@ -748,8 +767,10 @@ h2 em {
   inset: 21px;
   border: 1px dashed rgba(217, 255, 84, 0.22);
   border-radius: 50%;
+  z-index: 1;
 }
 .diagram-node {
+  z-index: 2;
   display: grid;
   place-items: center;
   position: absolute;
@@ -777,6 +798,7 @@ h2 em {
   background: var(--lime);
 }
 .diagram-line {
+  z-index: 2;
   height: 1px;
   position: absolute;
   display: block;

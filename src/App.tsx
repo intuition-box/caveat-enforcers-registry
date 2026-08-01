@@ -261,7 +261,7 @@ export function App() {
           aria-label="Caveat Enforcers Registry home"
           onClick={() => setMobileMenu(false)}
         >
-          <span className="mark" aria-hidden="true" />
+          <img className="mark" src="/assets/caveat-mark.svg" alt="" />
           <span>Caveat Enforcers</span>
         </a>
         <div className={`nav-links ${mobileMenu ? "open" : ""}`}>
@@ -330,6 +330,11 @@ export function App() {
           aria-label="Interactive registry constellation"
           role="img"
         >
+          <img
+            className="hero-art"
+            src="/assets/boundary-atlas-hero.webp"
+            alt="Abstract boundary atlas with connected evidence paths"
+          />
           <div className="orbit orbit-one">
             <span className="orbit-node node-a">A</span>
             <span className="orbit-node node-b">T</span>
@@ -559,6 +564,10 @@ export function App() {
         </div>
         <div className="compose-explainer" data-reveal>
           <div className="compose-diagram">
+            <img
+              src="/assets/permission-anatomy.webp"
+              alt="Three open boundaries around a central permission signal, connected to contextual evidence nodes"
+            />
             <span className="diagram-node node-base">Base rule</span>
             <span className="diagram-line line-one" />
             <span className="diagram-line line-two" />
