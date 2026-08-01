@@ -2,14 +2,28 @@
   "name": "@intuition-box/caveat-enforcers-registry",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "Open registry for ERC-7710 caveat enforcer deployments and evidence.",
   "packageManager": "pnpm@11.1.2",
   "scripts": {
-    "check": "node scripts/check-docs.mjs",
+    "check": "pnpm check:docs && tsc --noEmit",
+    "check:docs": "node scripts/check-docs.mjs",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "prettier": "^3.5.3"
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "prettier": "^3.5.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.0"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   }
 }

@@ -47,3 +47,9 @@ pnpm install
 pnpm check
 pnpm format:check
 ```
+
+## Frontend configuration
+
+The read-only directory is a Vite application. Copy `.env.example` to `.env` and add the
+reviewed registry membership predicate ID and deployment-class term ID. The directory only
+loads live entries when both IDs are present.

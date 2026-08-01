@@ -8,6 +8,15 @@
 
 Mainnet is the canonical data environment for registry reads and release validation. Do not write disposable records to it.
 
+## Directory configuration
+
+The read-only frontend requires these reviewed values:
+
+- `VITE_REGISTRY_MEMBERSHIP_PREDICATE_ID`
+- `VITE_REGISTRY_DEPLOYMENT_CLASS_ID`
+
+The values belong in the application's environment configuration and must match the versioned ontology manifest. The directory shows no live registry entries until both values are supplied.
+
 ## Query boundary
 
 The application must define its reviewed membership predicate and object term IDs in a versioned ontology manifest. It must query those IDs to discover deployments.
