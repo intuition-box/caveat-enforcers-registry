@@ -37,7 +37,6 @@ This repository is in its foundation phase. It defines the public product contra
 - [Product requirements](docs/PRODUCT.md)
 - [Registry schema](docs/SCHEMA.md)
 - [Composability guide](docs/COMPOSABILITY.md)
-- [Brand direction](docs/BRAND-DIRECTION.md)
 - [Integration rules](docs/INTEGRATION.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
@@ -48,10 +47,24 @@ This repository is in its foundation phase. It defines the public product contra
 pnpm install
 pnpm check
 pnpm format:check
+pnpm build
 ```
 
-## Frontend configuration
+## Registry client configuration
 
-The read-only directory is a Vite application. Copy `.env.example` to `.env` and add the
-reviewed registry membership predicate ID and deployment-class term ID. The directory only
-loads live entries when both IDs are present.
+The repository currently exposes the backend-neutral Intuition read adapter only. Provide the
+GraphQL endpoint, reviewed registry membership predicate ID, and deployment-class term ID to
+`loadRegistry` through `RegistryConfig`. The adapter returns `unconfigured` until both ontology
+IDs are present and never invents registry records.
+
+```ts
+import { loadRegistry } from "./src/index.js";
+
+const state = await loadRegistry({
+  endpoint:
+    process.env.INTUITION_GRAPHQL_URL ??
+    "https://mainnet.intuition.sh/v1/graphql",
+  membershipPredicateId: process.env.REGISTRY_MEMBERSHIP_PREDICATE_ID,
+  deploymentClassId: process.env.REGISTRY_DEPLOYMENT_CLASS_ID,
+});
+```

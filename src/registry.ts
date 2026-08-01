@@ -1,4 +1,4 @@
-import type { EnforcerRecord } from "./types";
+import type { EnforcerRecord } from "./types.js";
 
 export type RegistryEntry = EnforcerRecord & { image?: string | null };
 
@@ -7,12 +7,35 @@ export type RegistryState =
   | { kind: "unconfigured" }
   | { kind: "error"; message: string };
 
-const endpoint =
-  import.meta.env.VITE_INTUITION_GRAPHQL_URL ??
-  "https://mainnet.intuition.sh/v1/graphql";
-const membershipPredicateId = import.meta.env
-  .VITE_REGISTRY_MEMBERSHIP_PREDICATE_ID;
-const deploymentClassId = import.meta.env.VITE_REGISTRY_DEPLOYMENT_CLASS_ID;
+export type RegistryConfig = {
+  endpoint: string;
+  membershipPredicateId?: string;
+  deploymentClassId?: string;
+  fetcher?: RegistryFetcher;
+};
+
+export type RegistryFetcher = (
+  input: string,
+  init: {
+    method: "POST";
+    headers: { "content-type": "application/json" };
+    body: string;
+  },
+) => Promise<RegistryResponse>;
+
+export type RegistryResponse = {
+  ok: boolean;
+  status: number;
+  json: () => Promise<unknown>;
+};
+
+const defaultFetcher: RegistryFetcher = (input, init) => {
+  const fetcher = (globalThis as { fetch?: RegistryFetcher }).fetch;
+  if (!fetcher) {
+    return Promise.reject(new Error("A fetch implementation is required."));
+  }
+  return fetcher(input, init);
+};
 
 const registryQuery = `
   query RegistryDeployments($predicateId: String!, $classId: String!) {
@@ -50,13 +73,22 @@ type GraphResponse = {
   errors?: Array<{ message: string }>;
 };
 
-export async function loadRegistry(): Promise<RegistryState> {
-  if (!membershipPredicateId || !deploymentClassId) {
+export async function loadRegistry(
+  config: RegistryConfig,
+): Promise<RegistryState> {
+  const {
+    endpoint,
+    membershipPredicateId,
+    deploymentClassId,
+    fetcher = defaultFetcher,
+  } = config;
+
+  if (!endpoint || !membershipPredicateId || !deploymentClassId) {
     return { kind: "unconfigured" };
   }
 
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetcher(endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({

@@ -2,7 +2,7 @@
 
 Composability is a contextual claim about a set of caveat enforcers. It answers whether the set reinforces the intended permission, conflicts with it, or repeats a restriction that is already present.
 
-The registry does not treat compatibility as a hardcoded frontend list. Each relationship is an Intuition triple with its use-case context, ordering notes, and supporting evidence. Community members can support or dispute the exact relationship.
+The registry does not treat compatibility as a hardcoded application list. Each relationship is an Intuition triple with its use-case context, ordering notes, and supporting evidence. Community members can support or dispute the exact relationship.
 
 ## Three starting presets
 
