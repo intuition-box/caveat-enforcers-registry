@@ -6,9 +6,8 @@
   "description": "Open registry for ERC-7710 caveat enforcer deployments and evidence.",
   "packageManager": "pnpm@11.1.2",
   "scripts": {
-    "dev": "vite",
     "server": "tsx src/server.ts",
-    "check": "pnpm check:docs && tsc --noEmit && tsc -p tsconfig.web.json --noEmit",
+    "check": "pnpm check:docs && tsc --noEmit",
     "check:schema": "node scripts/check-graphql-schema.mjs",
     "check:submission-schema": "node scripts/check-submission-schema.mjs",
     "check:reference-enforcers": "node scripts/check-reference-enforcers.mjs",
@@ -21,7 +20,6 @@
     "check:docs": "node scripts/check-docs.mjs",
     "build": "node scripts/build.mjs",
     "test": "node_modules/.bin/tsx --test test/*.test.ts",
-    "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
