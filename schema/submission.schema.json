@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/intuition-box/caveat-enforcers-registry/blob/main/schema/submission.schema.json",
+  "title": "Caveat Enforcer Registry Submission",
+  "description": "Portable submission contract for listing an ERC-7710 caveat enforcer deployment.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "chainId",
+    "contractAddress",
+    "enforcerName",
+    "description",
+    "type",
+    "restrictionDomain",
+    "operation",
+    "sourceUrl",
+    "termsSchema",
+    "submitterWallet"
+  ],
+  "properties": {
+    "chainId": {
+      "oneOf": [
+        { "type": "integer", "minimum": 0 },
+        { "type": "string", "pattern": "^[0-9]+$" }
+      ]
+    },
+    "contractAddress": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{40}$"
+    },
+    "enforcerName": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "type": { "type": "string", "minLength": 1 },
+    "restrictionDomain": { "type": "string", "minLength": 1 },
+    "operation": { "type": "string", "minLength": 1 },
+    "sourceUrl": {
+      "type": "string",
+      "pattern": "^https?://\\S+$"
+    },
+    "sourceVersion": { "type": "string", "minLength": 1 },
+    "submitterWallet": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{40}$"
+    },
+    "initialSignal": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "evidence": {
+      "$ref": "#/$defs/evidence"
+    },
+    "termsSchema": {
+      "$ref": "#/$defs/termsSchema"
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "audit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sourceUrl", "scope"],
+          "properties": {
+            "sourceUrl": {
+              "type": "string",
+              "pattern": "^https?://\\S+$"
+            },
+            "scope": { "type": "string", "minLength": 1 },
+            "sourceVersion": { "type": "string", "minLength": 1 }
+          }
+        },
+        "usage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "sourceUrl": {
+                "type": "string",
+                "pattern": "^https?://\\S+$"
+              }
+            }
+          }
+        },
+        "compositions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["relation", "relatedType", "context"],
+            "properties": {
+              "relation": {
+                "enum": ["complements", "conflicts", "redundant"]
+              },
+              "relatedType": { "type": "string", "minLength": 1 },
+              "context": { "type": "string", "minLength": 1 },
+              "ordering": { "type": "string", "minLength": 1 },
+              "supportedBy": {
+                "type": "string",
+                "pattern": "^https?://\\S+$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "termsSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "enforcer",
+        "source",
+        "encoding",
+        "malformedInputBehavior",
+        "fixtures"
+      ],
+      "properties": {
+        "schemaVersion": { "type": "string", "minLength": 1 },
+        "enforcer": { "type": "string", "minLength": 1 },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "commit", "path"],
+          "properties": {
+            "repository": { "type": "string", "minLength": 1 },
+            "commit": { "type": "string", "minLength": 1 },
+            "path": { "type": "string", "minLength": 1 }
+          }
+        },
+        "decoderFunction": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "inputs", "outputs"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "inputs": { "$ref": "#/$defs/parameters" },
+            "outputs": { "$ref": "#/$defs/parameters" }
+          }
+        },
+        "encoding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "fields"],
+          "properties": {
+            "kind": {
+              "enum": ["abi", "packed", "raw", "custom"]
+            },
+            "totalBytes": { "type": "integer", "minimum": 1 },
+            "fields": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/field" }
+            }
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "malformedInputBehavior": { "type": "string", "minLength": 1 },
+        "fixtures": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/fixture" }
+        }
+      }
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "type": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "offset", "bytes"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "offset": { "type": "integer", "minimum": 0 },
+        "bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["terms", "decoded"],
+      "properties": {
+        "terms": {
+          "type": "string",
+          "pattern": "^0x(?:[0-9a-fA-F]{2})*$"
+        },
+        "decoded": { "type": "object" },
+        "decoderArgs": { "type": "array" }
+      }
+    }
+  }
+}

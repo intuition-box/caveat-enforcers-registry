@@ -1,0 +1,24 @@
+{
+  "version": "unreviewed",
+  "chainId": "1155",
+  "deploymentClassId": "",
+  "predicates": {
+    "membership": "",
+    "implements": "",
+    "deployedOn": "",
+    "partOfRelease": "",
+    "sourceAt": "",
+    "describedBy": "",
+    "hasTermsSchema": "",
+    "coveredByAudit": "",
+    "usedBy": "",
+    "restricts": "",
+    "affectsOperation": "",
+    "complements": "",
+    "conflictsWith": "",
+    "redundantWith": "",
+    "appliesInContext": "",
+    "requiresOrdering": "",
+    "supportedBy": ""
+  }
+}

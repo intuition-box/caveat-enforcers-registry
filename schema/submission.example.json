@@ -1,0 +1,62 @@
+{
+  "chainId": 1155,
+  "contractAddress": "0x1111111111111111111111111111111111111111",
+  "enforcerName": "Example Enforcer",
+  "description": "Limits a delegated transfer to a fixed amount.",
+  "type": "ExampleEnforcer",
+  "restrictionDomain": "ERC20 transfer",
+  "operation": "transfer",
+  "sourceUrl": "https://github.com/example/repo",
+  "sourceVersion": "abc123",
+  "submitterWallet": "0x2222222222222222222222222222222222222222",
+  "initialSignal": "0",
+  "evidence": {
+    "audit": {
+      "sourceUrl": "https://example.com/audit.pdf",
+      "scope": "ExampleEnforcer source at abc123",
+      "sourceVersion": "abc123"
+    },
+    "usage": [
+      {
+        "name": "Example Wallet",
+        "sourceUrl": "https://example.com/integration"
+      }
+    ],
+    "compositions": [
+      {
+        "relation": "complements",
+        "relatedType": "TimeWindowEnforcer",
+        "context": "Time-gated token transfer",
+        "ordering": "Apply the time window before the transfer amount check.",
+        "supportedBy": "https://example.com/composability-test"
+      }
+    ]
+  },
+  "termsSchema": {
+    "schemaVersion": "1.0.0",
+    "enforcer": "ExampleEnforcer",
+    "source": {
+      "repository": "https://github.com/example/repo",
+      "commit": "abc123",
+      "path": "src/ExampleEnforcer.sol"
+    },
+    "encoding": {
+      "kind": "packed",
+      "totalBytes": 52,
+      "fields": [
+        { "name": "target", "type": "address", "offset": 0, "bytes": 20 },
+        { "name": "limit", "type": "uint256", "offset": 20, "bytes": 32 }
+      ]
+    },
+    "malformedInputBehavior": "revert",
+    "fixtures": [
+      {
+        "terms": "0x11111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000",
+        "decoded": {
+          "target": "0x1111111111111111111111111111111111111111",
+          "limit": "0"
+        }
+      }
+    ]
+  }
+}

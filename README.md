@@ -32,11 +32,16 @@ Claims are represented as Intuition atoms and triples. Support and opposition ar
 
 ## Current scope
 
-This repository is in its foundation phase. It defines the public product contract, contribution rules, and schema direction before the application and submission flow are implemented.
+This repository is in active implementation. It defines the public product contract, contribution rules, canonical Intuition read path, validation boundary, runnable backend service, and an unsigned MultiVault submission workflow. Production ontology IDs and wallet write approval remain external gates.
+
+When a submission declares a contract terms decoder, preparation also performs a read-only `eth_call` and compares the returned values with the submitted fixtures before producing the unsigned plan.
 
 - [Product requirements](docs/PRODUCT.md)
 - [Registry schema](docs/SCHEMA.md)
+- [Composability guide](docs/COMPOSABILITY.md)
 - [Integration rules](docs/INTEGRATION.md)
+- [Backend implementation status](docs/BACKEND.md)
+- [Acceptance proof](docs/PROOF.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 
@@ -46,4 +51,25 @@ This repository is in its foundation phase. It defines the public product contra
 pnpm install
 pnpm check
 pnpm format:check
+pnpm build
+```
+
+## Registry client configuration
+
+The repository exposes a backend service plus a backend-neutral Intuition reader, claim resolver, validation helpers,
+composability reader, indexer poller, and unsigned MultiVault submission workflow. Provide the GraphQL
+endpoint, reviewed registry membership predicate ID, and deployment-class term ID to
+`loadRegistry` through `RegistryConfig`. The reader returns `unconfigured` until the reviewed
+IDs are present and never invents registry records.
+
+```ts
+import { loadRegistry } from "./src/index.js";
+
+const state = await loadRegistry({
+  endpoint:
+    process.env.INTUITION_GRAPHQL_URL ??
+    "https://mainnet.intuition.sh/v1/graphql",
+  membershipPredicateId: process.env.REGISTRY_MEMBERSHIP_PREDICATE_ID,
+  deploymentClassId: process.env.REGISTRY_DEPLOYMENT_CLASS_ID,
+});
 ```
