@@ -314,12 +314,19 @@ export async function resolveSubmissionWorkflow(
       });
     }
 
+    const plannedPredicateIds = new Set(
+      atomOperations(plan)
+        .filter((operation) => operation.key.startsWith("ontology-predicate:"))
+        .map((operation) =>
+          intuitionAtomIdFromText(operation.content).toLowerCase(),
+        ),
+    );
     const configuredIds = [
       ontology.deploymentClassId,
       ...Object.values(ontology.predicates).filter((id): id is string =>
         Boolean(id?.trim()),
       ),
-    ];
+    ].filter((id) => !plannedPredicateIds.has(id.toLowerCase()));
     const configuredExists = await Promise.all(
       configuredIds.map(async (id) => ({
         id,
@@ -339,7 +346,7 @@ export async function resolveSubmissionWorkflow(
       initialSignal: plan.initialSignal,
       missingConfiguredTermIds,
       warning:
-        "This resolution is read-only. Configured ontology terms must already exist; only new submission atoms and triples may be created.",
+        "This resolution is read-only. Configured ontology terms must already exist; proposed ontology predicate atoms are included in the ordered write batch when they are new.",
     };
   } catch (error) {
     return {

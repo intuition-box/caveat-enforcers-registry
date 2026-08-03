@@ -148,3 +148,43 @@ test("backend HTTP registry route forwards browse filters", async () => {
     });
   }
 });
+
+test("backend CORS is opt-in and supports browser preflight", async () => {
+  const previous = process.env.CORS_ORIGIN;
+  process.env.CORS_ORIGIN = "https://registry.example";
+  const server = startBackendServer(0, {
+    backend: new RegistryBackend({
+      endpoint: "https://mainnet.intuition.sh/v1/graphql",
+      ontology: createOntologyManifest({ version: "unconfigured" }),
+    }),
+  });
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const address = server.address() as AddressInfo;
+  try {
+    const preflight = await fetch(
+      `http://127.0.0.1:${address.port}/api/registry`,
+      {
+        method: "OPTIONS",
+        headers: { origin: "https://registry.example" },
+      },
+    );
+    assert.equal(preflight.status, 204);
+    assert.equal(
+      preflight.headers.get("access-control-allow-origin"),
+      "https://registry.example",
+    );
+    const health = await fetch(`http://127.0.0.1:${address.port}/health`, {
+      headers: { origin: "https://registry.example" },
+    });
+    assert.equal(
+      health.headers.get("access-control-allow-origin"),
+      "https://registry.example",
+    );
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+    if (previous === undefined) delete process.env.CORS_ORIGIN;
+    else process.env.CORS_ORIGIN = previous;
+  }
+});

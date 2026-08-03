@@ -6,6 +6,7 @@ import type {
   ContractCodeCheck,
   SubmissionCompositionEvidence,
 } from "./validation.js";
+import { intuitionAtomIdFromText } from "./intuition.js";
 
 function canonicalJsonValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalJsonValue);
@@ -75,9 +76,41 @@ const compositionPredicateKeys: Record<
   redundant: "redundantWith",
 };
 
+/**
+ * The proposed manifest is permissionless: when a standard relationship atom
+ * is not on mainnet yet, the first submission can create that atom in the same
+ * ordered workflow. A custom/reviewed manifest still fails closed instead of
+ * guessing a predicate.
+ */
+const PROPOSED_PREDICATE_ATOMS: Partial<Record<PredicateKey, string>> = {
+  implements: "implements",
+  sourceAt: "source at",
+  hasTermsSchema: "has terms schema",
+  restricts: "restricts",
+  affectsOperation: "affects operation",
+  coveredByAudit: "covered by audit",
+  usedBy: "used by",
+  complements: "complements",
+  redundantWith: "redundant with",
+  appliesInContext: "applies in context",
+  requiresOrdering: "requires ordering",
+  supportedBy: "supported by",
+};
+
+function predicateIdFor(
+  ontology: OntologyManifest,
+  key: PredicateKey,
+): string | undefined {
+  const configured = ontology.predicates[key]?.trim();
+  if (configured) return configured;
+  if (!ontology.version.startsWith("proposed-")) return undefined;
+  const content = PROPOSED_PREDICATE_ATOMS[key];
+  return content ? intuitionAtomIdFromText(content) : undefined;
+}
+
 function missingPredicateKeys(ontology: OntologyManifest): string[] {
   return requiredPredicates
-    .filter((key) => !ontology.predicates[key]?.trim())
+    .filter((key) => !predicateIdFor(ontology, key))
     .map((key) => `predicates.${key}`);
 }
 
@@ -97,6 +130,7 @@ export function buildSubmissionPlan(
     submission.sourceVersion?.trim() || "version not supplied";
   const termsContent = canonicalJson(submission.termsSchema);
   const sourceReleasePredicate = ontology.predicates.partOfRelease?.trim();
+  const predicate = (key: PredicateKey) => predicateIdFor(ontology, key);
   const hasSourceRelease =
     Boolean(submission.sourceVersion?.trim()) &&
     Boolean(sourceReleasePredicate);
@@ -108,27 +142,26 @@ export function buildSubmissionPlan(
   );
   const compositions = submission.evidence?.compositions ?? [];
   const evidencePredicateRequirements = [
-    ...(auditContent && !ontology.predicates.coveredByAudit?.trim()
+    ...(auditContent && !predicate("coveredByAudit")
       ? ["predicates.coveredByAudit"]
       : []),
-    ...(usageContent.length && !ontology.predicates.usedBy?.trim()
+    ...(usageContent.length && !predicate("usedBy")
       ? ["predicates.usedBy"]
       : []),
     ...compositions.flatMap((composition) => {
       const requirements = [
         ...(!ontology.predicates[
           compositionPredicateKeys[composition.relation]
-        ]?.trim()
+        ]?.trim() && !predicate(compositionPredicateKeys[composition.relation])
           ? [`predicates.${compositionPredicateKeys[composition.relation]}`]
           : []),
-        ...(!ontology.predicates.appliesInContext?.trim()
+        ...(!predicate("appliesInContext")
           ? ["predicates.appliesInContext"]
           : []),
-        ...(composition.ordering &&
-        !ontology.predicates.requiresOrdering?.trim()
+        ...(composition.ordering && !predicate("requiresOrdering")
           ? ["predicates.requiresOrdering"]
           : []),
-        ...(composition.supportedBy && !ontology.predicates.supportedBy?.trim()
+        ...(composition.supportedBy && !predicate("supportedBy")
           ? ["predicates.supportedBy"]
           : []),
       ];
@@ -140,7 +173,32 @@ export function buildSubmissionPlan(
     ...evidencePredicateRequirements,
   ];
 
+  const evidencePredicateKeys: PredicateKey[] = [
+    ...(auditContent ? ["coveredByAudit" as const] : []),
+    ...(usageContent.length ? ["usedBy" as const] : []),
+    ...compositions.flatMap((composition) => [
+      compositionPredicateKeys[composition.relation],
+      "appliesInContext" as const,
+      ...(composition.ordering ? (["requiresOrdering"] as const) : []),
+      ...(composition.supportedBy ? (["supportedBy"] as const) : []),
+    ]),
+  ];
+  const proposedPredicateKeys = Array.from(
+    new Set<PredicateKey>([...requiredPredicates, ...evidencePredicateKeys]),
+  ).filter(
+    (key) =>
+      !ontology.predicates[key]?.trim() &&
+      ontology.version.startsWith("proposed-") &&
+      Boolean(PROPOSED_PREDICATE_ATOMS[key]),
+  );
+
   const operations: SubmissionPlanOperation[] = [
+    ...proposedPredicateKeys.map((key) => ({
+      kind: "ensure-atom" as const,
+      key: `ontology-predicate:${key}`,
+      content: PROPOSED_PREDICATE_ATOMS[key]!,
+      note: "Permissionless proposed ontology atom; create it before dependent triples.",
+    })),
     {
       kind: "ensure-atom",
       key: "deployment",
@@ -257,7 +315,7 @@ export function buildSubmissionPlan(
       kind: "create-triple",
       key: "membership",
       subject: deployment,
-      predicateId: ontology.predicates.membership ?? "",
+      predicateId: predicate("membership") ?? "",
       object: ontology.deploymentClassId,
       note: "Canonical registry membership relation.",
     },
@@ -265,7 +323,7 @@ export function buildSubmissionPlan(
       kind: "create-triple",
       key: "implements",
       subject: deployment,
-      predicateId: ontology.predicates.implements ?? "",
+      predicateId: predicate("implements") ?? "",
       object: submission.type,
       note: "Connects deployment to the chain-independent enforcer type.",
     },
@@ -273,7 +331,7 @@ export function buildSubmissionPlan(
       kind: "create-triple",
       key: "deployed-on",
       subject: deployment,
-      predicateId: ontology.predicates.deployedOn ?? "",
+      predicateId: predicate("deployedOn") ?? "",
       object: `eip155:${submission.chainId}`,
       note: "Records the deployment chain independently from the address.",
     },
@@ -281,7 +339,7 @@ export function buildSubmissionPlan(
       kind: "create-triple",
       key: "source-at",
       subject: deployment,
-      predicateId: ontology.predicates.sourceAt ?? "",
+      predicateId: predicate("sourceAt") ?? "",
       object: submission.sourceUrl,
       note: "Source URL claim. Version is represented in the source-release atom.",
     },
@@ -289,7 +347,7 @@ export function buildSubmissionPlan(
       kind: "create-triple",
       key: "has-terms-schema",
       subject: deployment,
-      predicateId: ontology.predicates.hasTermsSchema ?? "",
+      predicateId: predicate("hasTermsSchema") ?? "",
       object: termsContent,
       note: "Links the deployment to its codec document.",
     },
@@ -297,7 +355,7 @@ export function buildSubmissionPlan(
       kind: "create-triple",
       key: "restricts",
       subject: submission.type,
-      predicateId: ontology.predicates.restricts ?? "",
+      predicateId: predicate("restricts") ?? "",
       object: submission.restrictionDomain,
       note: "Restriction domain belongs to the enforcer type.",
     },
@@ -305,7 +363,7 @@ export function buildSubmissionPlan(
       kind: "create-triple",
       key: "affects-operation",
       subject: submission.type,
-      predicateId: ontology.predicates.affectsOperation ?? "",
+      predicateId: predicate("affectsOperation") ?? "",
       object: submission.operation,
       note: "Affected operation belongs to the enforcer type.",
     },
@@ -339,7 +397,7 @@ export function buildSubmissionPlan(
             kind: "create-triple" as const,
             key: "covered-by-audit",
             subject: deployment,
-            predicateId: ontology.predicates.coveredByAudit ?? "",
+            predicateId: predicate("coveredByAudit") ?? "",
             object: auditContent,
             note: "Links the deployment to an exact audit scope and source.",
           },
@@ -349,7 +407,7 @@ export function buildSubmissionPlan(
       kind: "create-triple" as const,
       key: `used-by:${index}`,
       subject: deployment,
-      predicateId: ontology.predicates.usedBy ?? "",
+      predicateId: predicate("usedBy") ?? "",
       object: content,
       note: "Links the deployment to a declared usage reference.",
     })),
@@ -361,9 +419,7 @@ export function buildSubmissionPlan(
           key: relationKey,
           subject: submission.type,
           predicateId:
-            ontology.predicates[
-              compositionPredicateKeys[composition.relation]
-            ] ?? "",
+            predicate(compositionPredicateKeys[composition.relation]) ?? "",
           object: composition.relatedType,
           note: "Declares a contextual compatibility relationship between enforcer types.",
         },
@@ -371,7 +427,7 @@ export function buildSubmissionPlan(
           kind: "create-triple" as const,
           key: `${relationKey}:context`,
           subject: `@triple:${relationKey}`,
-          predicateId: ontology.predicates.appliesInContext ?? "",
+          predicateId: predicate("appliesInContext") ?? "",
           object: composition.context,
           note: "Scopes the compatibility relationship to the submitted use case.",
         },
@@ -381,7 +437,7 @@ export function buildSubmissionPlan(
                 kind: "create-triple" as const,
                 key: `${relationKey}:ordering`,
                 subject: `@triple:${relationKey}`,
-                predicateId: ontology.predicates.requiresOrdering ?? "",
+                predicateId: predicate("requiresOrdering") ?? "",
                 object: composition.ordering,
                 note: "Records required ordering for the relationship.",
               },
@@ -393,7 +449,7 @@ export function buildSubmissionPlan(
                 kind: "create-triple" as const,
                 key: `${relationKey}:evidence`,
                 subject: `@triple:${relationKey}`,
-                predicateId: ontology.predicates.supportedBy ?? "",
+                predicateId: predicate("supportedBy") ?? "",
                 object: composition.supportedBy,
                 note: "Links the relationship to supporting source evidence.",
               },
@@ -418,7 +474,7 @@ export function buildSubmissionPlan(
     codeCheck,
     chainCheck,
     warning:
-      "This plan is not a signed transaction. Simulate it and verify the receipt before any canonical write.",
+      "This plan is not a signed transaction. Simulate it and verify the receipt before any canonical write. Proposed predicate atoms are permissionless and may be created by the submitting wallet.",
   };
 }
 

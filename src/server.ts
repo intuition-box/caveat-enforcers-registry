@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import { createPublicClient, http } from "viem";
 import {
   INTUITION_MAINNET_GRAPHQL,
+  INTUITION_MAINNET_RPC,
   readOntologyManifestFromEnv,
 } from "./ontology.js";
 import { RegistryBackend } from "./backend.js";
@@ -26,7 +27,7 @@ function envValue(name: string, fallback = ""): string {
 }
 
 function createBackend(): RegistryBackend {
-  const rpcEndpoint = envValue("INTUITION_RPC_URL");
+  const rpcEndpoint = envValue("INTUITION_RPC_URL", INTUITION_MAINNET_RPC);
   const publicClient = rpcEndpoint
     ? (createPublicClient({
         transport: http(rpcEndpoint),
@@ -79,12 +80,39 @@ function routePath(request: IncomingMessage): { pathname: string; url: URL } {
   return { pathname: url.pathname, url };
 }
 
+function applyCors(
+  request: IncomingMessage,
+  response: ServerResponse,
+): boolean {
+  const configured = envValue("CORS_ORIGIN");
+  const requestOrigin = request.headers.origin;
+  if (configured && requestOrigin) {
+    const allowed = configured
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+    if (allowed.includes("*") || allowed.includes(requestOrigin)) {
+      response.setHeader("access-control-allow-origin", requestOrigin);
+      response.setHeader("vary", "origin");
+      response.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
+      response.setHeader("access-control-allow-headers", "content-type,accept");
+    }
+  }
+  if (request.method === "OPTIONS") {
+    response.statusCode = 204;
+    response.end();
+    return true;
+  }
+  return false;
+}
+
 export async function handleBackendRequest(
   request: IncomingMessage,
   response: ServerResponse,
   backend = createBackend(),
   writeAdapter?: SubmissionWriteAdapter,
 ): Promise<void> {
+  if (applyCors(request, response)) return;
   const { pathname, url } = routePath(request);
   try {
     if (pathname === "/health") {
@@ -357,7 +385,7 @@ export function startBackendServer(
       options.writeAdapter,
     );
   });
-  server.listen(port, "127.0.0.1");
+  server.listen(port, envValue("HOST", "127.0.0.1"));
   return server;
 }
 

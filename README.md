@@ -32,7 +32,7 @@ Claims are represented as Intuition atoms and triples. Support and opposition ar
 
 ## Current scope
 
-This repository is in active implementation. It defines the public product contract, contribution rules, canonical Intuition read path, validation boundary, runnable backend service, and an unsigned MultiVault submission workflow. A proposed ontology is included for permissionless use; wallet signing and funding remain explicit user responsibilities.
+This repository is in active implementation. It defines the public product contract, contribution rules, canonical Intuition read path, validation boundary, runnable backend service, and a browser-wallet-owned MultiVault submission workflow. A proposed ontology is included for permissionless use; wallet signing and funding remain explicit user responsibilities.
 
 When a submission declares a contract terms decoder, preparation also performs a read-only `eth_call` and compares the returned values with the submitted fixtures before producing the unsigned plan.
 
