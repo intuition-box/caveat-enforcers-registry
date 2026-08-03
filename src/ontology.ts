@@ -1,8 +1,11 @@
 export const INTUITION_MAINNET_CHAIN_ID = "1155";
 export const INTUITION_MAINNET_GRAPHQL =
   "https://mainnet.intuition.sh/v1/graphql";
+export const INTUITION_MAINNET_RPC = "https://rpc.intuition.systems";
 export const INTUITION_MAINNET_MULTIVAULT =
   "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e";
+export const INTUITION_MAINNET_DELEGATION_MANAGER =
+  "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3";
 
 /**
  * Permissionless starting point for the open registry ontology.

@@ -972,6 +972,49 @@ test("submission plans are previewable but blocked without reviewed ontology", (
   assert.match(ready.warning, /not a signed transaction/);
 });
 
+test("the permissionless proposal bootstraps missing standard predicate atoms", () => {
+  const validated = validateSubmission(submission);
+  assert.equal(validated.valid, true);
+  if (!validated.valid) return;
+
+  const plan = buildSubmissionPlan(
+    validated.value,
+    PROPOSED_ONTOLOGY_MANIFEST,
+    { status: "verified", address, codeLength: 5 },
+    { status: "verified", chainId: "1155" },
+  );
+  assert.equal(plan.status, "ready-for-simulation");
+  assert.deepEqual(plan.missingOntologyKeys, []);
+  assert.deepEqual(
+    plan.operations
+      .filter(
+        (operation) =>
+          operation.kind === "ensure-atom" &&
+          operation.key.startsWith("ontology-predicate:"),
+      )
+      .map((operation) => operation.key),
+    [
+      "ontology-predicate:implements",
+      "ontology-predicate:sourceAt",
+      "ontology-predicate:hasTermsSchema",
+      "ontology-predicate:restricts",
+      "ontology-predicate:affectsOperation",
+    ],
+  );
+  const triples = plan.operations.filter(
+    (operation) => operation.kind === "create-triple",
+  );
+  assert.ok(
+    triples.every((operation) =>
+      /^0x[0-9a-f]{64}$/i.test(operation.predicateId),
+    ),
+  );
+  assert.equal(
+    triples.find((operation) => operation.key === "implements")?.predicateId,
+    intuitionAtomIdFromText("implements"),
+  );
+});
+
 test("optional audit and usage evidence becomes reviewed write operations", async () => {
   const evidenceSubmission = {
     ...submission,

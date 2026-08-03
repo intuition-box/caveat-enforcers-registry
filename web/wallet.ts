@@ -14,6 +14,7 @@ import {
 import {
   PROPOSED_ONTOLOGY_MANIFEST,
   INTUITION_MAINNET_GRAPHQL,
+  INTUITION_MAINNET_RPC,
 } from "../src/ontology";
 import type { IntuitionPublicClient } from "../src/intuition";
 import { createViemSubmissionWriteAdapter } from "../src/viem-adapter";
@@ -27,7 +28,7 @@ const intuitionMainnet = defineChain({
   name: "Intuition",
   nativeCurrency: { name: "Trust", symbol: "TRUST", decimals: 18 },
   rpcUrls: {
-    default: { http: ["https://mainnet.intuition.sh"] },
+    default: { http: [INTUITION_MAINNET_RPC] },
   },
 });
 

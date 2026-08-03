@@ -20,6 +20,18 @@ import {
   type RegistryApiState,
   type RegistryDetailResponse,
 } from "./api";
+import {
+  browserWalletAvailable,
+  connectBrowserWallet,
+  curateWithBrowserWallet,
+  submitWithBrowserWallet,
+  type BrowserWallet,
+} from "./wallet";
+import {
+  validateSubmission as validateSubmissionLocally,
+  type SubmissionInput,
+} from "../src/validation";
+import type { CurationInput } from "../src/curation";
 
 /* ---------------------------------------------------------------- primitives */
 
@@ -633,7 +645,149 @@ function EvidenceGraph() {
 
 const STEPS = ["Identity", "Deployment", "Evidence", "Review"];
 
+type ContributionMode = "list" | "attest" | "counter";
+
+const DEFAULT_TERMS_SCHEMA = JSON.stringify(
+  {
+    schemaVersion: "1.0.0",
+    enforcer: "ExampleEnforcer",
+    source: {
+      repository: "https://github.com/example/enforcer",
+      commit: "main",
+      path: "src/ExampleEnforcer.sol",
+    },
+    encoding: {
+      kind: "raw",
+      totalBytes: 1,
+      fields: [{ name: "byte", type: "bytes1", offset: 0, bytes: 1 }],
+    },
+    malformedInputBehavior: "revert",
+    fixtures: [{ terms: "0x00", decoded: { byte: "0x00" } }],
+  },
+  null,
+  2,
+);
+
+function shortAddress(address: string): string {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
+
 export function SubmitPage() {
+  const [mode, setMode] = useState<ContributionMode>("list");
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("frequency");
+  const [purpose, setPurpose] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [sourceVersion, setSourceVersion] = useState("");
+  const [contractAddress, setContractAddress] = useState("");
+  const [termsJson, setTermsJson] = useState(DEFAULT_TERMS_SCHEMA);
+  const [claimId, setClaimId] = useState("");
+  const [amount, setAmount] = useState("1");
+  const [curveId, setCurveId] = useState("1");
+  const [wallet, setWallet] = useState<BrowserWallet | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  async function connectWallet() {
+    setStatus("Requesting an Intuition mainnet account from your wallet…");
+    try {
+      const connected = await connectBrowserWallet();
+      setWallet(connected);
+      setStatus(
+        `Connected ${shortAddress(connected.address)} on Intuition mainnet.`,
+      );
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "The browser wallet could not be connected.",
+      );
+    }
+  }
+
+  async function submitContribution(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setStatus("Preparing a wallet-owned write…");
+    try {
+      const activeWallet = wallet ?? (await connectBrowserWallet());
+      if (!wallet) setWallet(activeWallet);
+
+      if (mode === "list") {
+        let termsSchema: unknown;
+        try {
+          termsSchema = JSON.parse(termsJson);
+        } catch {
+          throw new Error("Terms schema must be valid JSON before submitting.");
+        }
+        const input: SubmissionInput = {
+          chainId: 1155,
+          contractAddress,
+          enforcerName: name,
+          description: purpose,
+          type: name,
+          restrictionDomain: category,
+          operation: "Delegated contract call",
+          sourceUrl,
+          ...(sourceVersion.trim() ? { sourceVersion } : {}),
+          termsSchema: termsSchema as SubmissionInput["termsSchema"],
+          submitterWallet: activeWallet.address,
+          initialSignal: "0",
+          evidence: {
+            audit: {
+              sourceUrl,
+              scope: "Repository and deployed contract evidence",
+              ...(sourceVersion.trim() ? { sourceVersion } : {}),
+            },
+          },
+        };
+        const validation = validateSubmissionLocally(input);
+        if (!validation.valid) {
+          throw new Error(
+            validation.issues
+              .slice(0, 3)
+              .map((issue) => `${issue.path}: ${issue.message}`)
+              .join("; "),
+          );
+        }
+        const result = await submitWithBrowserWallet(input, activeWallet);
+        setStatus(
+          "message" in result
+            ? result.message
+            : result.issues
+                .map((issue) => `${issue.path}: ${issue.message}`)
+                .join("; "),
+        );
+        return;
+      }
+
+      const curation: CurationInput = {
+        claimId,
+        action: mode === "attest" ? "support" : "oppose",
+        receiver: activeWallet.address,
+        amount,
+        curveId,
+      };
+      const result = await curateWithBrowserWallet(curation, activeWallet);
+      setStatus(result.message);
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "The contribution could not be prepared.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const walletLabel = wallet
+    ? shortAddress(wallet.address)
+    : browserWalletAvailable()
+      ? "Available"
+      : "Not detected";
+
   return (
     <main>
       <section className="band band--ink band--split">
@@ -654,7 +808,12 @@ export function SubmitPage() {
 
       <ol className="stepper">
         {STEPS.map((step, i) => (
-          <li key={step} className={i === 0 ? "is-active" : undefined}>
+          <li
+            key={step}
+            className={
+              i === (mode === "list" ? 0 : 2) ? "is-active" : undefined
+            }
+          >
             <span className="mono-sub">{String(i + 1).padStart(2, "0")}</span>
             <span>{step}</span>
           </li>
@@ -664,13 +823,19 @@ export function SubmitPage() {
       <section className="band band--paper">
         <div className="two-col two-col--form">
           <form
+            id="contribution-form"
             className="form"
-            onSubmit={(e) => e.preventDefault()}
-            aria-label="List a new enforcer"
+            onSubmit={submitContribution}
+            aria-label="Contribute to the open registry"
           >
             <label>
               <span className="mono-label">Contribution type</span>
-              <select defaultValue="list">
+              <select
+                value={mode}
+                onChange={(event) =>
+                  setMode(event.target.value as ContributionMode)
+                }
+              >
                 <option value="list">List a new enforcer</option>
                 <option value="attest">Attest to an existing claim</option>
                 <option value="counter">Submit a counter-signal</option>
@@ -680,11 +845,21 @@ export function SubmitPage() {
             <div className="form__pair">
               <label>
                 <span className="mono-label">Enforcer name</span>
-                <input placeholder="SessionFrequencyEnforcer" />
+                <input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="SessionFrequencyEnforcer"
+                  required={mode === "list"}
+                  disabled={mode !== "list"}
+                />
               </label>
               <label>
                 <span className="mono-label">Constraint category</span>
-                <select defaultValue="frequency">
+                <select
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  disabled={mode !== "list"}
+                >
                   <option value="frequency">Frequency</option>
                   <option value="amount">Amount limit</option>
                   <option value="target">Target address</option>
@@ -697,23 +872,104 @@ export function SubmitPage() {
             <label>
               <span className="mono-label">Plain-language purpose</span>
               <textarea
+                value={purpose}
+                onChange={(event) => setPurpose(event.target.value)}
                 rows={3}
                 placeholder="Limits how often a delegated session may execute within a defined interval."
+                required={mode === "list"}
+                disabled={mode !== "list"}
               />
             </label>
 
             <div className="form__pair">
               <label>
                 <span className="mono-label">Source URL</span>
-                <input placeholder="https://github.com/example/enforcers" />
+                <input
+                  value={sourceUrl}
+                  onChange={(event) => setSourceUrl(event.target.value)}
+                  placeholder="https://github.com/example/enforcers"
+                  required={mode === "list"}
+                  disabled={mode !== "list"}
+                />
               </label>
               <label>
                 <span className="mono-label">Chain</span>
-                <select defaultValue="1155">
+                <select value="1155" disabled>
                   <option value="1155">Intuition 1155</option>
                 </select>
               </label>
             </div>
+
+            {mode === "list" ? (
+              <>
+                <div className="form__pair">
+                  <label>
+                    <span className="mono-label">
+                      Deployed enforcer address
+                    </span>
+                    <input
+                      value={contractAddress}
+                      onChange={(event) =>
+                        setContractAddress(event.target.value)
+                      }
+                      placeholder="0x…"
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span className="mono-label">Source version</span>
+                    <input
+                      value={sourceVersion}
+                      onChange={(event) => setSourceVersion(event.target.value)}
+                      placeholder="v1.0.0 or commit SHA"
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  <span className="mono-label">Terms schema JSON</span>
+                  <textarea
+                    rows={8}
+                    value={termsJson}
+                    onChange={(event) => setTermsJson(event.target.value)}
+                    spellCheck={false}
+                    required
+                  />
+                </label>
+              </>
+            ) : (
+              <>
+                <label>
+                  <span className="mono-label">Existing claim ID</span>
+                  <input
+                    value={claimId}
+                    onChange={(event) => setClaimId(event.target.value)}
+                    placeholder="0x… 32-byte Intuition triple ID"
+                    required
+                  />
+                </label>
+                <div className="form__pair">
+                  <label>
+                    <span className="mono-label">Deposit amount (wei)</span>
+                    <input
+                      inputMode="numeric"
+                      value={amount}
+                      onChange={(event) => setAmount(event.target.value)}
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span className="mono-label">Curve ID</span>
+                    <input
+                      inputMode="numeric"
+                      value={curveId}
+                      onChange={(event) => setCurveId(event.target.value)}
+                      required
+                    />
+                  </label>
+                </div>
+              </>
+            )}
           </form>
 
           <aside className="preflight">
@@ -721,18 +977,60 @@ export function SubmitPage() {
             <h2 className="headline headline--sm">Submission outline</h2>
             <Spec
               rows={[
-                ["Identity", "Ready"],
-                ["Source", "Provided"],
-                ["Deployment", "Next step"],
-                ["Wallet write", "Not started"],
+                [
+                  "Identity",
+                  mode === "list" ? name || "Required" : "Claim signal",
+                ],
+                [
+                  "Source",
+                  mode === "list"
+                    ? sourceUrl
+                      ? "Provided"
+                      : "Required"
+                    : "Intuition triple",
+                ],
+                [
+                  "Deployment",
+                  mode === "list"
+                    ? contractAddress
+                      ? "Provided"
+                      : "Required"
+                    : "Verified before deposit",
+                ],
+                ["Wallet", walletLabel],
               ]}
             />
-            <button className="cta cta--solid" type="button">
-              Continue to deployment <span aria-hidden="true">→</span>
+            <button
+              className="cta cta--solid"
+              type="button"
+              onClick={connectWallet}
+              disabled={busy || Boolean(wallet)}
+            >
+              {wallet ? "Wallet connected" : "Connect wallet"}{" "}
+              <span aria-hidden="true">→</span>
             </button>
+            <button
+              className="cta cta--dark"
+              type="submit"
+              form="contribution-form"
+              disabled={busy}
+            >
+              {busy
+                ? "Waiting for wallet…"
+                : mode === "list"
+                  ? "Review and sign"
+                  : "Review signal"}{" "}
+              <span aria-hidden="true">→</span>
+            </button>
+            {status && (
+              <p className="band__note" role="status" aria-live="polite">
+                {status}
+              </p>
+            )}
             <p className="band__note">
-              Nothing is written on-chain from this screen. Every submission is
-              validated and shown as a transaction plan before any write.
+              {mode === "list"
+                ? "Validation, simulation, wallet approval, receipt verification, and indexer confirmation happen in order. The server never receives your signing key."
+                : "The claim and target vault are verified before the wallet prompts for a support or opposition deposit."}
             </p>
           </aside>
         </div>

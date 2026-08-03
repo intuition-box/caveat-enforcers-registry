@@ -1,6 +1,6 @@
 # Backend implementation status
 
-The backend is a typed, backend-neutral registry client. It reads the canonical Intuition graph directly and prepares a submission plan without signing or writing to the chain.
+The backend is a typed, backend-neutral registry client. It reads the canonical Intuition graph directly and prepares a submission plan without hidden signing state. The web client can pass an injected browser wallet through the same adapter boundary for explicit user-approved writes.
 
 ## Implemented locally
 
@@ -20,6 +20,7 @@ The backend is a typed, backend-neutral registry client. It reads the canonical 
 - Direct term and triple verification recomputes the deployed salted ID from the returned data or components, rejecting mismatched RPC responses.
 - Real `createAtoms` and `createTriples` calldata encoding with no signer or wallet side effects.
 - Optional viem wallet/public-client adapter for simulation, signing, and receipt confirmation when an account is explicitly injected.
+- Browser wallet integration using `window.ethereum`, chain-1155 switching, explicit account connection, and the same simulation, write, receipt, MultiVault, and indexer verification pipeline.
 - Deterministic atom and triple ID resolution, duplicate detection, and ordered write batches.
 - Submission initial signal is carried into the membership vault asset; source-release atoms are only created when a configured release predicate can link them.
 - Optional audit and known-usage evidence is validated, canonicalized, and added to the same write plan; the plan fails closed if its predicates are not configured.
@@ -31,6 +32,7 @@ The backend is a typed, backend-neutral registry client. It reads the canonical 
 - Executable ABI and packed fixture decoding that rejects declared values which do not match the submitted terms bytes.
 - Read-only `eth_call` verification for declared terms decoder functions, comparing every decoder output with the submitted fixture before a plan is returned.
 - Submission transaction-plan generation with explicit atom and triple operations.
+- Permissionless proposed ontology workflow that creates missing standard predicate atoms in the ordered atom transaction instead of waiting for a central approval gate; custom manifests still fail closed when required IDs are missing.
 - Optional canonical description linking through the configured `describedBy` predicate; the field remains unmapped until that predicate is supplied.
 - Guarded submission lifecycle from plan, through simulation, submission, receipt, and indexer discovery.
 - Service-level execution coordinator that accepts an explicit write adapter, confirms every submitted receipt, verifies direct MultiVault state, and polls the canonical registry before returning `indexed`.
@@ -71,7 +73,7 @@ silently promotes a candidate.
 - No private signer, funding wallet, or hidden write authority is committed. The default runtime
   uses the explicitly labeled proposal in `config/ontology.manifest.proposed.json`; operators can
   override it with environment values, and community support or opposition remains independent.
-- No wallet signing, funded wallet, or transaction owner is configured. The repository can encode the official MultiVault calls, but it does not submit them by itself.
+- No funded wallet or transaction owner is configured. The repository does not submit anything automatically; a user must connect a browser wallet and approve each prompt.
 - The service does not persist submissions or expose an unauthenticated production write endpoint. Wallet signing remains an explicit client or injected adapter responsibility.
 - No production pinning key, funded wallet, or transaction owner is configured.
 - No genuine production submission has yet been receipt- or MultiVault-verified.
@@ -80,7 +82,7 @@ silently promotes a candidate.
 ## Safe sequence for a proposed ontology
 
 1. Inspect or override the proposed ontology IDs and record the semantic justification.
-2. Connect an Intuition write adapter behind an injected signer and dry-run transaction preview.
+2. Connect a browser wallet on Intuition 1155 and dry-run the transaction preview.
 3. Simulate the complete atom and triple plan.
 4. Submit one approved genuine entry on the canonical environment.
 5. Verify the receipt, direct MultiVault state, and expected term IDs.
