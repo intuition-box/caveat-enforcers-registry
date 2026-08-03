@@ -22,6 +22,8 @@ import {
   loadRegistryPage,
   normalizeEvmAddress,
   pollRegistryForDeployment,
+  PROPOSED_ONTOLOGY_MANIFEST,
+  readOntologyManifestFromEnv,
   readIntuitionVault,
   intuitionAtomIdFromText,
   intuitionAtomIdFromData,
@@ -135,6 +137,44 @@ test("ontology manifests reject non-canonical term IDs", () => {
   assert.deepEqual(
     issues.map((issue) => issue.path),
     ["deploymentClassId", "predicates.membership", "predicates.implements"],
+  );
+});
+
+test("empty runtime configuration uses the explicit permissionless ontology proposal", () => {
+  const manifest = readOntologyManifestFromEnv({});
+  assert.equal(manifest.version, PROPOSED_ONTOLOGY_MANIFEST.version);
+  assert.equal(manifest.chainId, PROPOSED_ONTOLOGY_MANIFEST.chainId);
+  assert.equal(
+    manifest.deploymentClassId,
+    PROPOSED_ONTOLOGY_MANIFEST.deploymentClassId,
+  );
+  assert.equal(
+    manifest.predicates.membership,
+    PROPOSED_ONTOLOGY_MANIFEST.predicates.membership,
+  );
+  assert.equal(
+    manifest.predicates.deployedOn,
+    PROPOSED_ONTOLOGY_MANIFEST.predicates.deployedOn,
+  );
+  assert.equal(
+    manifest.predicates.conflictsWith,
+    PROPOSED_ONTOLOGY_MANIFEST.predicates.conflictsWith,
+  );
+  assert.equal(validateOntologyManifest(manifest).length, 0);
+});
+
+test("runtime ontology values remain overridable without a central approval gate", () => {
+  const manifest = readOntologyManifestFromEnv({
+    REGISTRY_ONTOLOGY_VERSION: "proposal-local",
+    REGISTRY_DEPLOYMENT_CLASS_ID: termId("a"),
+    REGISTRY_MEMBERSHIP_PREDICATE_ID: termId("b"),
+  });
+  assert.equal(manifest.version, "proposal-local");
+  assert.equal(manifest.deploymentClassId, termId("a"));
+  assert.equal(manifest.predicates.membership, termId("b"));
+  assert.equal(
+    manifest.predicates.deployedOn,
+    PROPOSED_ONTOLOGY_MANIFEST.predicates.deployedOn,
   );
 });
 
@@ -908,7 +948,7 @@ test("submission plans are previewable but blocked without reviewed ontology", (
     createOntologyManifest({ version: "unreviewed" }),
     codeCheck,
   );
-  assert.equal(blocked.status, "blocked-by-review");
+  assert.equal(blocked.status, "blocked-by-configuration");
   assert.ok(blocked.missingOntologyKeys.includes("deploymentClassId"));
   assert.ok(
     blocked.operations.some((operation) => operation.kind === "create-triple"),
@@ -979,7 +1019,7 @@ test("optional audit and usage evidence becomes reviewed write operations", asyn
     }),
     { status: "verified", address, codeLength: 5 },
   );
-  assert.equal(withoutEvidencePredicates.status, "blocked-by-review");
+  assert.equal(withoutEvidencePredicates.status, "blocked-by-configuration");
   assert.ok(
     withoutEvidencePredicates.missingOntologyKeys.includes(
       "predicates.coveredByAudit",
@@ -1230,7 +1270,7 @@ test("submission workflow resolves atom IDs and orders MultiVault writes", async
   );
   assert.equal(resolution.status, "ready");
   if (resolution.status !== "ready") return;
-  assert.equal(resolution.missingReviewedTermIds.length, 0);
+  assert.equal(resolution.missingConfiguredTermIds.length, 0);
   assert.equal(resolution.initialSignal, "1");
   assert.equal(resolution.atoms.length, 9);
   assert.equal(resolution.triples.length, 9);
