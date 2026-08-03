@@ -22,6 +22,9 @@ import {
   loadRegistryPage,
   normalizeEvmAddress,
   pollRegistryForDeployment,
+  LEGACY_GENERIC_DEPLOYMENT_CLASS_ID,
+  PROPOSED_DEPLOYMENT_CLASS_ID,
+  PROPOSED_DEPLOYMENT_CLASS_LABEL,
   PROPOSED_ONTOLOGY_MANIFEST,
   readOntologyManifestFromEnv,
   readIntuitionVault,
@@ -138,6 +141,23 @@ test("ontology manifests reject non-canonical term IDs", () => {
     issues.map((issue) => issue.path),
     ["deploymentClassId", "predicates.membership", "predicates.implements"],
   );
+});
+
+test("ontology manifests reject the legacy generic deployment boundary", () => {
+  const issues = validateOntologyManifest(
+    createOntologyManifest({
+      version: "1.0.0",
+      deploymentClassId: LEGACY_GENERIC_DEPLOYMENT_CLASS_ID,
+      predicates: { membership: termId("a") },
+    }),
+  );
+  assert.deepEqual(issues, [
+    {
+      path: "deploymentClassId",
+      message:
+        "The generic deployment atom is not a safe registry boundary; use the ERC-7710 caveat enforcer deployment class.",
+    },
+  ]);
 });
 
 test("empty runtime configuration uses the explicit permissionless ontology proposal", () => {
@@ -985,6 +1005,31 @@ test("the permissionless proposal bootstraps missing standard predicate atoms", 
   );
   assert.equal(plan.status, "ready-for-simulation");
   assert.deepEqual(plan.missingOntologyKeys, []);
+  assert.equal(
+    PROPOSED_ONTOLOGY_MANIFEST.deploymentClassId,
+    PROPOSED_DEPLOYMENT_CLASS_ID,
+  );
+  assert.equal(
+    intuitionAtomIdFromText(PROPOSED_DEPLOYMENT_CLASS_LABEL),
+    PROPOSED_DEPLOYMENT_CLASS_ID,
+  );
+  assert.deepEqual(
+    plan.operations.find(
+      (operation) => operation.key === "ontology-class:deployment",
+    ),
+    {
+      kind: "ensure-atom",
+      key: "ontology-class:deployment",
+      content: PROPOSED_DEPLOYMENT_CLASS_LABEL,
+      note: "Create the collision-safe ERC-7710 deployment class before membership triples.",
+    },
+  );
+  assert.ok(
+    plan.operations.findIndex(
+      (operation) => operation.key === "ontology-class:deployment",
+    ) <
+      plan.operations.findIndex((operation) => operation.key === "membership"),
+  );
   assert.deepEqual(
     plan.operations
       .filter(

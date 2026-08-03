@@ -7,6 +7,14 @@ export const INTUITION_MAINNET_MULTIVAULT =
 export const INTUITION_MAINNET_DELEGATION_MANAGER =
   "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3";
 
+/** The collision-safe object class for registry membership claims. */
+export const PROPOSED_DEPLOYMENT_CLASS_LABEL =
+  "ERC-7710 caveat enforcer deployment";
+export const PROPOSED_DEPLOYMENT_CLASS_ID =
+  "0x6b417110d95173e05bb927254249126617efb6410824afe0e8d029245252f21c";
+export const LEGACY_GENERIC_DEPLOYMENT_CLASS_ID =
+  "0x4d0e5a453b4d4d38741c899591d7e1ea838237d445b9c0e0c87826bc4a566b63";
+
 /**
  * Permissionless starting point for the open registry ontology.
  *
@@ -17,8 +25,7 @@ export const INTUITION_MAINNET_DELEGATION_MANAGER =
 export const PROPOSED_ONTOLOGY_MANIFEST: OntologyManifest = {
   version: "proposed-mainnet-2026-08-03",
   chainId: INTUITION_MAINNET_CHAIN_ID,
-  deploymentClassId:
-    "0x4d0e5a453b4d4d38741c899591d7e1ea838237d445b9c0e0c87826bc4a566b63",
+  deploymentClassId: PROPOSED_DEPLOYMENT_CLASS_ID,
   predicates: {
     membership:
       "0xb0681668ca193e8608b43adea19fecbbe0828ef5afc941cef257d30a20564ef1",
@@ -90,6 +97,15 @@ export function validateOntologyManifest(
     issues.push({
       path: "deploymentClassId",
       message: "The deployment-class term ID must be a 32-byte hex value.",
+    });
+  } else if (
+    manifest.deploymentClassId.trim().toLowerCase() ===
+    LEGACY_GENERIC_DEPLOYMENT_CLASS_ID
+  ) {
+    issues.push({
+      path: "deploymentClassId",
+      message:
+        "The generic deployment atom is not a safe registry boundary; use the ERC-7710 caveat enforcer deployment class.",
     });
   }
 

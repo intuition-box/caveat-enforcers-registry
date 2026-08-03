@@ -105,6 +105,11 @@ Routes:
 - `GET /api/registry` reads the canonical membership page. Optional `query`, `chain`, `domain`, and `operation` parameters apply deterministic filters to the returned page; metadata filters automatically hydrate bounded deployment claims. `hydrate=true` requests the same claim hydration without a metadata filter.
 - `GET /api/registry/{deploymentId}` resolves deployment claims and summaries.
 - `GET /api/registry/{deploymentId}/composability` resolves configured complements, conflicts, and redundancy claims with separate signals.
+
+For the permissionless proposed manifest, the write coordinator creates the dedicated
+`ERC-7710 caveat enforcer deployment` class atom before predicate atoms and before the
+membership triple. It never substitutes the generic `deployment` atom for that class.
+
 - `POST /api/submissions/validate` validates the published submission schema.
 - `POST /api/submissions/prepare` verifies chain and contract code and returns the unsigned plan.
 - `POST /api/submissions/resolve` resolves existing terms and returns an ordered unsigned write batch.

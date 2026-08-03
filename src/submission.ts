@@ -1,5 +1,9 @@
 import type { OntologyManifest, PredicateKey } from "./ontology.js";
-import { validateOntologyManifest } from "./ontology.js";
+import {
+  PROPOSED_DEPLOYMENT_CLASS_ID,
+  PROPOSED_DEPLOYMENT_CLASS_LABEL,
+  validateOntologyManifest,
+} from "./ontology.js";
 import type { RpcChainCheck } from "./chain.js";
 import type {
   NormalizedSubmission,
@@ -193,6 +197,18 @@ export function buildSubmissionPlan(
   );
 
   const operations: SubmissionPlanOperation[] = [
+    ...(ontology.version.startsWith("proposed-") &&
+    ontology.deploymentClassId.toLowerCase() ===
+      PROPOSED_DEPLOYMENT_CLASS_ID.toLowerCase()
+      ? [
+          {
+            kind: "ensure-atom" as const,
+            key: "ontology-class:deployment",
+            content: PROPOSED_DEPLOYMENT_CLASS_LABEL,
+            note: "Create the collision-safe ERC-7710 deployment class before membership triples.",
+          },
+        ]
+      : []),
     ...proposedPredicateKeys.map((key) => ({
       kind: "ensure-atom" as const,
       key: `ontology-predicate:${key}`,

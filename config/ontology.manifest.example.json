@@ -1,7 +1,7 @@
 {
   "version": "proposed-mainnet-2026-08-03",
   "chainId": "1155",
-  "deploymentClassId": "0x4d0e5a453b4d4d38741c899591d7e1ea838237d445b9c0e0c87826bc4a566b63",
+  "deploymentClassId": "0x6b417110d95173e05bb927254249126617efb6410824afe0e8d029245252f21c",
   "predicates": {
     "membership": "0xb0681668ca193e8608b43adea19fecbbe0828ef5afc941cef257d30a20564ef1",
     "implements": "",

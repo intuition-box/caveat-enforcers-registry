@@ -2,7 +2,10 @@ import { readFile } from "node:fs/promises";
 import { concatHex, keccak256, stringToHex } from "viem";
 
 const seed = JSON.parse(
-  await readFile(new URL("../data/composability-seed.json", import.meta.url), "utf8"),
+  await readFile(
+    new URL("../data/composability-seed.json", import.meta.url),
+    "utf8",
+  ),
 );
 const triples = JSON.parse(
   await readFile(
@@ -20,7 +23,8 @@ const tripleId = (subject, predicate, object) =>
   keccak256(concatHex([tripleSalt, subject, predicate, object]));
 
 if (seed.chainId !== "1155") errors.push("seed chain must be 1155");
-if (seed.status !== "portable-seed") errors.push("seed must remain portable-seed");
+if (seed.status !== "portable-seed")
+  errors.push("seed must remain portable-seed");
 if (!Array.isArray(seed.relationships) || seed.relationships.length < 3)
   errors.push("seed must contain at least three relationships");
 if (triples.status !== "canonical-id-plan")
@@ -41,11 +45,33 @@ for (const [index, item] of (triples.triples ?? []).entries()) {
     )
   )
     errors.push(`triples[${index}] relationship ID does not match components`);
-  if (item.context?.id !== tripleId(item.context.subjectId, item.context.predicateId, item.context.object.id))
+  if (
+    item.context?.id !==
+    tripleId(
+      item.context.subjectId,
+      item.context.predicateId,
+      item.context.object.id,
+    )
+  )
     errors.push(`triples[${index}] context ID does not match components`);
-  if (item.ordering && item.ordering.id !== tripleId(item.ordering.subjectId, item.ordering.predicateId, item.ordering.object.id))
+  if (
+    item.ordering &&
+    item.ordering.id !==
+      tripleId(
+        item.ordering.subjectId,
+        item.ordering.predicateId,
+        item.ordering.object.id,
+      )
+  )
     errors.push(`triples[${index}] ordering ID does not match components`);
-  if (item.evidence?.id !== tripleId(item.evidence.subjectId, item.evidence.predicateId, item.evidence.object.id))
+  if (
+    item.evidence?.id !==
+    tripleId(
+      item.evidence.subjectId,
+      item.evidence.predicateId,
+      item.evidence.object.id,
+    )
+  )
     errors.push(`triples[${index}] evidence ID does not match components`);
   for (const atom of [
     relationship.subject,
