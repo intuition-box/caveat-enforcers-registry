@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: caveat-enforcers-registry-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: INTUITION_RPC_URL
+        value: https://rpc.intuition.systems
+      - key: REGISTRY_GRAPHQL_ENDPOINT
+        value: https://mainnet.intuition.sh/v1/graphql
+      - key: CORS_ORIGIN
+        sync: false
