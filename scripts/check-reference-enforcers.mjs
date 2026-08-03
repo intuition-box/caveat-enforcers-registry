@@ -5,9 +5,17 @@ const document = JSON.parse(await readFile(path, "utf8"));
 const enforcers = document.enforcers;
 const errors = [];
 
-if (document.source?.tag !== "v1.3.0") errors.push("source tag must be v1.3.0");
+if (document.source?.package !== "@metamask/smart-accounts-kit")
+  errors.push("reference source must be @metamask/smart-accounts-kit");
+if (
+  document.source?.environment !==
+  "getSmartAccountsEnvironment(1155).caveatEnforcers"
+)
+  errors.push("reference source must be the kit environment enforcer map");
 if (document.source?.deploymentChainId !== "1155")
   errors.push("deployment chain must be Intuition mainnet chain 1155");
+if (document.observations?.rpcEndpoint !== "https://rpc.intuition.systems")
+  errors.push("reference observation RPC must be https://rpc.intuition.systems");
 if (document.source?.registryStatus !== "reference-only")
   errors.push("reference data must remain marked reference-only");
 if (!Array.isArray(enforcers) || enforcers.length !== 32)
@@ -40,24 +48,19 @@ for (const [index, enforcer] of (enforcers ?? []).entries()) {
 const missing = (enforcers ?? []).filter(
   (enforcer) => enforcer.codeStatus === "missing",
 );
-if (
-  missing.length !== 1 ||
-  missing[0]?.name !== "SpecificActionERC20TransferBatchEnforcer"
-)
-  errors.push(
-    "the known Intuition 1155 gap must be SpecificActionERC20TransferBatchEnforcer only",
-  );
+if (missing.length)
+  errors.push("all 32 kit enforcers must report non-empty code on Intuition 1155");
 if (
   (enforcers ?? []).filter((enforcer) => enforcer.codeStatus === "observed")
-    .length !== 31
+    .length !== 32
 )
-  errors.push("expected 31 observed Intuition 1155 deployments");
+  errors.push("expected 32 observed Intuition 1155 deployments");
 
 if (errors.length) {
   console.error(errors.map((error) => `- ${error}`).join("\n"));
   process.exitCode = 1;
 } else {
   console.log(
-    "MetaMask v1.3.0 reference dataset passed: 32 enforcers, 31 observed, 1 missing.",
+    "MetaMask Smart Accounts Kit reference dataset passed: 32 enforcers, all observed.",
   );
 }
