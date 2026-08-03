@@ -1,0 +1,179 @@
+{
+  "source": {
+    "project": "MetaMask Delegation Framework",
+    "tag": "v1.3.0",
+    "commit": "bfbdf9795a976833ed2fa000baf42fbb83958b03",
+    "repository": "https://github.com/MetaMask/delegation-framework",
+    "deploymentDocument": "https://github.com/MetaMask/delegation-framework/blob/v1.3.0/documents/Deployments.md",
+    "deploymentChainId": "1155",
+    "registryStatus": "reference-only",
+    "registryStatusNote": "These records describe the initial reference collection. They are not Intuition membership claims and do not imply approval or support."
+  },
+  "observations": {
+    "observedAt": "2026-08-03",
+    "observationSource": "Intuition mainnet eth_getCode audit",
+    "codeStatusMeaning": "observed means non-empty bytecode was reported at the deterministic address on Intuition chain 1155; missing means no bytecode was reported."
+  },
+  "enforcers": [
+    {
+      "name": "AllowedCalldataEnforcer",
+      "address": "0xc2b0d624c1c4319760C96503BA27C347F3260f55",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "AllowedMethodsEnforcer",
+      "address": "0x2c21fD0Cb9DC8445CB3fb0DC5E7Bb0Aca01842B5",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "AllowedTargetsEnforcer",
+      "address": "0x7F20f61b1f09b08D970938F6fa563634d65c4EeB",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "BlockNumberEnforcer",
+      "address": "0x5d9818dF0AE3f66e9c3D0c5029DAF99d1823ca6c",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "DeployedEnforcer",
+      "address": "0x24ff2AA430D53a8CD6788018E902E098083dcCd2",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ERC20BalanceChangeEnforcer",
+      "address": "0xcdF6aB796408598Cea671d79506d7D48E97a5437",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ERC20TransferAmountEnforcer",
+      "address": "0xf100b0819427117EcF76Ed94B358B1A5b5C6D2Fc",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ERC20PeriodTransferEnforcer",
+      "address": "0x474e3Ae7E169e940607cC624Da8A15Eb120139aB",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ERC20StreamingEnforcer",
+      "address": "0x56c97aE02f233B29fa03502Ecc0457266d9be00e",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ERC721BalanceChangeEnforcer",
+      "address": "0x8aFdf96eDBbe7e1eD3f5Cd89C7E084841e12A09e",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ERC721TransferEnforcer",
+      "address": "0x3790e6B7233f779b09DA74C72b6e94813925b9aF",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ERC1155BalanceChangeEnforcer",
+      "address": "0x63c322732695cAFbbD488Fc6937A0A7B66fC001A",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ExactCalldataBatchEnforcer",
+      "address": "0x982FD5C86BBF425d7d1451f974192d4525113DfD",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ExactCalldataEnforcer",
+      "address": "0x99F2e9bF15ce5eC84685604836F71aB835DBBdED",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ExactExecutionBatchEnforcer",
+      "address": "0x1e141e455d08721Dd5BCDA1BaA6Ea5633Afd5017",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ExactExecutionEnforcer",
+      "address": "0x146713078D39eCC1F5338309c28405ccf85Abfbb",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "IdEnforcer",
+      "address": "0xC8B5D93463c893401094cc70e66A206fb5987997",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "LogicalOrWrapperEnforcer",
+      "address": "0xE1302607a3251AF54c3a6e69318d6aa07F5eB46c",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "LimitedCallsEnforcer",
+      "address": "0x04658B29F6b82ed55274221a06Fc97D318E25416",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "MultiTokenPeriodEnforcer",
+      "address": "0xFB2f1a9BD76d3701B730E5d69C3219D42D80eBb7",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "NativeBalanceChangeEnforcer",
+      "address": "0xbD7B277507723490Cd50b12EaaFe87C616be6880",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ArgsEqualityCheckEnforcer",
+      "address": "0x44B8C6ae3C304213c3e298495e12497Ed3E56E41",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "NativeTokenPaymentEnforcer",
+      "address": "0x4803a326ddED6dDBc60e659e5ed12d85c7582811",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "NativeTokenTransferAmountEnforcer",
+      "address": "0xF71af580b9c3078fbc2BBF16FbB8EEd82b330320",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "NativeTokenStreamingEnforcer",
+      "address": "0xD10b97905a320b13a0608f7E9cC506b56747df19",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "NativeTokenPeriodTransferEnforcer",
+      "address": "0x9BC0FAf4Aca5AE429F4c06aEEaC517520CB16BD9",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "NonceEnforcer",
+      "address": "0xDE4f2FAC4B3D87A1d9953Ca5FC09FCa7F366254f",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "OwnershipTransferEnforcer",
+      "address": "0x7EEf9734E7092032B5C56310Eb9BbD1f4A524681",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "RedeemerEnforcer",
+      "address": "0xE144b0b2618071B4E56f746313528a669c7E65c5",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "SpecificActionERC20TransferBatchEnforcer",
+      "address": "0x00e0251aaA263dfE3B3541B758A82D1CBA1c3B6D",
+      "codeStatus": "missing"
+    },
+    {
+      "name": "TimestampEnforcer",
+      "address": "0x1046bb45C8d673d4ea75321280DB34899413c069",
+      "codeStatus": "observed"
+    },
+    {
+      "name": "ValueLteEnforcer",
+      "address": "0x92Bf12322527cAA612fd31a0e810472BBB106A8F",
+      "codeStatus": "observed"
+    }
+  ]
+}

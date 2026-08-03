@@ -38,6 +38,7 @@ When a submission declares a contract terms decoder, preparation also performs a
 
 - [Product requirements](docs/PRODUCT.md)
 - [Registry schema](docs/SCHEMA.md)
+- [MetaMask reference collection](docs/REFERENCE-DATA.md)
 - [Composability guide](docs/COMPOSABILITY.md)
 - [Integration rules](docs/INTEGRATION.md)
 - [Backend implementation status](docs/BACKEND.md)

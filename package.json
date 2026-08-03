@@ -11,6 +11,7 @@
     "check": "pnpm check:docs && tsc --noEmit && tsc -p tsconfig.web.json --noEmit",
     "check:schema": "node scripts/check-graphql-schema.mjs",
     "check:submission-schema": "node scripts/check-submission-schema.mjs",
+    "check:reference-enforcers": "node scripts/check-reference-enforcers.mjs",
     "check:local-proof": "node_modules/.bin/tsx --test --test-name-pattern=\"backend execution coordinator confirms and indexes an injected submission\" test/backend.test.ts",
     "discover:ontology": "node scripts/discover-ontology-candidates.mjs",
     "check:docs": "node scripts/check-docs.mjs",
