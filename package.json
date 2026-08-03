@@ -12,6 +12,9 @@
     "check:schema": "node scripts/check-graphql-schema.mjs",
     "check:submission-schema": "node scripts/check-submission-schema.mjs",
     "check:reference-enforcers": "node scripts/check-reference-enforcers.mjs",
+    "generate:reference-enforcers": "node scripts/generate-reference-enforcers.mjs",
+    "generate:composability-seed": "node scripts/generate-composability-triples.mjs",
+    "check:composability-seed": "node scripts/check-composability-seed.mjs",
     "query:registry": "node scripts/query-registry.mjs",
     "check:local-proof": "node_modules/.bin/tsx --test --test-name-pattern=\"backend execution coordinator confirms and indexes an injected submission\" test/backend.test.ts",
     "discover:ontology": "node scripts/discover-ontology-candidates.mjs",
@@ -23,6 +26,7 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@metamask/smart-accounts-kit": "^1.7.0",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",

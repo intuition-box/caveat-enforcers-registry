@@ -1,0 +1,229 @@
+{
+  "schemaVersion": "1.0.0",
+  "chainId": "1155",
+  "status": "canonical-id-plan",
+  "source": {
+    "repository": "https://github.com/intuition-box/delegation",
+    "chain": "Intuition 1155",
+    "providedVerification": "Team addendum, 2026-08-03"
+  },
+  "triples": [
+    {
+      "key": "function-call-payable-conflict",
+      "relationship": {
+        "id": "0xfa87ac8a1d0a4c4471177bd45fb7eb133f10b9189a26ad115a4ccfebc995c39c",
+        "subject": {
+          "label": "ScopeType.FunctionCall",
+          "id": "0x588372cf0523e21649e78ac4b34740f89027240fbed5cfdafb1be7e5368d7b52"
+        },
+        "predicate": {
+          "label": "conflicts with",
+          "id": "0x01d4e9039fd585178fcb08acd7daec2416d6226e9a6ecd51cf844f996ee7d5d3",
+          "source": "proposed ontology mainnet atom"
+        },
+        "object": {
+          "label": "payable call",
+          "id": "0xe81786a2081e91c9d3d71ae3a3943152c3962eb5fe59ff93ffb4f67365133d46"
+        }
+      },
+      "context": {
+        "id": "0xe10e477b985d5d367035d6a24f8a9c956fd12d38f6757b8299c83a0d11853a87",
+        "subjectId": "0xfa87ac8a1d0a4c4471177bd45fb7eb133f10b9189a26ad115a4ccfebc995c39c",
+        "predicateId": "0x2221a9913138f0b959ce3819c122c9c579b882d1d59c1e47ee0e5c9e6f0f9bbb",
+        "object": {
+          "label": "A FunctionCall scope where the call sends native value",
+          "id": "0xe23ad2ee0ad0ba73c8ffbd633642ec294abf42b977e23f24a7a566a42a57fed4"
+        }
+      },
+      "evidence": {
+        "id": "0x1a9895f98ea597a4915e7ba48ad0d371f2a0d1d843cce585d80569f89fe0c290",
+        "subjectId": "0xfa87ac8a1d0a4c4471177bd45fb7eb133f10b9189a26ad115a4ccfebc995c39c",
+        "predicateId": "0xffb5cca1253d9f3c9f7ecd2bdcb7952bc5238ef964fbf53eaa1d238a6371b8fe",
+        "object": {
+          "label": "https://github.com/intuition-box/delegation",
+          "id": "0x8e4e5bb3769934c35dccab91deebdbff46d0ebe40d563c6bff6a36130aada9c5"
+        }
+      },
+      "evidenceNote": "FunctionCall pins ValueLteEnforcer to 0 and silently ignores maxValue, so a payable call is not compatible with that scope."
+    },
+    {
+      "key": "native-transfer-calldata-conflict",
+      "relationship": {
+        "id": "0x7174ff5f493d51eac6d5d89ea016b2959eee1ca11682bf8933c0108cd3ba8b90",
+        "subject": {
+          "label": "ScopeType.NativeTokenTransferAmount",
+          "id": "0x7c526f2c345e4f01646b5b2db01874df9a74ba2d709640368d1feb9574e4c848"
+        },
+        "predicate": {
+          "label": "conflicts with",
+          "id": "0x01d4e9039fd585178fcb08acd7daec2416d6226e9a6ecd51cf844f996ee7d5d3",
+          "source": "proposed ontology mainnet atom"
+        },
+        "object": {
+          "label": "call with calldata",
+          "id": "0xa279f82d1b36fa8ab2142ad96263757f00e965a00c5fa0bf205aa7831d57a9ee"
+        }
+      },
+      "context": {
+        "id": "0xfd2872f072328edeae71ee2a986801a1862e5554da9169c77183934eb3c800ad",
+        "subjectId": "0x7174ff5f493d51eac6d5d89ea016b2959eee1ca11682bf8933c0108cd3ba8b90",
+        "predicateId": "0x2221a9913138f0b959ce3819c122c9c579b882d1d59c1e47ee0e5c9e6f0f9bbb",
+        "object": {
+          "label": "A native-token transfer scope that needs calldata",
+          "id": "0xff1a86dde3d8e03e840da20432492e109454bde37034344f12de4298731ad4fd"
+        }
+      },
+      "evidence": {
+        "id": "0xadf034cd037bfe39d88db38d97a1931c71d53754ae2b66e9bdd7998a1fade429",
+        "subjectId": "0x7174ff5f493d51eac6d5d89ea016b2959eee1ca11682bf8933c0108cd3ba8b90",
+        "predicateId": "0xffb5cca1253d9f3c9f7ecd2bdcb7952bc5238ef964fbf53eaa1d238a6371b8fe",
+        "object": {
+          "label": "https://github.com/intuition-box/delegation",
+          "id": "0x8e4e5bb3769934c35dccab91deebdbff46d0ebe40d563c6bff6a36130aada9c5"
+        }
+      },
+      "evidenceNote": "NativeTokenTransferAmount defaults ExactCalldataEnforcer to 0x and blocks all calldata; AllowedCalldataEnforcer replaces that default."
+    },
+    {
+      "key": "allowed-targets-methods-complement",
+      "relationship": {
+        "id": "0x2be8456860865d5350af51e8294e61ee8099eb961b7a2eb9de1fa3c789014bf5",
+        "subject": {
+          "label": "AllowedTargetsEnforcer",
+          "id": "0x2f0a3130b9c46e6462244015f019cb05ee3923af2a4adf7266f6e8e4a67e1c09"
+        },
+        "predicate": {
+          "label": "complements",
+          "id": "0x1185fe25f14560074c18ba04e54dd87bda9cf94517a87fe7aebea726e9a6b318",
+          "source": "permissionless derived atom"
+        },
+        "object": {
+          "label": "AllowedMethodsEnforcer",
+          "id": "0x0d2a289cfeb4687acd4bd9281bc6a3508b13305c3ab024f78f360975590dcc34"
+        }
+      },
+      "context": {
+        "id": "0x16ecbf6a5ee0f628e348f5ef4ed7252f57bc0a91cd63a5a32879486cb34fb0ba",
+        "subjectId": "0x2be8456860865d5350af51e8294e61ee8099eb961b7a2eb9de1fa3c789014bf5",
+        "predicateId": "0x2221a9913138f0b959ce3819c122c9c579b882d1d59c1e47ee0e5c9e6f0f9bbb",
+        "object": {
+          "label": "A scoped agent action set with the same delegation target and method set",
+          "id": "0xf42b66e438578109a24fab67eaba53b704ee4a91166d7d6487e1bf02c1b4eb63"
+        }
+      },
+      "ordering": {
+        "id": "0x101cbc19b92331a9cca1dcaba7aa4d3e1b78e969d176266793d7a805dcccb0ac",
+        "subjectId": "0x2be8456860865d5350af51e8294e61ee8099eb961b7a2eb9de1fa3c789014bf5",
+        "predicateId": "0xaecf3645b41bffa37ddd92543d5e61489738a84d3e22ee49e86a44a63ac6dff8",
+        "object": {
+          "label": "Resolve the allowed target set before evaluating the allowed method set.",
+          "id": "0xdd4651be8d48efd2f9f5f3b8c104a1fcaa710b827f2be9d22df4ce52ac4cb51c"
+        }
+      },
+      "evidence": {
+        "id": "0x9b481c6fdf816d066bdee4b7d78c377122c133c0891d3123c139a3d6a1edcd25",
+        "subjectId": "0x2be8456860865d5350af51e8294e61ee8099eb961b7a2eb9de1fa3c789014bf5",
+        "predicateId": "0xffb5cca1253d9f3c9f7ecd2bdcb7952bc5238ef964fbf53eaa1d238a6371b8fe",
+        "object": {
+          "label": "https://github.com/intuition-box/delegation",
+          "id": "0x8e4e5bb3769934c35dccab91deebdbff46d0ebe40d563c6bff6a36130aada9c5"
+        }
+      },
+      "evidenceNote": "AllowedTargets, AllowedMethods, LimitedCalls, and Timestamp compose cleanly as a scoped-agent-action set."
+    },
+    {
+      "key": "allowed-targets-call-count-complement",
+      "relationship": {
+        "id": "0x71053c42ab4afd08ca7497cbac0549d77c022f687b4d16fdf0893baa61a02b3d",
+        "subject": {
+          "label": "AllowedTargetsEnforcer",
+          "id": "0x2f0a3130b9c46e6462244015f019cb05ee3923af2a4adf7266f6e8e4a67e1c09"
+        },
+        "predicate": {
+          "label": "complements",
+          "id": "0x1185fe25f14560074c18ba04e54dd87bda9cf94517a87fe7aebea726e9a6b318",
+          "source": "permissionless derived atom"
+        },
+        "object": {
+          "label": "LimitedCallsEnforcer",
+          "id": "0xc0b5d35a1651bfa52d003724fb615fd32eb7ced074005ba96a2b9b67fe9fff20"
+        }
+      },
+      "context": {
+        "id": "0x951026416c60d80368ef231bdedeb325b6a05c83af17388abdb8e76dd5820ca8",
+        "subjectId": "0x71053c42ab4afd08ca7497cbac0549d77c022f687b4d16fdf0893baa61a02b3d",
+        "predicateId": "0x2221a9913138f0b959ce3819c122c9c579b882d1d59c1e47ee0e5c9e6f0f9bbb",
+        "object": {
+          "label": "A scoped agent action set with the same delegation target and call counter",
+          "id": "0x33f4b00ef3e19b1126ca42f47d150215e1a644617e5c3bbfe2aaa513fb8847fa"
+        }
+      },
+      "ordering": {
+        "id": "0x3e75fb43eb86057840c4923496c082d051f74ff7c67f6eb078d5addc7f95e7a1",
+        "subjectId": "0x71053c42ab4afd08ca7497cbac0549d77c022f687b4d16fdf0893baa61a02b3d",
+        "predicateId": "0xaecf3645b41bffa37ddd92543d5e61489738a84d3e22ee49e86a44a63ac6dff8",
+        "object": {
+          "label": "Resolve the allowed target set before consuming the call counter.",
+          "id": "0x8b5b6990a27d57cd714c827d658d0b7b72ad6ff2eadf8f8cf33f6cbd4edaf080"
+        }
+      },
+      "evidence": {
+        "id": "0x2abeb695719736e26b8dd36f8a1060299e67d15830be2e0ff2fae930dd0ba179",
+        "subjectId": "0x71053c42ab4afd08ca7497cbac0549d77c022f687b4d16fdf0893baa61a02b3d",
+        "predicateId": "0xffb5cca1253d9f3c9f7ecd2bdcb7952bc5238ef964fbf53eaa1d238a6371b8fe",
+        "object": {
+          "label": "https://github.com/intuition-box/delegation",
+          "id": "0x8e4e5bb3769934c35dccab91deebdbff46d0ebe40d563c6bff6a36130aada9c5"
+        }
+      },
+      "evidenceNote": "AllowedTargets, AllowedMethods, LimitedCalls, and Timestamp compose cleanly as a scoped-agent-action set."
+    },
+    {
+      "key": "allowed-targets-time-complement",
+      "relationship": {
+        "id": "0x39174f9fd44e0f31b415124a1f788e530e83eb9dfc30723b82d9d2d68fc23c56",
+        "subject": {
+          "label": "AllowedTargetsEnforcer",
+          "id": "0x2f0a3130b9c46e6462244015f019cb05ee3923af2a4adf7266f6e8e4a67e1c09"
+        },
+        "predicate": {
+          "label": "complements",
+          "id": "0x1185fe25f14560074c18ba04e54dd87bda9cf94517a87fe7aebea726e9a6b318",
+          "source": "permissionless derived atom"
+        },
+        "object": {
+          "label": "TimestampEnforcer",
+          "id": "0xb1070aac86a6628baf691531407422a70945fedd7d61795dce2370190aae1201"
+        }
+      },
+      "context": {
+        "id": "0x4c37f08581d1d84f76209477fc3e9a7d5d9f6cc170a658ee4cb82e7b01e28559",
+        "subjectId": "0x39174f9fd44e0f31b415124a1f788e530e83eb9dfc30723b82d9d2d68fc23c56",
+        "predicateId": "0x2221a9913138f0b959ce3819c122c9c579b882d1d59c1e47ee0e5c9e6f0f9bbb",
+        "object": {
+          "label": "A scoped agent action set with the same delegation target and time window",
+          "id": "0x8c6110bc4deaa5d2d04b015ab946e47fa379ba9556404f110be31b30c854f345"
+        }
+      },
+      "ordering": {
+        "id": "0xb33116af2c7f798e9436ba2ab221e5a0f466723704d7ff477daaae0b3be3a3e8",
+        "subjectId": "0x39174f9fd44e0f31b415124a1f788e530e83eb9dfc30723b82d9d2d68fc23c56",
+        "predicateId": "0xaecf3645b41bffa37ddd92543d5e61489738a84d3e22ee49e86a44a63ac6dff8",
+        "object": {
+          "label": "Resolve the time window before executing the target-bound call.",
+          "id": "0xd2173a2c91ad7c7774b98d3d66b0ebdc2aa76d6d389c6f6fe4251a7a8c1b10e6"
+        }
+      },
+      "evidence": {
+        "id": "0x32b11949db2987f73891318072d99d1c1d51c852eefd32b6201c42505560c533",
+        "subjectId": "0x39174f9fd44e0f31b415124a1f788e530e83eb9dfc30723b82d9d2d68fc23c56",
+        "predicateId": "0xffb5cca1253d9f3c9f7ecd2bdcb7952bc5238ef964fbf53eaa1d238a6371b8fe",
+        "object": {
+          "label": "https://github.com/intuition-box/delegation",
+          "id": "0x8e4e5bb3769934c35dccab91deebdbff46d0ebe40d563c6bff6a36130aada9c5"
+        }
+      },
+      "evidenceNote": "AllowedTargets, AllowedMethods, LimitedCalls, and Timestamp compose cleanly as a scoped-agent-action set."
+    }
+  ]
+}

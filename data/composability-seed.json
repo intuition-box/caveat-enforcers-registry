@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "chainId": "1155",
+  "status": "portable-seed",
+  "note": "These records are canonical Intuition ID plans, not claims already written onchain. A connected wallet must create the missing atoms and triples before the registry can display them as live evidence.",
+  "source": {
+    "repository": "https://github.com/intuition-box/delegation",
+    "chain": "Intuition 1155",
+    "providedVerification": "Team addendum, 2026-08-03"
+  },
+  "relationships": [
+    {
+      "key": "function-call-payable-conflict",
+      "subjectType": "ScopeType.FunctionCall",
+      "relation": "conflicts",
+      "relatedType": "payable call",
+      "context": "A FunctionCall scope where the call sends native value",
+      "evidenceNote": "FunctionCall pins ValueLteEnforcer to 0 and silently ignores maxValue, so a payable call is not compatible with that scope.",
+      "supportedBy": "https://github.com/intuition-box/delegation"
+    },
+    {
+      "key": "native-transfer-calldata-conflict",
+      "subjectType": "ScopeType.NativeTokenTransferAmount",
+      "relation": "conflicts",
+      "relatedType": "call with calldata",
+      "context": "A native-token transfer scope that needs calldata",
+      "evidenceNote": "NativeTokenTransferAmount defaults ExactCalldataEnforcer to 0x and blocks all calldata; AllowedCalldataEnforcer replaces that default.",
+      "supportedBy": "https://github.com/intuition-box/delegation"
+    },
+    {
+      "key": "allowed-targets-methods-complement",
+      "subjectType": "AllowedTargetsEnforcer",
+      "relation": "complements",
+      "relatedType": "AllowedMethodsEnforcer",
+      "context": "A scoped agent action set with the same delegation target and method set",
+      "ordering": "Resolve the allowed target set before evaluating the allowed method set.",
+      "evidenceNote": "AllowedTargets, AllowedMethods, LimitedCalls, and Timestamp compose cleanly as a scoped-agent-action set.",
+      "supportedBy": "https://github.com/intuition-box/delegation"
+    },
+    {
+      "key": "allowed-targets-call-count-complement",
+      "subjectType": "AllowedTargetsEnforcer",
+      "relation": "complements",
+      "relatedType": "LimitedCallsEnforcer",
+      "context": "A scoped agent action set with the same delegation target and call counter",
+      "ordering": "Resolve the allowed target set before consuming the call counter.",
+      "evidenceNote": "AllowedTargets, AllowedMethods, LimitedCalls, and Timestamp compose cleanly as a scoped-agent-action set.",
+      "supportedBy": "https://github.com/intuition-box/delegation"
+    },
+    {
+      "key": "allowed-targets-time-complement",
+      "subjectType": "AllowedTargetsEnforcer",
+      "relation": "complements",
+      "relatedType": "TimestampEnforcer",
+      "context": "A scoped agent action set with the same delegation target and time window",
+      "ordering": "Resolve the time window before executing the target-bound call.",
+      "evidenceNote": "AllowedTargets, AllowedMethods, LimitedCalls, and Timestamp compose cleanly as a scoped-agent-action set.",
+      "supportedBy": "https://github.com/intuition-box/delegation"
+    }
+  ]
+}
