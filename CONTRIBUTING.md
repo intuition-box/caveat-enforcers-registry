@@ -7,7 +7,7 @@ Contributions must preserve the registry's open, evidence-based model.
 1. Read [the registry schema](docs/SCHEMA.md).
 2. Keep claims specific to their source, deployment, and evidence.
 3. Do not add a claim that cannot be supported by the submitted artifact.
-4. Run `pnpm check` and `pnpm format:check`.
+4. Run `pnpm check`, `pnpm test`, `pnpm check:submission-schema`, and `pnpm format:check`.
 
 ## Enforcer submissions
 

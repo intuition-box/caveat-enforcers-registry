@@ -40,6 +40,11 @@ The relationship triple then receives context and evidence claims:
 [relationship triple] -> supported by -> [source or test artifact]
 ```
 
+The backend resolves these secondary claims by their reviewed predicate IDs and keeps their
+support and opposition signals separate. If the context predicates are not approved yet, the
+base relationship remains readable and its contextual list is empty rather than inferred from
+labels.
+
 Use `conflicts with` when both restrictions cannot satisfy the stated context. Use `redundant with` when one adds no meaningful restriction in that context. Do not infer either relationship from a label or from stake alone.
 
 ## For end users

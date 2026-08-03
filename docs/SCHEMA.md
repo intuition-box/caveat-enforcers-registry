@@ -5,10 +5,11 @@
 1. An enforcer type is separate from a deployment.
 2. A deployment is identified by CAIP-10: `caip10:eip155:{chainId}:{address}`.
 3. Canonical term IDs define meaning. Labels are presentation only.
-4. Evidence is attached to the exact claim it supports.
-5. A type can be listed even when it has no deployment on a particular chain.
-6. Every contributor uses the same submission schema.
-7. A new indexed entry must be discoverable without an application release.
+4. Structured JSON atoms use sorted object keys so equivalent metadata has one deterministic atom value.
+5. Evidence is attached to the exact claim it supports.
+6. A type can be listed even when it has no deployment on a particular chain.
+7. Every contributor uses the same submission schema.
+8. A new indexed entry must be discoverable without an application release.
 
 ## Entities
 
@@ -32,6 +33,7 @@ The reviewed ontology manifest will supply canonical predicate and object term I
 | deployment         | deployed on       | chain                               |
 | deployment         | part of release   | source release                      |
 | deployment         | source at         | source artifact                     |
+| enforcer type      | described by      | human-readable description          |
 | deployment         | has terms schema  | terms schema                        |
 | deployment         | covered by audit  | audit evidence                      |
 | deployment or type | used by           | wallet or protocol                  |
@@ -54,6 +56,10 @@ Do not create an audit claim without an exact evidence artifact.
 
 When a contract exposes a terms decoder, the codec tests must compare against that contract behavior.
 
+## Portable submission contract
+
+The language-neutral submission contract is published at [`schema/submission.schema.json`](../schema/submission.schema.json), with a complete example at [`schema/submission.example.json`](../schema/submission.example.json). The backend runtime validator remains authoritative for semantic checks such as executable fixtures, code presence, and chain identity.
+
 ## Minimum deployment submission
 
 - chain ID and contract address;
@@ -65,6 +71,13 @@ When a contract exposes a terms decoder, the codec tests must compare against th
 - contract-code verification result for the chosen chain.
 
 Optional evidence includes an audit report, release record, deployment transaction, known usage, composition relationship, and examples. Optional evidence must remain absent when it is unavailable.
+
+The portable submission contract currently models audit evidence as a source URL, scope, and
+optional source version, known usage as named references with optional URLs, and composability
+evidence as a relationship, use-case context, optional ordering, and optional supporting URL.
+These claims are written only when the corresponding reviewed predicates are present in the
+ontology manifest. Context and ordering claims use the canonical ID of the relationship triple as
+their subject, so they remain extensible and attestable by the community.
 
 ## Submission flow
 

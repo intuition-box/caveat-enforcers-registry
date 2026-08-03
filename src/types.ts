@@ -3,6 +3,22 @@ export type Claim = {
   object: string;
   stake: string;
   side: "support" | "counter";
+  id?: string;
+  predicateId?: string;
+  predicateLabel?: string | null;
+  objectId?: string;
+  objectLabel?: string | null;
+  objectData?: string | null;
+  objectValue?: string | null;
+  objectType?: string | null;
+  createdAt?: string;
+  oppositionStake?: string;
+};
+
+export type RegistrySignal = {
+  value: string;
+  label: string;
+  positionCount?: string;
 };
 
 export type EnforcerRecord = {
@@ -22,4 +38,6 @@ export type EnforcerRecord = {
   terms: string;
   claims: Claim[];
   usage: string[];
+  supportSignal?: RegistrySignal;
+  oppositionSignal?: RegistrySignal;
 };

@@ -6,14 +6,39 @@
   "description": "Open registry for ERC-7710 caveat enforcer deployments and evidence.",
   "packageManager": "pnpm@11.1.2",
   "scripts": {
-    "check": "pnpm check:docs && tsc --noEmit",
+    "dev": "vite",
+    "server": "tsx src/server.ts",
+    "check": "pnpm check:docs && tsc --noEmit && tsc -p tsconfig.web.json --noEmit",
+    "check:schema": "node scripts/check-graphql-schema.mjs",
+    "check:submission-schema": "node scripts/check-submission-schema.mjs",
+    "check:local-proof": "node_modules/.bin/tsx --test --test-name-pattern=\"backend execution coordinator confirms and indexes an injected submission\" test/backend.test.ts",
+    "discover:ontology": "node scripts/discover-ontology-candidates.mjs",
     "check:docs": "node scripts/check-docs.mjs",
-    "build": "tsc --noEmit",
+    "build": "pnpm check && vite build",
+    "test": "node_modules/.bin/tsx --test test/*.test.ts",
+    "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
     "prettier": "^3.5.3",
-    "typescript": "^7.0.2"
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.0"
+  },
+  "dependencies": {
+    "@0xintuition/protocol": "^2.0.3",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource/space-mono": "^5.3.0",
+    "gsap": "^3.15.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2",
+    "viem": "^2.55.10"
   }
 }
