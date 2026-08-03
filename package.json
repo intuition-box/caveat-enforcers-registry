@@ -19,7 +19,7 @@
     "check:local-proof": "node_modules/.bin/tsx --test --test-name-pattern=\"backend execution coordinator confirms and indexes an injected submission\" test/backend.test.ts",
     "discover:ontology": "node scripts/discover-ontology-candidates.mjs",
     "check:docs": "node scripts/check-docs.mjs",
-    "build": "pnpm check && vite build",
+    "build": "node scripts/build.mjs",
     "test": "node_modules/.bin/tsx --test test/*.test.ts",
     "preview": "vite preview",
     "format": "prettier --write .",

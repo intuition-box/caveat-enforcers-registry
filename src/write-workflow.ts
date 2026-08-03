@@ -314,9 +314,9 @@ export async function resolveSubmissionWorkflow(
       });
     }
 
-    const plannedPredicateIds = new Set(
+    const plannedOntologyIds = new Set(
       atomOperations(plan)
-        .filter((operation) => operation.key.startsWith("ontology-predicate:"))
+        .filter((operation) => operation.key.startsWith("ontology-"))
         .map((operation) =>
           intuitionAtomIdFromText(operation.content).toLowerCase(),
         ),
@@ -326,7 +326,7 @@ export async function resolveSubmissionWorkflow(
       ...Object.values(ontology.predicates).filter((id): id is string =>
         Boolean(id?.trim()),
       ),
-    ].filter((id) => !plannedPredicateIds.has(id.toLowerCase()));
+    ].filter((id) => !plannedOntologyIds.has(id.toLowerCase()));
     const configuredExists = await Promise.all(
       configuredIds.map(async (id) => ({
         id,
@@ -346,7 +346,7 @@ export async function resolveSubmissionWorkflow(
       initialSignal: plan.initialSignal,
       missingConfiguredTermIds,
       warning:
-        "This resolution is read-only. Configured ontology terms must already exist; proposed ontology predicate atoms are included in the ordered write batch when they are new.",
+        "This resolution is read-only. The proposed deployment class and predicate atoms are included in the ordered write batch when they are new; reviewed manifest terms must already exist.",
     };
   } catch (error) {
     return {

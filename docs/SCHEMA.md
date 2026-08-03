@@ -42,6 +42,12 @@ The ontology manifest supplies canonical predicate and object term IDs. The regi
 
 Do not create an audit claim without an exact evidence artifact.
 
+The object in the first row is a dedicated class atom, not the generic `deployment`
+atom. The proposed manifest uses `ERC-7710 caveat enforcer deployment` and creates
+that atom before any membership triple when it is not already present. This keeps the
+registry boundary collision-resistant and makes re-seeding under a corrected class
+unnecessary.
+
 ## Terms schema
 
 `terms` bytes are not assumed to be standard ABI encoding. Every listed enforcer must include a versioned codec document with:

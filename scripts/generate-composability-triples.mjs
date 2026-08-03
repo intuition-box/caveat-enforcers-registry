@@ -52,7 +52,10 @@ const triples = seed.relationships.map((relationship) => {
       id: relationshipId,
       subject: { label: relationship.subjectType, id: subjectId },
       predicate: {
-        label: relationship.relation === "conflicts" ? "conflicts with" : "complements",
+        label:
+          relationship.relation === "conflicts"
+            ? "conflicts with"
+            : "complements",
         id: predicateId,
         source:
           relationship.relation === "conflicts"
@@ -62,11 +65,7 @@ const triples = seed.relationships.map((relationship) => {
       object: { label: relationship.relatedType, id: objectId },
     },
     context: {
-      id: tripleId(
-        relationshipId,
-        contextPredicateId,
-        contextId,
-      ),
+      id: tripleId(relationshipId, contextPredicateId, contextId),
       subjectId: relationshipId,
       predicateId: contextPredicateId,
       object: { label: relationship.context, id: contextId },
@@ -105,4 +104,6 @@ await writeFile(
     2,
   )}\n`,
 );
-console.log(`Wrote ${triples.length} canonical composability relationship plans.`);
+console.log(
+  `Wrote ${triples.length} canonical composability relationship plans.`,
+);

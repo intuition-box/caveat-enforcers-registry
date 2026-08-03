@@ -15,7 +15,9 @@ if (
 if (document.source?.deploymentChainId !== "1155")
   errors.push("deployment chain must be Intuition mainnet chain 1155");
 if (document.observations?.rpcEndpoint !== "https://rpc.intuition.systems")
-  errors.push("reference observation RPC must be https://rpc.intuition.systems");
+  errors.push(
+    "reference observation RPC must be https://rpc.intuition.systems",
+  );
 if (document.source?.registryStatus !== "reference-only")
   errors.push("reference data must remain marked reference-only");
 if (!Array.isArray(enforcers) || enforcers.length !== 32)
@@ -49,7 +51,9 @@ const missing = (enforcers ?? []).filter(
   (enforcer) => enforcer.codeStatus === "missing",
 );
 if (missing.length)
-  errors.push("all 32 kit enforcers must report non-empty code on Intuition 1155");
+  errors.push(
+    "all 32 kit enforcers must report non-empty code on Intuition 1155",
+  );
 if (
   (enforcers ?? []).filter((enforcer) => enforcer.codeStatus === "observed")
     .length !== 32

@@ -8,6 +8,14 @@
 - MultiVault: `0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e`
 - DelegationManager: `0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`
 
+The proposed registry boundary uses the dedicated object class atom
+`ERC-7710 caveat enforcer deployment` (`0x6b417110d95173e05bb927254249126617efb6410824afe0e8d029245252f21c`).
+It deliberately does not reuse the generic `deployment` atom: a broad object would
+allow unrelated deployment claims to collide with the registry. The atom is currently
+absent on mainnet and is therefore the first `ensure-atom` operation in a proposed
+browser-wallet submission. The membership triple is not eligible to be sent until
+that atom has been created or verified in the same ordered workflow.
+
 Mainnet is the canonical data environment for registry reads and release validation. Do not write disposable records to it.
 
 ## Directory configuration
@@ -83,7 +91,7 @@ Variables:
 ```json
 {
   "membershipPredicateId": "0x...32-byte-term-id...",
-  "deploymentClassId": "0x...32-byte-term-id...",
+  "deploymentClassId": "0x6b417110d95173e05bb927254249126617efb6410824afe0e8d029245252f21c",
   "limit": 100,
   "offset": 0
 }
