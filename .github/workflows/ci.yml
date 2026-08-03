@@ -25,5 +25,6 @@ jobs:
       - run: pnpm check
       - run: pnpm test
       - run: pnpm check:submission-schema
+      - run: pnpm check:reference-enforcers
       - run: pnpm format:check
       - run: pnpm build
