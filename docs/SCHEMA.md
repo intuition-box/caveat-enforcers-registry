@@ -24,7 +24,7 @@
 
 ## Core claims
 
-The reviewed ontology manifest will supply canonical predicate and object term IDs. The registry must support claims equivalent to these relationships:
+The ontology manifest supplies canonical predicate and object term IDs. The registry must support claims equivalent to these relationships:
 
 | Subject            | Relationship      | Object                              |
 | ------------------ | ----------------- | ----------------------------------- |
@@ -75,7 +75,7 @@ Optional evidence includes an audit report, release record, deployment transacti
 The portable submission contract currently models audit evidence as a source URL, scope, and
 optional source version, known usage as named references with optional URLs, and composability
 evidence as a relationship, use-case context, optional ordering, and optional supporting URL.
-These claims are written only when the corresponding reviewed predicates are present in the
+These claims are written only when the corresponding configured predicates are present in the
 ontology manifest. Context and ordering claims use the canonical ID of the relationship triple as
 their subject, so they remain extensible and attestable by the community.
 

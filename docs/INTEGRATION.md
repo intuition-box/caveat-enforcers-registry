@@ -10,7 +10,7 @@ Mainnet is the canonical data environment for registry reads and release validat
 
 ## Directory configuration
 
-The registry client requires these reviewed values:
+The registry client requires these configured values:
 
 - `REGISTRY_MEMBERSHIP_PREDICATE_ID`
 - `REGISTRY_DEPLOYMENT_CLASS_ID`

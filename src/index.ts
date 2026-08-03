@@ -17,6 +17,7 @@ export {
   INTUITION_MAINNET_CHAIN_ID,
   INTUITION_MAINNET_GRAPHQL,
   INTUITION_MAINNET_MULTIVAULT,
+  PROPOSED_ONTOLOGY_MANIFEST,
   createOntologyManifest,
   readOntologyManifestFromEnv,
   validateOntologyManifest,

@@ -2,10 +2,16 @@ import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
 import test from "node:test";
 import { RegistryBackend } from "../src/backend.js";
+import { createOntologyManifest } from "../src/ontology.js";
 import { startBackendServer } from "../src/server.js";
 
-test("backend server exposes honest health when ontology is unreviewed", async () => {
-  const server = startBackendServer(0);
+test("backend server exposes honest health when ontology is incomplete", async () => {
+  const server = startBackendServer(0, {
+    backend: new RegistryBackend({
+      endpoint: "https://mainnet.intuition.sh/v1/graphql",
+      ontology: createOntologyManifest({ version: "unconfigured" }),
+    }),
+  });
   await new Promise<void>((resolve) => server.once("listening", resolve));
   const address = server.address() as AddressInfo;
   try {

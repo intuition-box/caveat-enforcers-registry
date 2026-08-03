@@ -40,10 +40,10 @@ export type SubmissionResolution =
       atoms: SubmissionAtomResolution[];
       triples: SubmissionTripleResolution[];
       initialSignal: string;
-      missingReviewedTermIds: string[];
+      missingConfiguredTermIds: string[];
       warning: string;
     }
-  | { status: "blocked"; message: string; missingReviewedTermIds: string[] }
+  | { status: "blocked"; message: string; missingConfiguredTermIds: string[] }
   | { status: "error"; message: string };
 
 export type SubmissionWriteTransaction = {
@@ -258,7 +258,7 @@ export async function resolveSubmissionWorkflow(
       status: "blocked",
       message:
         "Resolve is blocked until the submission plan is ready for simulation.",
-      missingReviewedTermIds: [],
+      missingConfiguredTermIds: [],
     };
   }
 
@@ -289,7 +289,7 @@ export async function resolveSubmissionWorkflow(
         return {
           status: "blocked",
           message: `Cannot resolve canonical IDs for the ${operation.key} triple.`,
-          missingReviewedTermIds: [],
+          missingConfiguredTermIds: [],
         };
       }
       const tripleId = intuitionTripleIdFromComponents(
@@ -314,21 +314,21 @@ export async function resolveSubmissionWorkflow(
       });
     }
 
-    const reviewedIds = [
+    const configuredIds = [
       ontology.deploymentClassId,
       ...Object.values(ontology.predicates).filter((id): id is string =>
         Boolean(id?.trim()),
       ),
     ];
-    const reviewedExists = await Promise.all(
-      reviewedIds.map(async (id) => ({
+    const configuredExists = await Promise.all(
+      configuredIds.map(async (id) => ({
         id,
         exists: /^0x[0-9a-f]{64}$/i.test(id)
           ? await termExists(publicClient, id, address)
           : false,
       })),
     );
-    const missingReviewedTermIds = reviewedExists
+    const missingConfiguredTermIds = configuredExists
       .filter((item) => !item.exists)
       .map((item) => item.id);
 
@@ -337,9 +337,9 @@ export async function resolveSubmissionWorkflow(
       atoms,
       triples,
       initialSignal: plan.initialSignal,
-      missingReviewedTermIds,
+      missingConfiguredTermIds,
       warning:
-        "This resolution is read-only. Reviewed ontology terms must already exist; only new submission atoms and triples may be created.",
+        "This resolution is read-only. Configured ontology terms must already exist; only new submission atoms and triples may be created.",
     };
   } catch (error) {
     return {
@@ -359,10 +359,10 @@ export function buildSubmissionWriteBatch(
   if (resolution.status !== "ready") {
     return { status: "blocked", message: resolution.message };
   }
-  if (resolution.missingReviewedTermIds.length) {
+  if (resolution.missingConfiguredTermIds.length) {
     return {
       status: "blocked",
-      message: `Reviewed ontology terms are missing: ${resolution.missingReviewedTermIds.join(
+      message: `Configured ontology terms are missing: ${resolution.missingConfiguredTermIds.join(
         ", ",
       )}`,
     };

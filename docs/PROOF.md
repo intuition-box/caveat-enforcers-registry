@@ -8,7 +8,7 @@ The backend tests cover both the low-level workflow and the service coordinator.
 test runs the complete workflow with hermetic adapters:
 
 1. Validate a new submission and its terms fixtures.
-2. Build the reviewed ontology plan.
+2. Build the proposed ontology plan and record its semantic justification.
 3. Resolve canonical atom and triple IDs.
 4. Build `createAtoms` before dependent `createTriples` calldata.
 5. Simulate and submit through an injected adapter.
@@ -36,7 +36,7 @@ This proves the local workflow and ordering without claiming that a test double 
 
 ## Live proof still required
 
-The team must supply the reviewed ontology IDs, write policy, signer, and funding source. Then the same sequence must run against the canonical environment:
+The operator must supply a write policy, signer, and funding source. The proposed ontology can be used immediately; then the same sequence must run against the canonical environment:
 
 1. Submit a genuinely unlisted enforcer.
 2. Verify the receipt and direct MultiVault state.

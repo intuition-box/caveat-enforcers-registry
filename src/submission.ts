@@ -40,7 +40,7 @@ export type SubmissionPlanOperation =
     };
 
 export type SubmissionPlan = {
-  status: "blocked-by-review" | "ready-for-simulation";
+  status: "blocked-by-configuration" | "ready-for-simulation";
   deployment: string;
   initialSignal: string;
   operations: SubmissionPlanOperation[];
@@ -409,7 +409,7 @@ export function buildSubmissionPlan(
       codeCheck.status === "verified" &&
       (chainCheck === undefined || chainCheck.status === "verified")
         ? "ready-for-simulation"
-        : "blocked-by-review",
+        : "blocked-by-configuration",
     deployment,
     initialSignal: submission.initialSignal ?? "0",
     operations,
@@ -430,7 +430,7 @@ export async function simulateSubmissionPlan(
     return {
       status: "blocked",
       message:
-        "Simulation is blocked until ontology review is complete and contract code is verified.",
+        "Simulation is blocked until the ontology is configured and contract code is verified.",
     };
   }
 

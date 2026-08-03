@@ -40,7 +40,8 @@ export function createSubmissionSession(
     : {
         state: "blocked",
         plan,
-        message: "Submission is blocked until review and code checks pass.",
+        message:
+          "Submission is blocked until ontology configuration and code checks pass.",
       };
 }
 
