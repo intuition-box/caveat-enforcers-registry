@@ -2220,3 +2220,159 @@ a:hover .arrow,
     opacity: 0.6;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   The road
+   Paper band with black closing in above and below. Vertical scroll becomes
+   travel to the right; three layers move at three speeds for depth.
+--------------------------------------------------------------------------- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.road {
+  position: relative;
+  background: var(--ink);
+}
+
+.road__stage {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.road__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.road__surface {
+  fill: var(--paper);
+}
+
+.road__rail {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.55;
+}
+
+.road__gate {
+  stroke: var(--ink);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.3;
+  stroke-dasharray: 3 5;
+}
+
+.road__shadow {
+  fill: #000;
+}
+
+.road__meridian {
+  fill: none;
+  stroke: rgba(243, 240, 232, 0.26);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.road__stray.is-blocked circle:first-child {
+  filter: brightness(1.35);
+}
+
+/* depth layers */
+.road__far,
+.road__near {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 1px;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.road__far i {
+  position: absolute;
+  top: 14%;
+  width: 46px;
+  height: 1px;
+  background: rgba(243, 240, 232, 0.16);
+}
+
+.road__near i {
+  position: absolute;
+  bottom: 11%;
+  width: 88px;
+  height: 2px;
+  background: rgba(243, 240, 232, 0.09);
+}
+
+/* travelling copy */
+.road__world {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Placed per frame in screen space so copy rides the road without tilting. */
+.road__card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: min(22rem, 62vw);
+  color: var(--paper);
+  will-change: transform;
+}
+
+.road__card h3 {
+  margin: 0.55rem 0 0.7rem;
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 2.6vw, 2.3rem);
+  font-weight: 640;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.road__card p:last-child {
+  margin: 0.5rem 0 0;
+  font-size: 0.96rem;
+  line-height: 1.55;
+  opacity: 0.66;
+}
+
+.road__card .glyph {
+  display: block;
+  margin-bottom: 0.9rem;
+  border: 1px solid var(--line-dark);
+}
+
+@media (max-width: 48rem) {
+  .road__card {
+    width: min(18rem, 74vw);
+  }
+
+  .road__card h3 {
+    font-size: 1.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .road__far,
+  .road__near {
+    display: none;
+  }
+}

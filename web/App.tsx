@@ -11,6 +11,7 @@ import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { CaveatMarkSvg, MARK_H, MARK_PATHS, MARK_W } from "./CaveatMark";
 import CinematicHero from "./CinematicHero";
 import HomeSections from "./HomeSections";
+import RoadSection from "./RoadSection";
 import {
   DetailPage,
   DevelopersPage,
@@ -175,6 +176,7 @@ function HomePage() {
   return (
     <main>
       <CinematicHero />
+      <RoadSection />
       <HomeSections />
     </main>
   );
