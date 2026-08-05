@@ -15,6 +15,8 @@ import { registryDeploymentsQuery } from "../src/registry";
 import referenceDocument from "../data/metamask-v1.3.0.json";
 import composabilityDocument from "../data/composability-seed.json";
 import ComposabilityGraph from "./ComposabilityGraph";
+import EnforcerRadialGraph from "./EnforcerRadialGraph";
+import BrowserFrame from "./BrowserFrame";
 import {
   fetchRegistry,
   fetchRegistryDetail,
@@ -376,6 +378,34 @@ export function RegistryPage() {
           value="Search → inspect → decide"
           variant="signal"
         />
+      </section>
+
+      <section className="route-section route-section--ink registry-map scroll-reveal">
+        <div className="route-section__intro">
+          <div>
+            <p className="route-kicker">Seeded on mainnet</p>
+            <h2 className="headline">The whole registry at a glance.</h2>
+          </div>
+          <p className="lede">
+            Every spoke is a live membership triple on Intuition: 32 ERC-7710
+            enforcers linked to one deployment class. Coloured by what they
+            restrict.
+          </p>
+        </div>
+        <BrowserFrame
+          title="Caveat Registry"
+          label="Live · Intuition 1155"
+          tone="ink"
+        >
+          <EnforcerRadialGraph
+            nodes={REFERENCE.map((entry) => ({
+              name: entry.name,
+              domain: entry.domain,
+              address: entry.address,
+              slug: entry.slug,
+            }))}
+          />
+        </BrowserFrame>
       </section>
 
       <section className="route-section route-section--paper registry-workspace scroll-reveal">
@@ -1411,7 +1441,13 @@ export function ComposabilityPage() {
           </p>
         </div>
 
-        <ComposabilityGraph relationships={COMPOSABILITY_RELATIONSHIPS} />
+        <BrowserFrame
+          title="Composability"
+          label="Reinforce · conflict · repeat"
+          tone="ink"
+        >
+          <ComposabilityGraph relationships={COMPOSABILITY_RELATIONSHIPS} />
+        </BrowserFrame>
 
         <div className="compose-presets">
           {COMPOSABILITY_PRESETS.map((preset) => {
