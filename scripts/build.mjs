@@ -5,6 +5,8 @@ const path = process.env.PATH ? `${binPath}:${process.env.PATH}` : binPath;
 const steps = [
   ["node", ["scripts/check-docs.mjs"]],
   ["tsc", ["--noEmit"]],
+  ["tsc", ["-p", "tsconfig.web.json", "--noEmit"]],
+  ["vite", ["build"]],
 ];
 
 for (const [command, args] of steps) {

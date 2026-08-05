@@ -8,7 +8,7 @@ The product must let people discover existing enforcers and submit new ones with
 
 ## Problem
 
-Enforcer information is fragmented across source repositories, deployments, documentation, and wallet integrations. A fixed frontend list becomes stale and excludes useful new enforcers.
+Enforcer information is fragmented across source repositories, deployments, documentation, and wallet integrations. A fixed directory list becomes stale and excludes useful new enforcers.
 
 ## MVP capabilities
 
