@@ -3,7 +3,9 @@ import type { RegistryEntry, RegistryState } from "../src/registry";
 const configuredBase = (
   import.meta.env.VITE_REGISTRY_API_BASE_URL ?? ""
 ).trim();
-const apiBase = configuredBase.replace(/\/$/, "");
+const apiBase = (
+  configuredBase || "https://caveat-enforcers-registry.onrender.com"
+).replace(/\/$/, "");
 
 export type RegistryApiState = RegistryState;
 

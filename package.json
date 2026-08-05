@@ -18,6 +18,8 @@
     "query:registry": "node scripts/query-registry.mjs",
     "check:local-proof": "node_modules/.bin/tsx --test --test-name-pattern=\"backend execution coordinator confirms and indexes an injected submission\" test/backend.test.ts",
     "discover:ontology": "node scripts/discover-ontology-candidates.mjs",
+    "seed:reference": "tsx scripts/seed-reference-enforcers.ts",
+    "check:seed": "tsc -p tsconfig.scripts.json --noEmit",
     "check:docs": "node scripts/check-docs.mjs",
     "build": "node scripts/build.mjs",
     "test": "node_modules/.bin/tsx --test test/*.test.ts",

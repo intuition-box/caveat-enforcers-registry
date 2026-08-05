@@ -9,5 +9,9 @@ services:
         value: https://rpc.intuition.systems
       - key: REGISTRY_GRAPHQL_ENDPOINT
         value: https://mainnet.intuition.sh/v1/graphql
+      - key: REGISTRY_PREDICATE_IMPLEMENTS
+        value: 0xb8adf8a79c30ae6a224ac8a76a738258114da42a3799387648f0fde2caeb2bba
+      - key: REGISTRY_PREDICATE_SOURCE_AT
+        value: 0xe5705ab105b08eb11c2fb1d624d71ba0243e8e4324864b56acafdc5fdc6c6a3e
       - key: CORS_ORIGIN
         sync: false

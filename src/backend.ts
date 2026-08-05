@@ -230,6 +230,8 @@ export class RegistryBackend {
               audit: detail.summary.audit ?? entry.audit,
               domain: detail.summary.domain ?? entry.domain,
               operation: detail.summary.operation ?? entry.operation,
+              implementation:
+                detail.summary.implementation ?? entry.implementation,
               claims: detail.summary.claims,
               usage: detail.summary.usage,
             };

@@ -262,7 +262,7 @@ function liveRow(
   return {
     id: entry.id,
     slug: entry.id,
-    name: entry.label,
+    name: entry.implementation ?? entry.label,
     purpose: entry.description,
     domain: entry.domain,
     chain: entry.chain,
