@@ -704,6 +704,73 @@ export function SubmitPage() {
   const [wallet, setWallet] = useState<BrowserWallet | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [importText, setImportText] = useState("");
+  const [importNote, setImportNote] = useState<string | null>(null);
+
+  function applyImportedJson() {
+    const raw = importText.trim();
+    if (!raw) {
+      setImportNote("Paste a submission JSON first.");
+      return;
+    }
+    let parsed: Record<string, unknown>;
+    try {
+      const value = JSON.parse(raw);
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new Error("not an object");
+      }
+      parsed = value as Record<string, unknown>;
+    } catch {
+      setImportNote("That is not valid submission JSON.");
+      return;
+    }
+
+    const str = (value: unknown): string =>
+      typeof value === "string" ? value : "";
+    const filled: string[] = [];
+    const set = (
+      label: string,
+      value: string,
+      apply: (next: string) => void,
+    ) => {
+      if (value.trim()) {
+        apply(value);
+        filled.push(label);
+      }
+    };
+
+    setMode("list");
+    set("name", str(parsed.enforcerName) || str(parsed.type), setName);
+    set("purpose", str(parsed.description), setPurpose);
+    set("source URL", str(parsed.sourceUrl), setSourceUrl);
+    set("source version", str(parsed.sourceVersion), setSourceVersion);
+    set("contract address", str(parsed.contractAddress), setContractAddress);
+
+    const domain = str(parsed.restrictionDomain).toLowerCase();
+    const categoryKey = domain.includes("time")
+      ? "time"
+      : domain.includes("amount")
+        ? "amount"
+        : domain.includes("target")
+          ? "target"
+          : domain.includes("method")
+            ? "method"
+            : domain.includes("frequency") || domain.includes("period")
+              ? "frequency"
+              : "";
+    set("category", categoryKey, setCategory);
+
+    if (parsed.termsSchema && typeof parsed.termsSchema === "object") {
+      setTermsJson(JSON.stringify(parsed.termsSchema, null, 2));
+      filled.push("terms schema");
+    }
+
+    setImportNote(
+      filled.length
+        ? `Filled ${filled.length} field${filled.length === 1 ? "" : "s"}: ${filled.join(", ")}. Review, connect your wallet, and sign.`
+        : "No recognized fields were found in that JSON.",
+    );
+  }
 
   async function connectWallet() {
     setStatus("Requesting an Intuition mainnet account from your wallet…");
@@ -856,6 +923,33 @@ export function SubmitPage() {
             onSubmit={submitContribution}
             aria-label="Contribute to the open registry"
           >
+            <label className="form__import">
+              <span className="mono-label">
+                Paste submission JSON (optional)
+              </span>
+              <textarea
+                value={importText}
+                onChange={(event) => setImportText(event.target.value)}
+                rows={4}
+                placeholder='Paste a submission JSON here and the fields below fill in automatically — e.g. { "enforcerName": "...", "contractAddress": "0x...", "termsSchema": { ... } }'
+                spellCheck={false}
+              />
+              <div className="form__import-actions">
+                <button
+                  className="cta cta--ghost"
+                  type="button"
+                  onClick={applyImportedJson}
+                >
+                  Autofill fields from JSON <span aria-hidden="true">↓</span>
+                </button>
+                {importNote && (
+                  <span className="band__note" role="status" aria-live="polite">
+                    {importNote}
+                  </span>
+                )}
+              </div>
+            </label>
+
             <label>
               <span className="mono-label">Contribution type</span>
               <select
