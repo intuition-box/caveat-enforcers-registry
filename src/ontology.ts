@@ -15,6 +15,14 @@ export const PROPOSED_DEPLOYMENT_CLASS_ID =
 export const LEGACY_GENERIC_DEPLOYMENT_CLASS_ID =
   "0x4d0e5a453b4d4d38741c899591d7e1ea838237d445b9c0e0c87826bc4a566b63";
 
+/** Predicate atoms used by the funded MetaMask reference seed. */
+export const REFERENCE_SEED_PREDICATES = {
+  implements:
+    "0xb8adf8a79c30ae6a224ac8a76a738258114da42a3799387648f0fde2caeb2bba",
+  sourceAt:
+    "0xe5705ab105b08eb11c2fb1d624d71ba0243e8e4324864b56acafdc5fdc6c6a3e",
+} as const;
+
 /**
  * Permissionless starting point for the open registry ontology.
  *

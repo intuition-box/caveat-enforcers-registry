@@ -8,6 +8,7 @@ import { createPublicClient, http } from "viem";
 import {
   INTUITION_MAINNET_GRAPHQL,
   INTUITION_MAINNET_RPC,
+  REFERENCE_SEED_PREDICATES,
   readOntologyManifestFromEnv,
 } from "./ontology.js";
 import { RegistryBackend } from "./backend.js";
@@ -33,7 +34,19 @@ function createBackend(): RegistryBackend {
         transport: http(rpcEndpoint),
       }) as unknown as IntuitionPublicClient)
     : undefined;
-  const ontology = readOntologyManifestFromEnv(process.env);
+  const configuredOntology = readOntologyManifestFromEnv(process.env);
+  const ontology = {
+    ...configuredOntology,
+    predicates: {
+      ...configuredOntology.predicates,
+      implements:
+        configuredOntology.predicates.implements ??
+        REFERENCE_SEED_PREDICATES.implements,
+      sourceAt:
+        configuredOntology.predicates.sourceAt ??
+        REFERENCE_SEED_PREDICATES.sourceAt,
+    },
+  };
   return new RegistryBackend({
     endpoint: envValue(
       "REGISTRY_GRAPHQL_ENDPOINT",
