@@ -28,6 +28,9 @@ const SubmitPage = lazy(() =>
 const LearnPage = lazy(() =>
   import("./Pages").then((module) => ({ default: module.LearnPage })),
 );
+const ComposabilityPage = lazy(() =>
+  import("./Pages").then((module) => ({ default: module.ComposabilityPage })),
+);
 const DevelopersPage = lazy(() =>
   import("./Pages").then((module) => ({ default: module.DevelopersPage })),
 );
@@ -190,6 +193,7 @@ function SiteHeader() {
   const links = [
     ["Registry", "/registry"],
     ["Submit", "/submit"],
+    ["Composability", "/composability"],
     ["Learn", "/learn"],
     ["Developers", "/developers"],
   ];
@@ -303,6 +307,7 @@ function SiteFooter() {
           <span>Product</span>
           <Link to="/registry">Registry</Link>
           <Link to="/submit">Submit</Link>
+          <Link to="/composability">Composability</Link>
           <Link to="/learn">Learn</Link>
         </nav>
         <nav aria-label="Developer navigation">
@@ -349,6 +354,7 @@ export default function App() {
           <Route path="/registry" element={<RegistryPage />} />
           <Route path="/registry/:slug" element={<DetailPage />} />
           <Route path="/submit" element={<SubmitPage />} />
+          <Route path="/composability" element={<ComposabilityPage />} />
           <Route path="/learn" element={<LearnPage />} />
           <Route path="/developers" element={<DevelopersPage />} />
           <Route path="*" element={<NotFoundPage />} />

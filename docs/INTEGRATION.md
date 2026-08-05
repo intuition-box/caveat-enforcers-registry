@@ -86,20 +86,97 @@ query RegistryDeployments(
 }
 ```
 
-Variables:
+Variables (these are the live mainnet values used by the launched registry, not placeholders):
 
 ```json
 {
-  "membershipPredicateId": "0x...32-byte-term-id...",
+  "membershipPredicateId": "0xb0681668ca193e8608b43adea19fecbbe0828ef5afc941cef257d30a20564ef1",
   "deploymentClassId": "0x6b417110d95173e05bb927254249126617efb6410824afe0e8d029245252f21c",
   "limit": 100,
   "offset": 0
 }
 ```
 
+`membershipPredicateId` is the `is` predicate atom; `deploymentClassId` is the
+`ERC-7710 caveat enforcer deployment` class atom. Together they are the registry boundary.
+
 `data.triples` is the membership page. `subject.term_id` is the deployment term to use for
-detail lookup. `term.vaults` and `counter_term.vaults` are separate support and opposition
-signals; a missing vault is not a zero-confidence guarantee.
+detail lookup. `subject.label` is the CAIP-10 identity (`caip10:eip155:1155:{address}`).
+`term.vaults` and `counter_term.vaults` are separate support and opposition signals; a missing
+vault is not a zero-confidence guarantee.
+
+### Runnable example
+
+No SDK and no Intuition-specific knowledge required. This returns the launched registry today:
+
+```bash
+curl -s https://mainnet.intuition.sh/v1/graphql \
+  -H 'content-type: application/json' \
+  -d '{
+    "query": "query($p:String!,$o:String!,$l:Int!,$off:Int!){triples(where:{predicate_id:{_eq:$p},object_id:{_eq:$o}},order_by:{created_at:desc},limit:$l,offset:$off){subject_id subject{label}}}",
+    "variables": {
+      "p": "0xb0681668ca193e8608b43adea19fecbbe0828ef5afc941cef257d30a20564ef1",
+      "o": "0x6b417110d95173e05bb927254249126617efb6410824afe0e8d029245252f21c",
+      "l": 100, "off": 0
+    }
+  }'
+```
+
+### Populating a wallet's enforcer picker
+
+A wallet or delegation UI can turn the same query into an enforcer picker with no registry code:
+
+```ts
+const ENDPOINT = "https://mainnet.intuition.sh/v1/graphql";
+const MEMBERSHIP_PREDICATE =
+  "0xb0681668ca193e8608b43adea19fecbbe0828ef5afc941cef257d30a20564ef1";
+const DEPLOYMENT_CLASS =
+  "0x6b417110d95173e05bb927254249126617efb6410824afe0e8d029245252f21c";
+
+const query = `
+  query RegistryDeployments($p: String!, $o: String!, $l: Int!, $off: Int!) {
+    triples(
+      where: { predicate_id: { _eq: $p }, object_id: { _eq: $o } }
+      order_by: { created_at: desc }
+      limit: $l
+      offset: $off
+    ) {
+      subject_id
+      subject { label }
+      term { vaults { total_assets position_count } }
+    }
+  }`;
+
+async function fetchEnforcerPicker() {
+  const res = await fetch(ENDPOINT, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      query,
+      variables: {
+        p: MEMBERSHIP_PREDICATE,
+        o: DEPLOYMENT_CLASS,
+        l: 100,
+        off: 0,
+      },
+    }),
+  });
+  const { data } = await res.json();
+  return data.triples.map((t) => {
+    // subject.label is "caip10:eip155:{chainId}:{address}"
+    const [, , chainId, address] = t.subject.label.split(":");
+    return {
+      deploymentTermId: t.subject_id, // use for the detail query
+      chainId,
+      address,
+      trustStaked: t.term?.vaults?.[0]?.total_assets ?? "0", // sort by community confidence
+    };
+  });
+}
+```
+
+Sort the returned options by `trustStaked` to surface the most community-endorsed enforcers first,
+then run the deployment detail query below for the one the user selects.
 
 ### Deployment detail query
 

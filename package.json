@@ -25,7 +25,8 @@
     "test": "node_modules/.bin/tsx --test test/*.test.ts",
     "preview": "vite preview",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "seed:composability": "tsx scripts/seed-composability.ts"
   },
   "devDependencies": {
     "@metamask/smart-accounts-kit": "^1.7.0",

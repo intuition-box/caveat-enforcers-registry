@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { registryDeploymentsQuery } from "../src/registry";
 import referenceDocument from "../data/metamask-v1.3.0.json";
+import composabilityDocument from "../data/composability-seed.json";
 import {
   fetchRegistry,
   fetchRegistryDetail,
@@ -1274,6 +1275,188 @@ export function LearnPage() {
             </ol>
           </article>
         ))}
+      </section>
+    </main>
+  );
+}
+
+/* --------------------------------------------------------------- composability */
+
+type ComposabilityRelationship = {
+  key: string;
+  subjectType: string;
+  relation: "conflicts" | "complements";
+  relatedType: string;
+  context: string;
+  ordering?: string;
+  evidenceNote?: string;
+  supportedBy: string;
+};
+
+const COMPOSABILITY_RELATIONSHIPS =
+  composabilityDocument.relationships as ComposabilityRelationship[];
+
+/**
+ * Curated use-case presets. The grouping is presentation; every compatibility
+ * claim below it comes from the composability relationship data, which is
+ * published as attestable Intuition triples (not hardcoded reasoning).
+ */
+const COMPOSABILITY_PRESETS: Array<{
+  id: string;
+  title: string;
+  plain: string;
+  keys: string[];
+}> = [
+  {
+    id: "scoped-agent-action",
+    title: "Scoped agent action",
+    plain:
+      "Give an agent a narrow, safe action surface: which contracts it may call, which methods, how often, and for how long.",
+    keys: [
+      "allowed-targets-methods-complement",
+      "allowed-targets-call-count-complement",
+      "allowed-targets-time-complement",
+    ],
+  },
+  {
+    id: "spending-native-value",
+    title: "Spending native value",
+    plain:
+      "Let a delegation move TRUST. The scope you choose decides whether a payable call is even possible.",
+    keys: ["function-call-payable-conflict"],
+  },
+  {
+    id: "native-transfer-with-calldata",
+    title: "Native transfer that also calls a contract",
+    plain:
+      "Move value and call a function in one delegated action. Some scopes silently block the calldata you need.",
+    keys: ["native-transfer-calldata-conflict"],
+  },
+];
+
+function RelationshipCard({
+  relationship,
+}: {
+  relationship: ComposabilityRelationship;
+}) {
+  const isConflict = relationship.relation === "conflicts";
+  return (
+    <article className="compose-card">
+      <div className="compose-card__relation">
+        <span className="compose-card__term">{relationship.subjectType}</span>
+        <Pill tone={isConflict ? "review" : "observed"}>
+          {isConflict ? "conflicts with" : "complements"}
+        </Pill>
+        <span className="compose-card__term">{relationship.relatedType}</span>
+      </div>
+      <Spec
+        rows={[
+          ["When", relationship.context],
+          ...(relationship.ordering
+            ? ([["Ordering", relationship.ordering]] as Array<[string, string]>)
+            : []),
+        ]}
+      />
+      {relationship.evidenceNote && (
+        <p className="compose-card__why">{relationship.evidenceNote}</p>
+      )}
+      <a
+        className="compose-card__evidence"
+        href={relationship.supportedBy}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Evidence source <span aria-hidden="true">↗</span>
+      </a>
+    </article>
+  );
+}
+
+export function ComposabilityPage() {
+  return (
+    <main>
+      <section className="route-hero route-hero--paper route-hero--learn scroll-reveal">
+        <div className="route-hero__copy">
+          <span className="route-kicker">Composability / Fit</span>
+          <h1 className="display">Which caveats work together.</h1>
+          <p className="lede">
+            Composability is a claim about a set of enforcers: whether they
+            reinforce the intended permission, conflict with it, or repeat a
+            restriction that is already there. Each claim below is an Intuition
+            triple the community can extend and dispute.
+          </p>
+          <div className="route-hero__meta">
+            <span>Plain language</span>
+            <span>Chain-verified</span>
+            <span>Attestable triples</span>
+          </div>
+        </div>
+        <RouteSignal
+          label="Composability / Fit"
+          value="Reinforce, conflict, or repeat"
+          variant="paper"
+        />
+      </section>
+
+      <section className="route-section route-section--paper route-section--tight scroll-reveal">
+        <div className="rail rail--head">
+          <div>
+            <h2 className="headline">Start from the job to be done.</h2>
+          </div>
+          <p className="lede">
+            Pick the outcome you want to permit, then read which enforcers fit
+            and which fight each other. A highly staked relationship is a
+            community-endorsed fit, not a safety guarantee.
+          </p>
+        </div>
+
+        <div className="compose-presets">
+          {COMPOSABILITY_PRESETS.map((preset) => {
+            const relationships = preset.keys
+              .map((key) =>
+                COMPOSABILITY_RELATIONSHIPS.find((item) => item.key === key),
+              )
+              .filter((item): item is ComposabilityRelationship =>
+                Boolean(item),
+              );
+            return (
+              <section
+                key={preset.id}
+                id={preset.id}
+                className="compose-preset"
+              >
+                <header className="compose-preset__head">
+                  <h3 className="headline headline--sm">{preset.title}</h3>
+                  <p className="lede">{preset.plain}</p>
+                </header>
+                <div className="compose-preset__grid">
+                  {relationships.map((relationship) => (
+                    <RelationshipCard
+                      key={relationship.key}
+                      relationship={relationship}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="route-section route-section--ink scroll-reveal">
+        <div className="two-col">
+          <div>
+            <h2 className="headline">Represented as triples, not UI rules.</h2>
+          </div>
+          <p className="lede">
+            Every relationship here is published to Intuition as a triple with
+            its use-case context, ordering, and evidence. Anyone can stake
+            $TRUST to support or dispute a claim, and any wallet or SDK can read
+            the same relationships through the documented GraphQL pattern. The
+            registry surfaces community signal; it does not invent a universal
+            score.
+          </p>
+        </div>
       </section>
     </main>
   );
