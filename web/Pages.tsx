@@ -14,6 +14,7 @@ import { Link, useParams } from "react-router-dom";
 import { registryDeploymentsQuery } from "../src/registry";
 import referenceDocument from "../data/metamask-v1.3.0.json";
 import composabilityDocument from "../data/composability-seed.json";
+import ComposabilityGraph from "./ComposabilityGraph";
 import {
   fetchRegistry,
   fetchRegistryDetail,
@@ -1409,6 +1410,8 @@ export function ComposabilityPage() {
             community-endorsed fit, not a safety guarantee.
           </p>
         </div>
+
+        <ComposabilityGraph relationships={COMPOSABILITY_RELATIONSHIPS} />
 
         <div className="compose-presets">
           {COMPOSABILITY_PRESETS.map((preset) => {

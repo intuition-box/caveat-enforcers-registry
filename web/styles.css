@@ -5972,3 +5972,168 @@ main > .band:first-child {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
+/* -------------------------------------------------------- composability graph */
+
+.compose-graph {
+  --compose-complement: #16855a;
+  --compose-conflict: #c23b2f;
+  margin: 1.5rem 0 2.5rem;
+}
+
+.compose-graph__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.25rem;
+  margin-bottom: 0.75rem;
+  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.compose-graph__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.compose-graph__key::before {
+  content: "";
+  width: 1.4rem;
+  height: 0;
+  border-top: 3px solid currentColor;
+  border-radius: 2px;
+}
+
+.compose-graph__key--complement {
+  color: var(--compose-complement);
+}
+.compose-graph__key--conflict {
+  color: var(--compose-conflict);
+}
+.compose-graph__hint {
+  opacity: 0.6;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.compose-graph__scroll {
+  overflow-x: auto;
+}
+
+.compose-graph__svg {
+  width: 100%;
+  min-width: 40rem;
+  height: auto;
+  display: block;
+}
+
+.compose-graph__baseline {
+  stroke: var(--line-light, rgba(0, 0, 0, 0.18));
+  stroke-width: 1;
+}
+
+.compose-graph__arc {
+  fill: none;
+  stroke-width: 2.5;
+  transition:
+    opacity 200ms ease,
+    stroke-width 200ms ease;
+  stroke-dasharray: 1;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.compose-graph__arc--complements {
+  stroke: var(--compose-complement);
+}
+.compose-graph__arc--conflicts {
+  stroke: var(--compose-conflict);
+}
+.compose-graph__arc.is-lit {
+  opacity: 0.9;
+}
+.compose-graph__arc.is-dim {
+  opacity: 0.12;
+}
+
+.compose-graph__node circle {
+  fill: var(--ink, #16130f);
+  transition:
+    opacity 200ms ease,
+    r 200ms ease;
+  cursor: pointer;
+}
+.compose-graph__node.is-dim {
+  opacity: 0.3;
+}
+.compose-graph__node.is-active circle {
+  fill: var(--accent, #d8492b);
+}
+.compose-graph__node:focus {
+  outline: none;
+}
+.compose-graph__node:focus circle {
+  stroke: var(--accent, #d8492b);
+  stroke-width: 3;
+}
+
+.compose-graph__label {
+  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  fill: currentColor;
+  text-anchor: start;
+  dominant-baseline: middle;
+}
+
+.compose-graph__readout {
+  min-height: 3.25rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-light, rgba(0, 0, 0, 0.14));
+  font-size: 0.92rem;
+}
+.compose-graph__readout ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.compose-graph__tag {
+  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.compose-graph__tag--complements {
+  color: var(--compose-complement);
+}
+.compose-graph__tag--conflicts {
+  color: var(--compose-conflict);
+}
+
+/* Entrance draw-in only when motion is allowed. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-ready .compose-graph__arc {
+    animation: compose-arc-draw 900ms ease forwards;
+  }
+}
+@keyframes compose-arc-draw {
+  from {
+    stroke-dasharray: 620;
+    stroke-dashoffset: 620;
+  }
+  to {
+    stroke-dasharray: 620;
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .compose-graph {
+    --compose-complement: #3fbd85;
+    --compose-conflict: #ef6a5c;
+  }
+}
