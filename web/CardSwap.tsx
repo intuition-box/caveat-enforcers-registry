@@ -23,17 +23,18 @@ export type CardProps = HTMLAttributes<HTMLDivElement> & {
   customClass?: string;
 };
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(
-  function Card({ customClass, className, ...rest }, ref) {
-    return (
-      <div
-        ref={ref}
-        {...rest}
-        className={["card", customClass, className].filter(Boolean).join(" ")}
-      />
-    );
-  },
-);
+export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
+  { customClass, className, ...rest },
+  ref,
+) {
+  return (
+    <div
+      ref={ref}
+      {...rest}
+      className={["card", customClass, className].filter(Boolean).join(" ")}
+    />
+  );
+});
 
 Card.displayName = "Card";
 
@@ -44,7 +45,12 @@ type Slot = {
   zIndex: number;
 };
 
-function makeSlot(index: number, distanceX: number, distanceY: number, total: number): Slot {
+function makeSlot(
+  index: number,
+  distanceX: number,
+  distanceY: number,
+  total: number,
+): Slot {
   return {
     x: index * distanceX,
     y: -index * distanceY,
@@ -99,7 +105,9 @@ export default function CardSwap({
     () => childArr.map(() => ({ current: null as HTMLDivElement | null })),
     [childArr.length],
   );
-  const order = useRef(Array.from({ length: childArr.length }, (_, index) => index));
+  const order = useRef(
+    Array.from({ length: childArr.length }, (_, index) => index),
+  );
   const timeline = useRef<gsap.core.Timeline | null>(null);
   const interval = useRef<number | null>(null);
   const container = useRef<HTMLDivElement | null>(null);
@@ -110,33 +118,40 @@ export default function CardSwap({
   cardClick.current = onCardClick;
 
   useEffect(() => {
-    const elements = refs.map((ref) => ref.current).filter(Boolean) as HTMLDivElement[];
+    const elements = refs
+      .map((ref) => ref.current)
+      .filter(Boolean) as HTMLDivElement[];
     const total = elements.length;
     if (total === 0) return undefined;
 
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const motion = easing === "elastic"
-      ? {
-          ease: "elastic.out(0.6,0.9)",
-          durDrop: 1.5,
-          durMove: 1.5,
-          durReturn: 1.5,
-          promoteOverlap: 0.9,
-          returnDelay: 0.05,
-        }
-      : {
-          ease: "power1.inOut",
-          durDrop: 0.8,
-          durMove: 0.8,
-          durReturn: 0.8,
-          promoteOverlap: 0.45,
-          returnDelay: 0.2,
-        };
+    const motion =
+      easing === "elastic"
+        ? {
+            ease: "elastic.out(0.6,0.9)",
+            durDrop: 1.5,
+            durMove: 1.5,
+            durReturn: 1.5,
+            promoteOverlap: 0.9,
+            returnDelay: 0.05,
+          }
+        : {
+            ease: "power1.inOut",
+            durDrop: 0.8,
+            durMove: 0.8,
+            durReturn: 0.8,
+            promoteOverlap: 0.45,
+            returnDelay: 0.2,
+          };
 
     elements.forEach((element, index) => {
-      placeNow(element, makeSlot(index, cardDistance, verticalDistance, total), skewAmount);
+      placeNow(
+        element,
+        makeSlot(index, cardDistance, verticalDistance, total),
+        skewAmount,
+      );
     });
     activeChange.current?.(order.current[0] ?? 0);
 
@@ -161,7 +176,10 @@ export default function CardSwap({
         duration: motion.durDrop,
         ease: motion.ease,
       });
-      nextTimeline.addLabel("promote", `-=${motion.durDrop * motion.promoteOverlap}`);
+      nextTimeline.addLabel(
+        "promote",
+        `-=${motion.durDrop * motion.promoteOverlap}`,
+      );
 
       rest.forEach((index, restIndex) => {
         const element = refs[index].current;
@@ -181,13 +199,25 @@ export default function CardSwap({
         );
       });
 
-      const backSlot = makeSlot(total - 1, cardDistance, verticalDistance, total);
-      nextTimeline.addLabel("return", `promote+=${motion.durMove * motion.returnDelay}`);
-      nextTimeline.call(() => {
-        gsap.set(frontElement, { zIndex: backSlot.zIndex });
-        order.current = [...rest, front];
-        activeChange.current?.(order.current[0] ?? 0);
-      }, undefined, "return");
+      const backSlot = makeSlot(
+        total - 1,
+        cardDistance,
+        verticalDistance,
+        total,
+      );
+      nextTimeline.addLabel(
+        "return",
+        `promote+=${motion.durMove * motion.returnDelay}`,
+      );
+      nextTimeline.call(
+        () => {
+          gsap.set(frontElement, { zIndex: backSlot.zIndex });
+          order.current = [...rest, front];
+          activeChange.current?.(order.current[0] ?? 0);
+        },
+        undefined,
+        "return",
+      );
       nextTimeline.to(
         frontElement,
         {
@@ -231,7 +261,15 @@ export default function CardSwap({
       if (interval.current !== null) window.clearInterval(interval.current);
       timeline.current?.kill();
     };
-  }, [cardDistance, delay, easing, pauseOnHover, refs, skewAmount, verticalDistance]);
+  }, [
+    cardDistance,
+    delay,
+    easing,
+    pauseOnHover,
+    refs,
+    skewAmount,
+    verticalDistance,
+  ]);
 
   const rendered = childArr.map((child, index) => {
     if (!isValidElement(child)) return child;

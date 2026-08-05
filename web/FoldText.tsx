@@ -84,7 +84,9 @@ export default function FoldText({
           className="fold-text-segment"
           data-fold-split={split}
           key={key}
-          style={{ "--fold-perspective": `${safePerspective}px` } as CSSProperties}
+          style={
+            { "--fold-perspective": `${safePerspective}px` } as CSSProperties
+          }
         >
           <span
             className="fold-text-piece"

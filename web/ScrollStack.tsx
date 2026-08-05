@@ -13,7 +13,9 @@ export function ScrollStackItem({
   itemClassName = "",
 }: ScrollStackItemProps) {
   return (
-    <div className={["scroll-stack-card", itemClassName].filter(Boolean).join(" ")}>
+    <div
+      className={["scroll-stack-card", itemClassName].filter(Boolean).join(" ")}
+    >
       {children}
     </div>
   );
@@ -129,14 +131,16 @@ export default function ScrollStack({
     if (blurAmount) {
       cardsRef.current.forEach((card, index) => {
         const cardTop = cardOffsetsRef.current[index] ?? getElementOffset(card);
-        const triggerStart = cardTop - stackPositionPx - itemStackDistance * index;
+        const triggerStart =
+          cardTop - stackPositionPx - itemStackDistance * index;
         if (scrollTop >= triggerStart) topCardIndex = index;
       });
     }
 
     cardsRef.current.forEach((card, index) => {
       const cardTop = cardOffsetsRef.current[index] ?? getElementOffset(card);
-      const triggerStart = cardTop - stackPositionPx - itemStackDistance * index;
+      const triggerStart =
+        cardTop - stackPositionPx - itemStackDistance * index;
       const triggerEnd = cardTop - scaleEndPositionPx;
       const scaleProgress = clampProgress(scrollTop, triggerStart, triggerEnd);
       const targetScale = baseScale + index * itemScale;
@@ -169,7 +173,9 @@ export default function ScrollStack({
 
       if (changed) {
         card.style.transform = `translate3d(0, ${nextTransform.translateY}px, 0) scale(${nextTransform.scale}) rotate(${nextTransform.rotation}deg)`;
-        card.style.filter = nextTransform.blur ? `blur(${nextTransform.blur}px)` : "";
+        card.style.filter = nextTransform.blur
+          ? `blur(${nextTransform.blur}px)`
+          : "";
         lastTransformsRef.current.set(index, nextTransform);
       }
 
@@ -220,7 +226,8 @@ export default function ScrollStack({
     };
 
     cards.forEach((card, index) => {
-      if (index < cards.length - 1) card.style.marginBottom = `${itemDistance}px`;
+      if (index < cards.length - 1)
+        card.style.marginBottom = `${itemDistance}px`;
       card.style.willChange = "transform, filter";
       card.style.transformOrigin = "top center";
       card.style.backfaceVisibility = "hidden";

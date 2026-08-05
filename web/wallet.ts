@@ -62,7 +62,7 @@ function addressFromAccount(value: unknown): Address {
 }
 
 async function ensureMainnet(provider: BrowserProvider): Promise<number> {
-  const chainId = String(await provider.request({ method: "eth_chainId" }));
+  let chainId = String(await provider.request({ method: "eth_chainId" }));
   if (chainId.toLowerCase() !== INTUITION_MAINNET_HEX) {
     try {
       await provider.request({
@@ -72,6 +72,12 @@ async function ensureMainnet(provider: BrowserProvider): Promise<number> {
     } catch {
       throw new Error(
         "Switch your wallet to Intuition mainnet (chain 1155) before writing.",
+      );
+    }
+    chainId = String(await provider.request({ method: "eth_chainId" }));
+    if (chainId.toLowerCase() !== INTUITION_MAINNET_HEX) {
+      throw new Error(
+        "Your wallet did not switch to Intuition mainnet (chain 1155).",
       );
     }
   }
