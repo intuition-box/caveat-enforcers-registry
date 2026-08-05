@@ -34,6 +34,7 @@ export type EnforcerRecord = {
   state: "reference" | "live";
   createdAt: string;
   deployment: string;
+  implementation?: string;
   source: string;
   terms: string;
   claims: Claim[];
