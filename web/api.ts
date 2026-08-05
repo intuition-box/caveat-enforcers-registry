@@ -19,6 +19,12 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   if (!response.ok) {
     throw new Error(`Registry service returned HTTP ${response.status}.`);
   }
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      "The registry API is not connected. Start the local registry service or configure VITE_REGISTRY_API_BASE_URL.",
+    );
+  }
   return (await response.json()) as T;
 }
 

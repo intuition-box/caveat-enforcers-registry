@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-02T19:08:36Z",
+  "generatedAt": "2026-08-04T11:58:39Z",
   "title": "Design System: Caveat Registry",
   "extensions": {
     "colorMeta": {
@@ -94,6 +94,21 @@
           "#f3f0e8"
         ]
       },
+      "stage-black": {
+        "role": "neutral",
+        "displayName": "Stage Black",
+        "canonical": "#0b0b0b",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#20201f",
+          "#393937",
+          "#555552",
+          "#767671",
+          "#9c9b94",
+          "#c9c7be",
+          "#f3f0e8"
+        ]
+      },
       "signal-orange": {
         "role": "primary",
         "displayName": "Signal Orange",
@@ -156,17 +171,21 @@
       }
     },
     "typographyMeta": {
+      "hero-offer": {
+        "displayName": "Hero Offer",
+        "purpose": "The concise offer beneath the cinematic Caveat mark."
+      },
       "display": {
-        "displayName": "Monumental Display",
-        "purpose": "Major route headings and the strongest product statements."
+        "displayName": "Route Display",
+        "purpose": "Major route statements and footer declarations."
       },
       "headline": {
-        "displayName": "Record Headline",
-        "purpose": "Registry states and high-priority explanatory sections."
+        "displayName": "Product Headline",
+        "purpose": "Detail sections, route modules, and proof headings."
       },
-      "title": {
-        "displayName": "Section Title",
-        "purpose": "Sequence steps, records, learning modules, and proof headings."
+      "section-title": {
+        "displayName": "Chapter Statement",
+        "purpose": "Large Home product chapter statements."
       },
       "body": {
         "displayName": "Explanatory Body",
@@ -174,112 +193,171 @@
       },
       "interface": {
         "displayName": "Interface Label",
-        "purpose": "Navigation, buttons, and compact actions."
+        "purpose": "Navigation, controls, records, and actions."
+      },
+      "field": {
+        "displayName": "Field Value",
+        "purpose": "Search, select, and submission control values."
       },
       "technical": {
         "displayName": "Technical Proof",
-        "purpose": "IDs, chains, states, schema notation, and protocol references."
+        "purpose": "IDs, chains, states, schema notation, and proof rails."
+      },
+      "technical-action": {
+        "displayName": "Technical Action",
+        "purpose": "Compact product actions on Ink and Paper chapters."
+      },
+      "status": {
+        "displayName": "Status Label",
+        "purpose": "Observed, review, progress, and evidence state labels."
       }
     },
     "shadows": [],
     "motion": [
       {
-        "name": "state-standard",
-        "value": "220ms ease",
-        "purpose": "Color, border, and menu-state transitions."
+        "name": "state-color",
+        "value": "160ms ease",
+        "purpose": "Compact color and border feedback on actions."
       },
       {
-        "name": "spatial-decisive",
-        "value": "280ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Underline travel and compact directional movement."
+        "name": "state-spatial",
+        "value": "220ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Two-pixel action lifts and directional arrow feedback."
       },
       {
-        "name": "copy-arrival",
-        "value": "900ms 220ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "One-time Home hero copy arrival after the mark appears."
+        "name": "hero-draw",
+        "value": "1.5s power2.inOut",
+        "purpose": "One-time drawing of the Caveat mark before its fill resolves."
       },
       {
-        "name": "hero-settle",
-        "value": "1400ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "One-time material settling of the Home hero artwork."
+        "name": "hero-scroll-scrub",
+        "value": "0.6s scrub",
+        "purpose": "Scroll-linked separation, thickness, header handoff, and paper transformation in the cinematic hero."
+      },
+      {
+        "name": "product-reveal-opacity",
+        "value": "720ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Opacity arrival for the translation and registry inspector only."
+      },
+      {
+        "name": "product-reveal-spatial",
+        "value": "820ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The 1.6rem rise for the translation and registry inspector only."
+      },
+      {
+        "name": "product-image-settle",
+        "value": "1100ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Image scale settlement inside either authored product demonstration."
       }
     ],
     "breakpoints": [
       {
+        "name": "stack",
+        "value": "60rem"
+      },
+      {
         "name": "mobile",
-        "value": "760px"
+        "value": "48rem"
+      },
+      {
+        "name": "hero-mobile",
+        "value": "40rem"
       }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Hero Solid Action",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "The strongest route action and the canonical contribution action.",
-      "html": "<button class=\"ds-btn-primary\">Explore the registry <span aria-hidden=\"true\">↗</span></button>",
-      "css": ".ds-btn-primary { display:inline-flex; min-height:3.25rem; align-items:center; justify-content:center; gap:0.7rem; padding:0.88rem 1.2rem; border:1px solid transparent; border-radius:0.85rem; background:#ff6b3d; color:#050505; font-family:'DM Sans',sans-serif; font-size:0.92rem; font-weight:650; cursor:pointer; transition:background 220ms ease,transform 220ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background:#ff825d; transform:translateY(-2px); } .ds-btn-primary:active { transform:translateY(0); } .ds-btn-primary:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; }"
+      "refersTo": "hero-action-solid",
+      "description": "The primary action carried inside the cinematic Caveat opening.",
+      "html": "<button class=\"ds-hero-action\">Explore the registry <span aria-hidden=\"true\">↗</span></button>",
+      "css": ".ds-hero-action { display:inline-flex; height:3.25rem; align-items:center; justify-content:center; gap:0.55rem; padding:0 1.4rem; border:1px solid transparent; border-radius:0.375rem; background:#f3f0e8; color:#050505; font-family:'DM Sans',sans-serif; font-size:0.92rem; font-weight:650; cursor:pointer; transition:transform 220ms cubic-bezier(0.16,1,0.3,1),background-color 160ms ease; } .ds-hero-action:hover { background:#fffefa; transform:translateY(-2px); } .ds-hero-action:active { transform:translateY(0); } .ds-hero-action:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; }"
     },
     {
-      "name": "Quiet Button",
+      "name": "Product Solid Action",
       "kind": "button",
-      "refersTo": "button-quiet",
-      "description": "A secondary action that remains legible over the dark hero field.",
-      "html": "<button class=\"ds-btn-quiet\">Understand caveats</button>",
-      "css": ".ds-btn-quiet { display:inline-flex; min-height:3.25rem; align-items:center; justify-content:center; padding:0.88rem 1.2rem; border:1px solid rgba(243,240,232,0.34); border-radius:0.85rem; background:rgba(5,5,5,0.58); color:#f3f0e8; font-family:'DM Sans',sans-serif; font-size:0.92rem; font-weight:650; cursor:pointer; transition:color 220ms ease,background 220ms ease,border-color 220ms ease,transform 220ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-quiet:hover { border-color:#f3f0e8; background:#f3f0e8; color:#050505; transform:translateY(-2px); } .ds-btn-quiet:active { transform:translateY(0); } .ds-btn-quiet:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; }"
+      "refersTo": "product-action-on-ink",
+      "description": "A compact high-contrast action on an Ink product chapter.",
+      "html": "<button class=\"ds-product-action\">List an enforcer <span aria-hidden=\"true\">↗</span></button>",
+      "css": ".ds-product-action { display:inline-flex; height:3.25rem; align-items:center; justify-content:center; gap:0.55rem; padding:0 1.4rem; border:1px solid transparent; border-radius:0.2rem; background:#f3f0e8; color:#050505; font-family:'Space Mono',monospace; font-size:0.72rem; font-weight:500; letter-spacing:0.035em; cursor:pointer; transition:transform 220ms cubic-bezier(0.16,1,0.3,1); } .ds-product-action:hover { transform:translateY(-2px); } .ds-product-action:active { transform:translateY(0); } .ds-product-action:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; }"
     },
     {
-      "name": "Dark Button",
+      "name": "Product Ghost Action",
       "kind": "button",
-      "refersTo": "button-dark",
-      "description": "A strong non-contribution action placed on warm paper.",
-      "html": "<button class=\"ds-btn-dark\">Try again</button>",
-      "css": ".ds-btn-dark { display:inline-flex; min-height:3.25rem; align-items:center; justify-content:center; padding:0.88rem 1.2rem; border:1px solid transparent; border-radius:0.85rem; background:#050505; color:#f3f0e8; font-family:'DM Sans',sans-serif; font-size:0.92rem; font-weight:650; cursor:pointer; transition:transform 220ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-dark:hover { transform:translateY(-2px); } .ds-btn-dark:active { transform:translateY(0); } .ds-btn-dark:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; }"
+      "description": "A secondary action that stays quiet on a dark product chapter and inverts on hover.",
+      "html": "<button class=\"ds-product-ghost\">Integration docs</button>",
+      "css": ".ds-product-ghost { display:inline-flex; height:3.25rem; align-items:center; justify-content:center; padding:0 1.4rem; border:1px solid rgba(243,240,232,0.42); border-radius:0.2rem; background:transparent; color:#f3f0e8; font-family:'Space Mono',monospace; font-size:0.72rem; font-weight:500; letter-spacing:0.035em; cursor:pointer; transition:transform 220ms cubic-bezier(0.16,1,0.3,1),background-color 160ms ease,color 160ms ease,border-color 160ms ease; } .ds-product-ghost:hover { border-color:#f3f0e8; background:#f3f0e8; color:#050505; transform:translateY(-2px); } .ds-product-ghost:active { transform:translateY(0); } .ds-product-ghost:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; }"
     },
     {
-      "name": "Navigation Link",
+      "name": "Route Navigation",
       "kind": "nav",
-      "description": "A quiet route label that gains full contrast and a directional underline.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Example navigation\"><a class=\"ds-nav-link ds-nav-link-active\" href=\"#\">Registry</a><a class=\"ds-nav-link\" href=\"#\">Submit</a><a class=\"ds-nav-link\" href=\"#\">Learn</a></nav>",
+      "description": "Muted route labels that gain full contrast and one directional underline.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Example navigation\"><a class=\"ds-nav-link ds-nav-link-active\" href=\"#\">Registry</a><a class=\"ds-nav-link\" href=\"#\">Submit</a><a class=\"ds-nav-link\" href=\"#\">Learn</a><a class=\"ds-nav-link\" href=\"#\">Developers</a></nav>",
       "css": ".ds-nav { display:flex; align-items:center; gap:2rem; padding:0 1rem; background:#050505; } .ds-nav-link { position:relative; padding:0.75rem 0; color:#a7a49d; font-family:'DM Sans',sans-serif; font-size:0.9rem; text-decoration:none; transition:color 220ms ease; } .ds-nav-link::after { position:absolute; right:0; bottom:0.38rem; left:0; height:1px; background:#f3f0e8; content:''; transform:scaleX(0); transform-origin:right; transition:transform 280ms cubic-bezier(0.16,1,0.3,1); } .ds-nav-link:hover,.ds-nav-link-active { color:#f3f0e8; } .ds-nav-link:hover::after,.ds-nav-link-active::after { transform:scaleX(1); transform-origin:left; } .ds-nav-link:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; }"
+    },
+    {
+      "name": "Registry Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "A square field with one bottom rule and explicit Signal Orange focus.",
+      "html": "<label class=\"ds-field\"><span>Search enforcers</span><input type=\"search\" placeholder=\"Name, purpose, source, or address\"></label>",
+      "css": ".ds-field { display:block; color:#050505; font-family:'DM Sans',sans-serif; } .ds-field span { display:block; margin-bottom:0.65rem; font-family:'Space Mono',monospace; font-size:0.66rem; letter-spacing:0.16em; text-transform:uppercase; opacity:0.62; } .ds-field input { width:100%; min-height:3.25rem; padding:0.7rem 0; border:0; border-bottom:1px solid rgba(5,5,5,0.18); border-radius:0; background:transparent; color:#050505; font:inherit; font-size:1rem; } .ds-field input:focus-visible { outline:0; border-bottom-color:#ff6b3d; } .ds-field input:disabled { opacity:0.48; }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill",
+      "description": "A descriptive evidence state with a square silhouette and no trust-score styling.",
+      "html": "<span class=\"ds-status-pill\"><i aria-hidden=\"true\"></i>Observed</span>",
+      "css": ".ds-status-pill { display:inline-flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; border:1px solid rgba(5,5,5,0.32); border-radius:0.2rem; color:#050505; font-family:'Space Mono',monospace; font-size:0.64rem; letter-spacing:0.11em; text-transform:uppercase; white-space:nowrap; opacity:0.68; } .ds-status-pill i { width:0.5rem; height:0.5rem; border:1px solid #a7a49d; border-radius:50%; background:rgba(167,164,157,0.45); }"
     },
     {
       "name": "Registry Row",
       "kind": "custom",
-      "description": "A flat, ruled deployment record that keeps identity and evidence metadata separate.",
-      "html": "<article class=\"ds-registry-row\"><div><h2>Allowed Targets Enforcer</h2><p>Restricts delegated calls to a declared target set.</p></div><dl><div><dt>Chain</dt><dd>Ethereum</dd></div><div><dt>Signal</dt><dd>Support shown separately</dd></div></dl></article>",
-      "css": ".ds-registry-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(18rem,0.55fr); gap:2rem; padding:2rem 0; border-bottom:1px solid rgba(5,5,5,0.18); background:#f3f0e8; color:#050505; font-family:'DM Sans',sans-serif; } .ds-registry-row h2 { margin:0; font-family:'Bricolage Grotesque',sans-serif; font-size:1.5rem; letter-spacing:-0.03em; } .ds-registry-row p,.ds-registry-row dl { margin:0; } .ds-registry-row p { margin-top:0.5rem; color:#67645f; } .ds-registry-row dl { display:grid; grid-template-columns:1fr 1fr; gap:1rem; } .ds-registry-row dt { margin-bottom:0.35rem; color:#77746e; font-family:'Space Mono',monospace; font-size:0.62rem; text-transform:uppercase; } .ds-registry-row dd { margin:0; } @media (max-width:760px) { .ds-registry-row { grid-template-columns:1fr; } .ds-registry-row dl { max-width:28rem; } }"
+      "description": "One item in a continuous ruled registry sequence with evidence kept in distinct columns.",
+      "html": "<a class=\"ds-registry-row\" href=\"#\"><span class=\"ds-registry-name\"><strong>AllowedCalldataEnforcer</strong><em>Pins the calldata a delegation may pass.</em></span><span>Calldata shape</span><span>Intuition 1155</span><span class=\"ds-registry-state\">Observed</span></a>",
+      "css": ".ds-registry-row { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,0.7fr) minmax(0,0.7fr) auto; min-height:6.25rem; align-items:center; gap:2rem; padding:1.25rem 0; border-bottom:1px solid rgba(5,5,5,0.18); background:#f3f0e8; color:#050505; font-family:'DM Sans',sans-serif; text-decoration:none; } .ds-registry-name strong { display:block; font-family:'Bricolage Grotesque',sans-serif; font-size:1.2rem; font-weight:570; } .ds-registry-name em { display:block; margin-top:0.3rem; font-size:0.94rem; font-style:normal; opacity:0.62; } .ds-registry-state { padding:0.5rem 1rem; border:1px solid rgba(5,5,5,0.22); border-radius:0.2rem; font-family:'Space Mono',monospace; font-size:0.64rem; letter-spacing:0.11em; text-transform:uppercase; } .ds-registry-row:hover .ds-registry-name strong { text-decoration:underline; text-underline-offset:4px; } .ds-registry-row:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; } @media (max-width:760px) { .ds-registry-row { grid-template-columns:minmax(0,1fr); gap:0.55rem; } .ds-registry-state { justify-self:start; } }"
     },
     {
-      "name": "Technical Proof Rail",
+      "name": "Translation Stage",
       "kind": "custom",
-      "description": "A compact protocol annotation joined by a flexible rule.",
-      "html": "<div class=\"ds-proof-rail\"><span>Built on Intuition</span><span class=\"ds-proof-rule\"></span><span>ERC-7710</span></div>",
-      "css": ".ds-proof-rail { display:flex; align-items:center; gap:0.9rem; color:#85837e; font-family:'Space Mono',monospace; font-size:0.66rem; letter-spacing:0.08em; text-transform:uppercase; } .ds-proof-rule { height:1px; min-width:5rem; flex:1; background:rgba(243,240,232,0.16); }"
+      "description": "A large square product stage that resolves an opaque address into readable boundary evidence.",
+      "html": "<section class=\"ds-translation\"><header><span>Intuition 1155</span><span>Illustrative resolution</span></header><div class=\"ds-translation-body\"><article><small>Unresolved</small><p class=\"ds-address\">0x0465…3B91</p><p>An address and encoded terms cannot explain what a delegate may do.</p></article><b aria-hidden=\"true\">→</b><article><small>Resolved record</small><h3>ERC-20 transfer limit</h3><p>Move one approved token, within the encoded amount ceiling.</p></article></div></section>",
+      "css": ".ds-translation { overflow:hidden; border:1px solid rgba(243,240,232,0.2); background:#050505; color:#f3f0e8; } .ds-translation header { display:flex; min-height:3.25rem; align-items:center; justify-content:space-between; gap:1rem; padding:0.75rem 1.25rem; border-bottom:1px solid rgba(243,240,232,0.16); color:rgba(243,240,232,0.62); font-family:'Space Mono',monospace; font-size:0.65rem; letter-spacing:0.08em; text-transform:uppercase; } .ds-translation-body { display:grid; grid-template-columns:minmax(0,0.8fr) 5rem minmax(0,1.2fr); min-height:26rem; } .ds-translation-body article { display:flex; flex-direction:column; justify-content:center; padding:3rem; } .ds-translation-body b { display:grid; place-items:center; border-right:1px solid rgba(243,240,232,0.16); border-left:1px solid rgba(243,240,232,0.16); font-weight:400; } .ds-translation small { font-family:'Space Mono',monospace; font-size:0.66rem; letter-spacing:0.16em; text-transform:uppercase; opacity:0.62; } .ds-address { font-family:'Space Mono',monospace; font-size:1.05rem; } .ds-translation h3 { max-width:10ch; margin:1rem 0; font-family:'Bricolage Grotesque',sans-serif; font-size:3rem; font-weight:580; line-height:0.94; letter-spacing:-0.04em; } .ds-translation article p:last-child { max-width:34ch; line-height:1.55; opacity:0.74; } @media (max-width:760px) { .ds-translation header { align-items:flex-start; flex-direction:column; } .ds-translation-body { grid-template-columns:1fr; } .ds-translation-body b { min-height:4rem; border:0; border-top:1px solid rgba(243,240,232,0.16); border-bottom:1px solid rgba(243,240,232,0.16); } }"
     },
     {
-      "name": "Developer Proof Block",
+      "name": "Record Inspector",
       "kind": "custom",
-      "description": "A dense, non-glowing code field for canonical reader examples.",
-      "html": "<pre class=\"ds-code-proof\"><code>const registry = await loadRegistry({\n  endpoint,\n  membershipPredicateId,\n  deploymentClassId,\n});</code></pre>",
-      "css": ".ds-code-proof { min-height:14rem; margin:0; padding:2rem; overflow:auto; border:1px solid rgba(243,240,232,0.16); border-radius:1rem; background:#0d0d0d; color:#dedbd4; font-family:'Space Mono',monospace; font-size:0.82rem; line-height:1.8; } .ds-code-proof:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; }"
+      "description": "The Paper detail pane paired with the Home reference list.",
+      "html": "<aside class=\"ds-inspector\"><small>Resolved reference</small><h3>AllowedTargets</h3><p>Restricts which contract addresses a delegation can call.</p><dl><div><dt>Constraint</dt><dd>Target address</dd></div><div><dt>Terms read as</dt><dd>One or more contract addresses</dd></div><div><dt>Chain evidence</dt><dd>Code observed on Intuition 1155</dd></div></dl><p class=\"ds-inspector-caveat\">Observed code is deployment evidence, not a safety verdict.</p></aside>",
+      "css": ".ds-inspector { min-height:38rem; padding:3rem; border-left:1px solid rgba(243,240,232,0.16); background:#f3f0e8; color:#050505; font-family:'DM Sans',sans-serif; } .ds-inspector small { font-family:'Space Mono',monospace; font-size:0.66rem; letter-spacing:0.16em; text-transform:uppercase; opacity:0.62; } .ds-inspector h3 { margin:1.25rem 0 0; font-family:'Bricolage Grotesque',sans-serif; font-size:2.4rem; font-weight:640; line-height:1; letter-spacing:-0.03em; } .ds-inspector > p:not(.ds-inspector-caveat) { max-width:38ch; margin:1rem 0 1.75rem; line-height:1.55; opacity:0.7; } .ds-inspector dl { margin:0; } .ds-inspector dl div { display:grid; grid-template-columns:8rem minmax(0,1fr); gap:1rem; padding:0.85rem 0; border-top:1px solid rgba(5,5,5,0.18); } .ds-inspector dt { font-family:'Space Mono',monospace; font-size:0.62rem; letter-spacing:0.09em; text-transform:uppercase; opacity:0.5; } .ds-inspector dd { margin:0; font-size:0.9rem; text-align:right; } .ds-inspector-caveat { margin:1.3rem 0 0; font-family:'Space Mono',monospace; font-size:0.62rem; line-height:1.55; letter-spacing:0.06em; opacity:0.5; }"
+    },
+    {
+      "name": "Developer Code Shell",
+      "kind": "custom",
+      "description": "A deep, square proof stage with a copy action and no glow.",
+      "html": "<section class=\"ds-code-shell\"><header><span>registry-deployments.graphql</span><button type=\"button\">Copy query</button></header><pre><code>query RegistryDeployments {\n  triples {\n    subject_id\n    object_id\n  }\n}</code></pre></section>",
+      "css": ".ds-code-shell { min-height:28rem; overflow:hidden; border:1px solid rgba(243,240,232,0.2); background:#050505; color:#f3f0e8; } .ds-code-shell header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.8rem 1rem; border-bottom:1px solid rgba(243,240,232,0.16); font-family:'Space Mono',monospace; font-size:0.65rem; letter-spacing:0.07em; } .ds-code-shell button { min-height:2.25rem; padding:0 0.8rem; border:1px solid rgba(243,240,232,0.16); border-radius:0.375rem; background:transparent; color:inherit; font:inherit; cursor:pointer; } .ds-code-shell button:hover,.ds-code-shell button:focus-visible { border-color:#f3f0e8; } .ds-code-shell button:focus-visible { outline:2px solid #ff6b3d; outline-offset:4px; } .ds-code-shell pre { margin:0; padding:2rem; overflow:auto; font-family:'Space Mono',monospace; font-size:0.78rem; line-height:1.65; }"
     }
   ],
   "narrative": {
     "northStar": "Registry Within",
-    "overview": "Registry Within treats the Caveat mark as an instrument of disclosure. The visual world is quiet, physical, and exact: pure black surrounds a monumental matte-white mark, while sparse record particles become visible inside its diagonal channel. A single orange record represents contribution, the act that keeps the registry open.\n\nThe broader product alternates between near-black and warm paper surfaces. Persuasive moments can be immersive, but registry, submission, learning, developer, and future deployment detail surfaces remain legible and operational. The system communicates public evidence with restraint. It must never make registry membership, stake, support, or an audit claim feel like a safety badge.",
+    "overview": "Registry Within treats the Caveat mark as an instrument of disclosure. The visual world is quiet, physical, and exact: pure black surrounds a monumental matte-white mark, while the mark opens to expose the governed space between its planes. The opening becomes proof, action, and eventually the paper field that carries the product.\n\nThe shipped website extends that world through large editorial product chapters. Near-black and archival paper alternate across seams cut at the mark's fold angle. Full-width demonstrations resolve abstract protocol facts into interfaces people can inspect, while continuous ruled sequences keep evidence connected. Registry, detail, submission, learning, and developer routes remain operational and explicit. Registry membership, stake, support, opposition, observed code, and audit claims never become a safety badge.",
     "keyCharacteristics": [
-      "Monumental display type and generous negative space",
-      "Warm paper against near-black, with no intermediate decorative atmosphere",
-      "Thin rules and compact monospaced annotations as technical proof",
-      "Signal Orange reserved for contribution and the strongest action",
-      "A flat, editorial product language that separates facts instead of decorating them",
-      "One shared identity across Home, Registry, Submit, Learn, Developers, and deployment detail"
+      "Monumental Bricolage statements inside a 75rem editorial frame",
+      "Archival paper against near-black, with one Signal Orange",
+      "Large square product stages instead of small card collections",
+      "Continuous ruled sequences for records, evidence, steps, and learning paths",
+      "Space Mono reserved for technical proof, states, and labels",
+      "Caveat-specific imagery tied to each route's job",
+      "One cinematic hero, two authored product reveals, and otherwise still product surfaces",
+      "One shared identity across Home, Registry, Detail, Submit, Learn, and Developers"
     ],
     "rules": [
       {
         "name": "The One Signal Rule",
-        "body": "Signal Orange belongs to contribution, primary action, focus, and meaningful selection. Do not use it as decoration or as a safety indicator.",
+        "body": "Signal Orange belongs to contribution, active progress, focus, and meaningful selection. Do not use it as decoration or as a safety indicator.",
         "section": "colors"
       },
       {
@@ -289,7 +367,7 @@
       },
       {
         "name": "The Black First Rule",
-        "body": "The Home first viewport is pure black so the matte-white Caveat mark reads as the singular object. Warm paper begins only after that immersive opening.",
+        "body": "The Home first viewport is pure black so the Caveat mark reads as the singular object. Paper arrives through the mark's own transformation.",
         "section": "colors"
       },
       {
@@ -308,41 +386,54 @@
         "section": "layout"
       },
       {
+        "name": "The Continuous Sequence Rule",
+        "body": "Related records, facts, steps, and learning points share one ruled sequence. Do not break them into isolated cards.",
+        "section": "layout"
+      },
+      {
         "name": "The Detail Continuity Rule",
-        "body": "A future deployment detail page must reuse the established heading, proof-column, rule, metadata, and action grammar. It must not introduce a separate explorer or dashboard identity.",
+        "body": "Deployment detail reuses the route band, proof column, status pill, specification row, and evidence grammar. It must not introduce a separate explorer identity.",
         "section": "layout"
       },
       {
         "name": "The Flat Evidence Rule",
-        "body": "Records rest on the page plane. Use rules and tonal changes to separate them, never ambient card shadows.",
+        "body": "Records rest on the page plane. Use rules, inset stages, and tonal changes to separate them, never ambient card shadows.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Two Demonstrations Rule",
+        "body": "Outside the cinematic hero, only the translation stage and registry inspector receive authored entry motion. New sections do not inherit reveal animation by default.",
         "section": "elevation"
       },
       {
         "name": "The No Glass Rule",
-        "body": "Do not add translucent decorative panels, glowing borders, or layered glass cards. The only backdrop blur belongs to the global header when readability requires it.",
+        "body": "Do not add translucent decorative panels, glowing borders, or layered glass cards. Header blur is permitted only when the header needs contrast over the cinematic field.",
         "section": "elevation"
       },
       {
         "name": "The One Symbol Rule",
-        "body": "Use the Caveat mark as an instrument of boundary and disclosure. Do not surround it with unrelated shields, locks, chains, nodes, or crypto iconography.",
+        "body": "Use the Caveat mark and its fold as instruments of boundary and disclosure. Do not surround them with unrelated shields, locks, chains, coins, or generic crypto networks.",
         "section": "shapes"
       }
     ],
     "dos": [
-      "Do reserve Signal Orange for contribution, the strongest action, focus, and meaningful selection.",
+      "Do align every major route and Home chapter to the 75rem editorial frame.",
+      "Do use large product stages and continuous ruled sequences to explain connected evidence.",
+      "Do reserve Signal Orange for contribution, active progress, focus, and meaningful selection.",
       "Do state that registry membership is a listing fact, not a safety verdict, wherever that distinction affects a decision.",
-      "Do use large Bricolage statements beside concise DM Sans explanation and Space Mono proof.",
+      "Do use Bricolage for meaning, DM Sans for action and explanation, and Space Mono for proof.",
       "Do separate source, release, terms schema, chain availability, support, opposition, and evidence claims so each remains inspectable.",
-      "Do preserve the same visual grammar across Home, Registry, Submit, Learn, Developers, and deployment detail.",
-      "Do keep desktop and mobile compositions spacious, ordered, and explicit."
+      "Do use Caveat-specific imagery with responsive desktop and mobile crops.",
+      "Do keep ordinary route surfaces still and honor reduced-motion preferences."
     ],
     "donts": [
       "Don't use gradients, decorative glass, ambient shadows, or glow as atmosphere.",
       "Don't use generic crypto networks, orbiting nodes, shields, locks, coins, or chain-link decoration.",
-      "Don't turn membership, stake, support, an audit claim, or Signal Orange into a safety badge.",
-      "Don't place every section inside a rounded card or detach records from the page with shadows.",
+      "Don't turn membership, stake, support, opposition, observed code, an audit claim, or Signal Orange into a safety badge.",
+      "Don't split one ruled sequence into a grid of detached rounded cards.",
+      "Don't animate ordinary sections beyond the two documented product demonstrations.",
       "Don't use Space Mono as a theme. It is reserved for technical proof.",
-      "Don't duplicate the monumental Caveat hero treatment on ordinary product pages."
+      "Don't duplicate the cinematic Caveat hero on ordinary product routes."
     ]
   }
 }

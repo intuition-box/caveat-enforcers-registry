@@ -2,20 +2,22 @@
  * The opening of the site.
  *
  * The mark strokes itself in against pure black, fills, and the offer settles
- * beneath it. On scroll the section pins and the mark comes apart: its two
- * planes slide along the axis perpendicular to their shared fold, exposing the
+ * beneath it. On scroll the viewport-sized stage stays visually present while
+ * the hero's own document boundary moves through the viewport: its two planes
+ * slide along the axis perpendicular to their shared fold, exposing the
  * thickness that was always implied and proving the flat sheet was a solid.
  * Rules hold tension across the gap — a caveat is the rule between two parties,
- * not the absence of one. The upper plane then lifts into the header and the
- * lower plane becomes the paper of the next section, its leading edge cut at
- * the mark's own fold angle.
+ * not the absence of one. Both planes then reunite in the header mark and a
+ * straight paper field hands directly to the next section without a spacer.
  */
 import { useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { MARK_H, MARK_PATHS, MARK_W } from "./CaveatMark";
 import { setHeroProgress } from "./heroProgress";
+import IntuitionLogo from "./IntuitionLogo";
+import SpecularButton from "./SpecularButton";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -46,12 +48,6 @@ const EDGE_LOWER = [
 
 const TETHERS = 7;
 
-/** Midpoint of the lower plane's upper edge — the pivot the paper opens from. */
-const ANCHOR = {
-  x: (EDGE_LOWER[0].x + EDGE_LOWER[1].x) / 2,
-  y: (EDGE_LOWER[0].y + EDGE_LOWER[1].y) / 2,
-};
-
 type Placement = { cx: number; cy: number; s: number };
 
 const seg = (p: number, a: number, b: number) =>
@@ -67,6 +63,7 @@ function prefersReducedMotion() {
 }
 
 export default function CinematicHero() {
+  const navigate = useNavigate();
   const rootRef = useRef<HTMLElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -74,6 +71,7 @@ export default function CinematicHero() {
   const lowerRef = useRef<SVGGElement | null>(null);
   const upperFillRef = useRef<SVGPathElement | null>(null);
   const lowerFillRef = useRef<SVGPathElement | null>(null);
+  const exitRef = useRef<HTMLDivElement | null>(null);
   const strokeRef = useRef<SVGGElement | null>(null);
   const gapRef = useRef<SVGGElement | null>(null);
   const introRef = useRef<HTMLDivElement | null>(null);
@@ -86,6 +84,7 @@ export default function CinematicHero() {
     const canvas = canvasRef.current;
     const upper = upperRef.current;
     const lower = lowerRef.current;
+    const exit = exitRef.current;
     const stroke = strokeRef.current;
     const gap = gapRef.current;
     const intro = introRef.current;
@@ -97,6 +96,7 @@ export default function CinematicHero() {
       !canvas ||
       !upper ||
       !lower ||
+      !exit ||
       !stroke ||
       !gap ||
       !intro ||
@@ -326,35 +326,23 @@ export default function CinematicHero() {
       actions.classList.toggle("is-live", strength > 0.85);
     };
 
-    /**
-     * The lower plane does not hand off to a wipe — it *is* the wipe. Anchored
-     * on its own upper edge and scaled up, that edge stays at the fold angle
-     * and sweeps the frame, so the paper you land on is the plane itself.
-     */
-    const flood = (at: Placement, t: number): Placement => {
-      if (t <= 0.001) return at;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const held = project(ANCHOR, at);
-      // High enough that the edge clears the top-left corner of the frame.
-      const targetY = -(Math.tan(FOLD) * held.x) - 80;
-      const bigS = mix(at.s, Math.max(vw, vh) / 30, t);
-      const y = mix(held.y, targetY, t);
-      return {
-        s: bigS,
-        cx: held.x - (ANCHOR.x - MARK_W / 2) * bigS,
-        cy: y - (ANCHOR.y - MARK_H / 2) * bigS,
-      };
+    const setStagePresence = (progress: number) => {
+      // The stage is a visual layer, not layout. It gently hands the page back
+      // to the following section as that section reaches the viewport.
+      const release = smooth(seg(progress, 0.9, 1));
+      stage.style.opacity = String(1 - release);
+      stage.style.pointerEvents = release > 0.98 ? "none" : "auto";
     };
 
     const frame = (progress: number) => {
       const p = progress;
       setHeroProgress(p);
+      setStagePresence(p);
 
       const grow = smooth(seg(p, 0, 0.62));
       const split = smooth(seg(p, 0.15, 0.46));
-      const flight = smooth(seg(p, 0.66, 0.85));
-      const floodT = smooth(seg(p, 0.855, 0.97));
+      const reunite = smooth(seg(p, 0.63, 0.85));
+      const exitT = smooth(seg(p, 0.86, 0.98));
 
       const s = mix(scaleFrom, scaleTo, grow);
       const cy = mix(centerYFrom, centerYTo, grow);
@@ -372,11 +360,13 @@ export default function CinematicHero() {
         s,
       };
 
-      // The upper plane leaves for the header.
-      if (flight > 0) {
-        upperAt.cx = mix(upperAt.cx, slot.cx, flight);
-        upperAt.cy = mix(upperAt.cy, slot.cy, flight);
-        upperAt.s = mix(upperAt.s, slot.s, flight);
+      // Both planes shrink into the measured header slot at the same time.
+      if (reunite > 0) {
+        for (const at of [upperAt, lowerAt]) {
+          at.cx = mix(at.cx, slot.cx, reunite);
+          at.cy = mix(at.cy, slot.cy, reunite);
+          at.s = mix(at.s, slot.s, reunite);
+        }
       }
 
       // Thickness swells with the split and collapses as the planes leave.
@@ -390,14 +380,13 @@ export default function CinematicHero() {
         seg(p, 0.26, 0.42) * (1 - smooth(seg(p, 0.54, 0.64))),
       );
 
-      lowerAt = flood(lowerAt, floodT);
-
       place(upper, upperAt);
       place(lower, lowerAt);
       place(stroke, held);
 
-      // The plane lands on black, then the header takes the mark from it.
-      gsap.set(upper, { opacity: 1 - seg(p, 0.85, 0.862) });
+      // The header takes the reunited mark, then straight paper replaces black.
+      gsap.set([upper, lower], { opacity: 1 - seg(p, 0.85, 0.872) });
+      exit.style.transform = `translate3d(0, ${((1 - exitT) * 100).toFixed(2)}%, 0)`;
 
       // While the intro is still running it owns the offer's opacity.
       if (introDone) {
@@ -472,15 +461,15 @@ export default function CinematicHero() {
 
     frame(0);
 
-    // ---- pinned scrub ---------------------------------------------------
+    // ---- natural-flow scrub ---------------------------------------------
     const state = { p: 0 };
 
     const trigger = ScrollTrigger.create({
       trigger: root,
       start: "top top",
-      end: "+=260%",
-      pin: stage,
-      pinSpacing: true,
+      // The root is one viewport tall, so the hero animates over its natural
+      // document height. The fixed visual stage does not reserve extra space.
+      end: "bottom top",
       scrub: reduced ? false : 0.6,
       onUpdate: (self) => {
         state.p = self.progress;
@@ -496,7 +485,7 @@ export default function CinematicHero() {
       },
       onLeave: () => {
         state.p = 1;
-        setHeroProgress(1);
+        frame(1);
       },
       onLeaveBack: () => {
         state.p = 0;
@@ -524,7 +513,7 @@ export default function CinematicHero() {
     return () => {
       window.removeEventListener("resize", onResize);
       trigger.kill();
-      gsap.killTweensOf([...fills, stroke, intro, foot, upper]);
+      gsap.killTweensOf([...fills, stroke, intro, foot, upper, lower]);
     };
   }, []);
 
@@ -585,8 +574,10 @@ export default function CinematicHero() {
           </g>
         </svg>
 
+        <div className="cine__exit" ref={exitRef} aria-hidden="true" />
+
         <div className="cine__intro" ref={introRef}>
-          <h1 id="cine-title">Open registry for delegation rules.</h1>
+          <h1 id="cine-title">Open registry for delegation rules</h1>
           <p>
             Discover, inspect, and contribute ERC-7710 caveat enforcers through
             one shared source of truth.
@@ -594,9 +585,28 @@ export default function CinematicHero() {
         </div>
 
         <div className="cine__actions" ref={actionsRef}>
-          <Link className="cine__cta cine__cta--solid" to="/registry">
-            Explore the registry <span aria-hidden="true" className="arrow" />
-          </Link>
+          <SpecularButton
+            className="cine__specular-button"
+            size="lg"
+            radius={18}
+            tint="#ffffff"
+            tintOpacity={0}
+            blur={0}
+            textColor="#f5f5f5"
+            lineColor="#ffffff"
+            baseColor="#525252"
+            intensity={1}
+            shineSize={10}
+            shineFade={40}
+            thickness={1}
+            speed={0.35}
+            followMouse
+            proximity={250}
+            autoAnimate={false}
+            onClick={() => navigate("/registry")}
+          >
+            Explore the registry
+          </SpecularButton>
           <Link className="cine__cta cine__cta--ghost" to="/learn">
             Understand caveats
           </Link>
@@ -604,7 +614,9 @@ export default function CinematicHero() {
 
         <div className="cine__foot" ref={footRef}>
           <div className="cine__meta">
-            <span>Built on Intuition</span>
+            <span className="intuition-lockup">
+              Built on <IntuitionLogo size={15} /> Intuition
+            </span>
             <i />
             <span>ERC-7710</span>
             <i />

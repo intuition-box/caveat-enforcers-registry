@@ -1,10 +1,9 @@
 /**
  * Registry, Detail, Submit, Learn and Developers.
  *
- * Built to the Codex page designs: an orange-dotted mono eyebrow above every
- * statement, pill actions, hairline record rows, and dark and paper bands
- * alternating down the page. Art comes from the approved asset set and is
- * placed on the surface it was rendered for.
+ * Built as operational product surfaces: hairline record rows, restrained
+ * controls, and dark and paper bands alternating down the page. Art comes
+ * from the approved asset set and is placed on the surface it was rendered for.
  *
  * The reference collection is labelled as reference data. Live records replace
  * it once the reviewed ontology IDs are configured — the page never presents
@@ -32,17 +31,10 @@ import {
   type SubmissionInput,
 } from "../src/validation";
 import type { CurationInput } from "../src/curation";
+import { CaveatMarkSvg } from "./CaveatMark";
+import IntuitionLogo from "./IntuitionLogo";
 
 /* ---------------------------------------------------------------- primitives */
-
-export function Eyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="eyebrow">
-      <i aria-hidden="true" />
-      {children}
-    </p>
-  );
-}
 
 type PillTone = "plain" | "observed" | "review";
 
@@ -74,25 +66,33 @@ function Spec({ rows }: { rows: Array<[string, string]> }) {
   );
 }
 
-function Art({
-  name,
-  alt,
-  ratio,
+function RouteSignal({
+  label,
+  value,
+  variant = "ink",
 }: {
-  name: string;
-  alt: string;
-  ratio: string;
+  label: string;
+  value: string;
+  variant?: "ink" | "paper" | "signal";
 }) {
   return (
-    <figure className="art" style={{ aspectRatio: ratio }}>
-      <picture>
-        <source
-          media="(max-width: 48rem)"
-          srcSet={`/art/${name.replace("desktop", "mobile")}`}
-        />
-        <img src={`/art/${name}`} alt={alt} loading="lazy" decoding="async" />
-      </picture>
-    </figure>
+    <div className={`route-signal route-signal--${variant}`} aria-hidden="true">
+      <div className="route-signal__top">
+        <span>{label}</span>
+        <span>Inspectable surface</span>
+      </div>
+      <div className="route-signal__field">
+        <span className="route-signal__mark">
+          <CaveatMarkSvg />
+        </span>
+        <strong>{value}</strong>
+        <span className="route-signal__line" />
+      </div>
+      <div className="route-signal__bottom">
+        <span>Actor / Action / Boundary</span>
+        <span>01—05</span>
+      </div>
+    </div>
   );
 }
 
@@ -104,7 +104,6 @@ type Reference = {
   name: string;
   purpose: string;
   domain: string;
-  glyph: string;
   chain: string;
   state: "observed" | "review";
   address: string;
@@ -236,14 +235,6 @@ function slugify(name: string): string {
     .toLowerCase();
 }
 
-function glyphForDomain(domain: string): string {
-  if (domain.includes("address")) return "target-address";
-  if (domain.includes("method") || domain.includes("calldata"))
-    return "callable-method";
-  if (domain.includes("time") || domain.includes("block")) return "time-window";
-  return "amount-limit";
-}
-
 export const REFERENCE: Reference[] = referenceDocument.enforcers.map(
   (entry) => {
     const [domain, purpose] = PURPOSES[entry.name] ?? [
@@ -256,7 +247,6 @@ export const REFERENCE: Reference[] = referenceDocument.enforcers.map(
       name: entry.name,
       purpose,
       domain,
-      glyph: glyphForDomain(domain.toLowerCase()),
       chain: "Intuition 1155",
       state: entry.codeStatus === "observed" ? "observed" : "review",
       address: entry.address,
@@ -275,7 +265,6 @@ function liveRow(
     name: entry.label,
     purpose: entry.description,
     domain: entry.domain,
-    glyph: glyphForDomain(entry.domain.toLowerCase()),
     chain: entry.chain,
     state: "observed",
     address: entry.deployment,
@@ -365,21 +354,41 @@ export function RegistryPage() {
 
   return (
     <main>
-      <section className="band band--ink band--art">
-        <div className="band__art" aria-hidden="true">
-          <img src="/art/registry-header-desktop-2000x600.webp" alt="" />
-        </div>
-        <div className="band__inner">
-          <Eyebrow>Community source of truth</Eyebrow>
+      <section className="route-hero route-hero--ink route-hero--registry scroll-reveal">
+        <div className="route-hero__copy">
+          <span className="route-kicker intuition-lockup">
+            <IntuitionLogo size={17} /> Intuition 1155 / Registry
+          </span>
           <h1 className="display">Find the boundary you need.</h1>
           <p className="lede">
             Search caveat enforcers by purpose, constraint, chain, or deployment
             evidence.
           </p>
+          <div className="route-hero__meta">
+            <span>32 reference types</span>
+            <span>Live membership when configured</span>
+          </div>
         </div>
+        <RouteSignal
+          label="Resolve / Registry"
+          value="Search → inspect → decide"
+          variant="signal"
+        />
       </section>
 
-      <section className="band band--paper">
+      <section className="route-section route-section--paper registry-workspace scroll-reveal">
+        <div className="route-section__intro">
+          <div>
+            <p className="route-kicker">One public index</p>
+            <h2 className="headline">
+              Start with the rule, then inspect the record.
+            </h2>
+          </div>
+          <p className="lede">
+            Membership makes an enforcer discoverable. It does not turn a
+            deployment into a safety badge.
+          </p>
+        </div>
         <div className="filters">
           <label>
             <span className="mono-label">Search enforcers</span>
@@ -506,13 +515,11 @@ export function DetailPage() {
 
   return (
     <main>
-      <section className="band band--ink">
-        <div className="band__inner">
+      <section className="route-hero route-hero--ink route-hero--detail scroll-reveal">
+        <div className="route-hero__copy">
           <Link className="pill pill--back" to="/registry">
             ← Registry
           </Link>
-
-          <Eyebrow>{record ? "Reference record" : "Indexed record"}</Eyebrow>
 
           <div className="detail">
             <div>
@@ -548,12 +555,23 @@ export function DetailPage() {
             />
           </div>
         </div>
+        <RouteSignal
+          label="Record / Boundary"
+          value="Purpose before permission"
+          variant="paper"
+        />
       </section>
 
-      <section className="band band--paper">
+      <section className="route-section route-section--paper detail-workspace scroll-reveal">
+        <div className="route-section__intro">
+          <p className="route-kicker">Record anatomy</p>
+          <p className="lede">
+            Every field stays inspectable. The page can explain the rule without
+            pretending the evidence is a verdict.
+          </p>
+        </div>
         <div className="two-col">
           <div>
-            <Eyebrow>Plain-language anatomy</Eyebrow>
             <h2 className="headline">What this rule controls.</h2>
             <Spec
               rows={[
@@ -566,7 +584,6 @@ export function DetailPage() {
           </div>
 
           <div>
-            <Eyebrow>Evidence relationships</Eyebrow>
             <h2 className="headline">Trust stays inspectable.</h2>
             <EvidenceGraph />
             {!record && detailState?.kind === "error" && (
@@ -790,23 +807,27 @@ export function SubmitPage() {
 
   return (
     <main>
-      <section className="band band--ink band--split">
-        <div>
-          <Eyebrow>Open contribution flow</Eyebrow>
+      <section className="route-hero route-hero--ink route-hero--submit scroll-reveal">
+        <div className="route-hero__copy">
+          <span className="route-kicker">Contribution / Public standard</span>
           <h1 className="display">Add what the ecosystem is missing.</h1>
           <p className="lede">
             List an enforcer, attest to an existing claim, or submit a
             counter-signal.
           </p>
+          <div className="route-hero__meta">
+            <span>Wallet-owned write</span>
+            <span>Validate → simulate → sign</span>
+          </div>
         </div>
-        <Art
-          name="contribution-desktop-1600x900.webp"
-          alt="A contributed record entering the index."
-          ratio="1600 / 900"
+        <RouteSignal
+          label="Contribute / Evidence"
+          value="List a missing boundary"
+          variant="signal"
         />
       </section>
 
-      <ol className="stepper">
+      <ol className="stepper scroll-reveal">
         {STEPS.map((step, i) => (
           <li
             key={step}
@@ -820,7 +841,14 @@ export function SubmitPage() {
         ))}
       </ol>
 
-      <section className="band band--paper">
+      <section className="route-section route-section--paper submit-workspace scroll-reveal">
+        <div className="route-section__intro">
+          <p className="route-kicker">A public record starts here</p>
+          <p className="lede">
+            Describe the boundary in plain language, attach source and terms,
+            then let your wallet approve the write.
+          </p>
+        </div>
         <div className="two-col two-col--form">
           <form
             id="contribution-form"
@@ -973,7 +1001,6 @@ export function SubmitPage() {
           </form>
 
           <aside className="preflight">
-            <Eyebrow>Live preflight</Eyebrow>
             <h2 className="headline headline--sm">Submission outline</h2>
             <Spec
               rows={[
@@ -1042,47 +1069,75 @@ export function SubmitPage() {
 /* ----------------------------------------------------------------------- learn */
 
 const PATHS = [
-  [
-    "New to caveats",
-    "Understand permissions, boundaries, and enforcers in plain language.",
-  ],
-  [
-    "Wallet builder",
-    "Query records, compare evidence, and present rules before signing.",
-  ],
-  [
-    "Enforcer author",
-    "Encode terms, publish deployments, and contribute registry claims.",
-  ],
-  [
-    "Researcher",
-    "Inspect provenance, signal, counter-signal, and change history.",
-  ],
-];
+  {
+    id: "new-to-caveats",
+    title: "New to caveats",
+    body: "Understand permissions, boundaries, and enforcers in plain language.",
+    points: [
+      "A delegation gives another account limited authority.",
+      "A caveat enforcer checks one condition before that authority is used.",
+      "Terms are the encoded values that make the condition specific.",
+    ],
+  },
+  {
+    id: "wallet-builder",
+    title: "Wallet builder",
+    body: "Query records, compare evidence, and present rules before signing.",
+    points: [
+      "Resolve the deployed address to a readable enforcer identity.",
+      "Decode terms with the published schema and show the exact boundary.",
+      "Keep source, deployment, support, and counter-signal separate.",
+    ],
+  },
+  {
+    id: "enforcer-author",
+    title: "Enforcer author",
+    body: "Encode terms, publish deployments, and contribute registry claims.",
+    points: [
+      "Publish source, version, deployment address, and terms schema.",
+      "Validate the contract and simulate the proposed registry write.",
+      "Sign from your own wallet, then wait for chain and indexer confirmation.",
+    ],
+  },
+  {
+    id: "researcher",
+    title: "Researcher",
+    body: "Inspect provenance, signal, counter-signal, and change history.",
+    points: [
+      "Treat membership as a discovery fact, never a safety verdict.",
+      "Inspect the claim source and what every signal actually asserts.",
+      "Read support and opposition independently instead of as one score.",
+    ],
+  },
+] as const;
 
 export function LearnPage() {
   return (
     <main>
-      <section className="band band--paper band--split">
-        <div>
-          <Eyebrow>Learn by mental model</Eyebrow>
+      <section className="route-hero route-hero--paper route-hero--learn scroll-reveal">
+        <div className="route-hero__copy">
+          <span className="route-kicker">Learn / Read the boundary</span>
           <h1 className="display">From permission to proof.</h1>
           <p className="lede">
             Choose your starting point. Each path moves from plain language to
             inspectable implementation.
           </p>
+          <div className="route-hero__meta">
+            <span>Plain language</span>
+            <span>Encoded terms</span>
+            <span>Evidence model</span>
+          </div>
         </div>
-        <Art
-          name="learning-desktop-1600x1100.webp"
-          alt="A permission resolving from plain language into an inspectable record."
-          ratio="1600 / 1100"
+        <RouteSignal
+          label="Learn / Resolution"
+          value="Read before signing"
+          variant="paper"
         />
       </section>
 
-      <section className="band band--paper band--tight">
+      <section className="route-section route-section--paper route-section--tight learn-index scroll-reveal">
         <div className="rail rail--head">
           <div>
-            <Eyebrow>Choose a path</Eyebrow>
             <h2 className="headline">Learn at your depth.</h2>
           </div>
           <p className="lede">
@@ -1092,23 +1147,39 @@ export function LearnPage() {
         </div>
 
         <ul className="table table--paths">
-          {PATHS.map(([title, body], i) => (
-            <li key={title}>
-              <Link to="/learn">
-                <span className="mono-sub">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
+          {PATHS.map((path) => (
+            <li key={path.id}>
+              <a href={`#${path.id}`}>
                 <span className="table__name">
-                  <strong>{title}</strong>
-                  <em>{body}</em>
+                  <strong>{path.title}</strong>
+                  <em>{path.body}</em>
                 </span>
                 <span className="table__start">
                   Start <span aria-hidden="true">→</span>
                 </span>
-              </Link>
+              </a>
             </li>
           ))}
         </ul>
+      </section>
+
+      <section
+        className="route-section route-section--ink learn-chapters scroll-reveal"
+        aria-label="Learning paths"
+      >
+        {PATHS.map((path) => (
+          <article id={path.id} key={path.id} className="learn-chapter">
+            <div>
+              <h2 className="headline">{path.title}</h2>
+              <p className="lede">{path.body}</p>
+            </div>
+            <ol>
+              {path.points.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ol>
+          </article>
+        ))}
       </section>
     </main>
   );
@@ -1118,29 +1189,55 @@ export function LearnPage() {
 
 export function DevelopersPage() {
   const snippet = registryDeploymentsQuery.trim();
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">(
+    "idle",
+  );
+
+  async function copySnippet() {
+    try {
+      await navigator.clipboard.writeText(snippet);
+      setCopyState("copied");
+      window.setTimeout(() => setCopyState("idle"), 1800);
+    } catch {
+      setCopyState("error");
+    }
+  }
 
   return (
     <main>
-      <section className="band band--ink band--split">
-        <div>
-          <Eyebrow>Build on the same source</Eyebrow>
+      <section className="route-hero route-hero--ink route-hero--developers scroll-reveal">
+        <div className="route-hero__copy">
+          <span className="route-kicker intuition-lockup">
+            <IntuitionLogo size={17} /> Intuition Graph
+          </span>
           <h1 className="display">Registry data, ready for your interface.</h1>
           <p className="lede">
             Query enforcer identity, deployment evidence, terms, relationships,
             and community signal from Intuition.
           </p>
+          <div className="route-hero__meta">
+            <span>GraphQL</span>
+            <span>Deployment-aware</span>
+            <span>Evidence-first</span>
+          </div>
         </div>
-        <Art
-          name="composition-desktop-1600x900.webp"
-          alt="One record resolving across many surfaces."
-          ratio="1600 / 900"
+        <RouteSignal
+          label="Integrate / Intuition"
+          value="One record, many surfaces"
+          variant="signal"
         />
       </section>
 
-      <section className="band band--paper">
+      <section className="route-section route-section--paper developers-workspace scroll-reveal">
+        <div className="route-section__intro">
+          <p className="route-kicker">Integration surface</p>
+          <p className="lede">
+            Ask for the evidence your interface needs. Keep individual claims
+            visible instead of inventing a universal trust score.
+          </p>
+        </div>
         <div className="two-col two-col--code">
           <div>
-            <Eyebrow>Query pattern</Eyebrow>
             <h2 className="headline">Ask for evidence, not assumptions.</h2>
             <p className="lede">
               The client takes explicit registry configuration. Products decide
@@ -1148,16 +1245,37 @@ export function DevelopersPage() {
               trust badge.
             </p>
           </div>
-          <pre className="code" aria-label="Registry deployments GraphQL query">
-            <code>{snippet}</code>
-          </pre>
+          <div className="code-shell">
+            <div className="code-shell__bar">
+              <span>registry-deployments.graphql</span>
+              <button type="button" onClick={copySnippet}>
+                {copyState === "copied"
+                  ? "Copied"
+                  : copyState === "error"
+                    ? "Copy unavailable"
+                    : "Copy query"}
+              </button>
+            </div>
+            <pre
+              className="code"
+              aria-label="Registry deployments GraphQL query"
+            >
+              <code>{snippet}</code>
+            </pre>
+            <span className="visually-hidden" role="status" aria-live="polite">
+              {copyState === "copied"
+                ? "GraphQL query copied to clipboard."
+                : copyState === "error"
+                  ? "Clipboard access is unavailable. Select the query text to copy it manually."
+                  : ""}
+            </span>
+          </div>
         </div>
       </section>
 
-      <section className="band band--ink">
+      <section className="route-section route-section--ink developers-close scroll-reveal">
         <div className="two-col">
           <div>
-            <Eyebrow>Integration architecture</Eyebrow>
             <h2 className="headline">One record, many surfaces.</h2>
           </div>
           <p className="lede">

@@ -1,33 +1,120 @@
 /**
- * DIRECTION: Registry Within. A calm, near-black product world where the Caveat mark is the physical instrument that exposes delegation records.
- * AUDIENCE: Wallet builders, delegation developers, auditors, and curious users trying to understand or contribute an enforcer.
- * JOB: Make an open registry intelligible, credible, and immediately usable without implying that registry membership equals safety.
- * FIRST VIEWPORT: A monumental matte Caveat mark contains the records; a centered one-line offer and two actions sit in the quiet lower field.
- * FORM: Multi-page product website with an immersive Persuade homepage and restrained Operate and Read surfaces.
+ * THESIS: Delegation boundaries become credible when the registry resolves code into inspectable evidence; this refuses the crypto badge-and-card-grid default.
+ * OWN-WORLD: Warp-informed cool white, pale lavender proof fields, near-black feature surfaces, a light sans hierarchy, and a restrained Intuition / MetaMask proof rail.
+ * STORY: Understand the boundary, inspect its evidence, explore real reference types, then search, contribute, learn, or integrate.
+ * FIRST VIEWPORT: The approved cinematic hero remains a monumental matte mark, centered offer, two actions, and a restrained proof rail.
+ * FORM: User-pinned Warp-inspired product chapters beneath an original hero; no concept-roll seed was required for this established-world extension.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
  */
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useState } from "react";
 import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { CaveatMarkSvg, MARK_H, MARK_PATHS, MARK_W } from "./CaveatMark";
 import CinematicHero from "./CinematicHero";
 import HomeSections from "./HomeSections";
-import RoadSection from "./RoadSection";
-import {
-  DetailPage,
-  DevelopersPage,
-  LearnPage,
-  RegistryPage,
-  SubmitPage,
-} from "./Pages";
+import IntuitionLogo from "./IntuitionLogo";
 import { subscribeHeroProgress } from "./heroProgress";
 
 const githubBase = "https://github.com/intuition-box/caveat-enforcers-registry";
+
+const RegistryPage = lazy(() =>
+  import("./Pages").then((module) => ({ default: module.RegistryPage })),
+);
+const DetailPage = lazy(() =>
+  import("./Pages").then((module) => ({ default: module.DetailPage })),
+);
+const SubmitPage = lazy(() =>
+  import("./Pages").then((module) => ({ default: module.SubmitPage })),
+);
+const LearnPage = lazy(() =>
+  import("./Pages").then((module) => ({ default: module.LearnPage })),
+);
+const DevelopersPage = lazy(() =>
+  import("./Pages").then((module) => ({ default: module.DevelopersPage })),
+);
 
 function ScrollReset() {
   const { pathname } = useLocation();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
+  }, [pathname]);
+
+  return null;
+}
+
+/**
+ * Stage the authored homepage demonstrations, chapter bands, and closing
+ * action sequence as they enter the viewport. The cinematic hero and FoldText
+ * own their own timelines; this observer handles section-level continuity.
+ */
+function PageMotion() {
+  const { pathname } = useLocation();
+
+  useLayoutEffect(() => {
+    const selector = ".translation, .registry-peek, .scroll-reveal";
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    document.documentElement.classList.add("motion-ready");
+
+    const register = (element: HTMLElement) => {
+      const readyClass = element.classList.contains("scroll-reveal")
+        ? "scroll-reveal-ready"
+        : "reveal-ready";
+      if (
+        element.classList.contains("reveal-ready") ||
+        element.classList.contains("scroll-reveal-ready")
+      ) {
+        return;
+      }
+      element.classList.add(readyClass);
+      if (reduced) {
+        element.classList.add("is-visible");
+      }
+    };
+
+    const revealVisible = () => {
+      document.querySelectorAll<HTMLElement>(selector).forEach((element) => {
+        if (element.classList.contains("is-visible")) return;
+        const rect = element.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.9 && rect.bottom > 0) {
+          element.classList.add("is-visible");
+        }
+      });
+    };
+
+    let frame = 0;
+    const queueReveal = () => {
+      if (frame || reduced) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        revealVisible();
+      });
+    };
+
+    const scan = () => {
+      document
+        .querySelectorAll<HTMLElement>(selector)
+        .forEach((element) => register(element));
+      queueReveal();
+    };
+
+    scan();
+    window.addEventListener("scroll", queueReveal, { passive: true });
+    window.addEventListener("resize", queueReveal);
+    const mutations = new MutationObserver(scan);
+    mutations.observe(document.getElementById("root") ?? document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", queueReveal);
+      window.removeEventListener("resize", queueReveal);
+      if (frame) window.cancelAnimationFrame(frame);
+      mutations.disconnect();
+    };
   }, [pathname]);
 
   return null;
@@ -48,30 +135,17 @@ function Mark({ compact = false }: { compact?: boolean }) {
 }
 
 /**
- * The header's mark during the handoff. The upper plane simply arrives — it has
- * just flown here from the hero — and the lower plane draws itself in beneath
- * it with the same stroke gesture the site opened with, completing the mark.
+ * The header's mark during the handoff. Both hero planes arrive together, so
+ * the navigation receives the whole mark rather than a staged reconstruction.
  */
 function NavMark({ draw }: { draw: number }) {
   const arrive = draw > 0.02 ? 1 : 0;
-  const strokeIn = Math.min(1, Math.max(0, draw / 0.62));
-  const fillIn = Math.min(1, Math.max(0, (draw - 0.48) / 0.52));
 
   return (
     <span className="brand-mark brand-mark--vector brand-mark--compact">
       <svg viewBox={`0 0 ${MARK_W} ${MARK_H}`} fill="none" aria-hidden="true">
         <path d={MARK_PATHS[0]} fill="currentColor" opacity={arrive} />
-        <path d={MARK_PATHS[1]} fill="currentColor" opacity={fillIn} />
-        <path
-          d={MARK_PATHS[1]}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={5}
-          pathLength={1}
-          strokeDasharray={1}
-          strokeDashoffset={1 - strokeIn}
-          opacity={1 - fillIn}
-        />
+        <path d={MARK_PATHS[1]} fill="currentColor" opacity={arrive} />
       </svg>
     </span>
   );
@@ -102,13 +176,12 @@ function SiteHeader() {
   const isHome = location.pathname === "/";
   const heroProgress = useHeroHandoff(isHome);
 
-  // The plane lands on black and the mark is taken over at 0.855; only then
-  // does the bar materialise under it, so nothing is ever seen through it.
+  // The full mark lands at 0.85; the header follows immediately underneath it.
   const reveal = isHome
-    ? Math.min(1, Math.max(0, (heroProgress - 0.862) / 0.07))
+    ? Math.min(1, Math.max(0, (heroProgress - 0.872) / 0.07))
     : 1;
   const markDraw = isHome
-    ? Math.min(1, Math.max(0, (heroProgress - 0.855) / 0.11))
+    ? Math.min(1, Math.max(0, (heroProgress - 0.842) / 0.035))
     : 1;
   const live = reveal > 0.999;
 
@@ -137,7 +210,22 @@ function SiteHeader() {
       }
       aria-hidden={isHome && !live ? true : undefined}
     >
-      <Link className="brand" to="/" aria-label="Caveat Registry home">
+      <Link
+        className="brand"
+        to="/"
+        aria-label="Caveat Registry home"
+        onClick={(event) => {
+          if (!isHome) return;
+          event.preventDefault();
+          const reduced = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+          ).matches;
+          window.scrollTo({
+            top: 0,
+            behavior: reduced ? "auto" : "smooth",
+          });
+        }}
+      >
         {isHome ? <NavMark draw={markDraw} /> : <Mark compact />}
         <span>Caveat Registry</span>
       </Link>
@@ -174,9 +262,8 @@ function Arrow() {
 
 function HomePage() {
   return (
-    <main>
+    <main className="home-page">
       <CinematicHero />
-      <RoadSection />
       <HomeSections />
     </main>
   );
@@ -193,39 +280,80 @@ function NotFoundPage() {
   );
 }
 
+function RouteLoading() {
+  return (
+    <main className="route-loading" role="status" aria-live="polite">
+      <span>Opening registry surface</span>
+    </main>
+  );
+}
+
 function SiteFooter() {
   return (
-    <footer className="site-footer">
-      <div>
-        <Mark compact />
-        <p>An open ERC-7710 caveat enforcer registry built on Intuition.</p>
+    <footer className="site-footer scroll-reveal">
+      <div className="site-footer__statement">
+        <div className="site-footer__brand">
+          <Mark compact />
+          <span>Caveat Registry</span>
+        </div>
+        <p>Delegation rules should be readable before they are trusted.</p>
       </div>
-      <nav aria-label="Footer navigation">
-        <Link to="/registry">Registry</Link>
-        <Link to="/submit">Submit</Link>
-        <Link to="/learn">Learn</Link>
-        <a href={githubBase}>
-          GitHub <Arrow />
-        </a>
-      </nav>
+      <div className="site-footer__links">
+        <nav aria-label="Product navigation">
+          <span>Product</span>
+          <Link to="/registry">Registry</Link>
+          <Link to="/submit">Submit</Link>
+          <Link to="/learn">Learn</Link>
+        </nav>
+        <nav aria-label="Developer navigation">
+          <span>Build</span>
+          <Link to="/developers">Developers</Link>
+          <a href={githubBase}>
+            GitHub <Arrow />
+          </a>
+        </nav>
+      </div>
+      <div className="site-footer__base">
+        <span>Caveat Registry</span>
+        <span className="intuition-lockup">
+          Built on <IntuitionLogo size={15} /> Intuition
+        </span>
+        <span>ERC-7710 open registry</span>
+      </div>
     </footer>
   );
 }
 
 export default function App() {
+  const location = useLocation();
+  const shellClass = [
+    "site-shell",
+    location.pathname === "/" ? "site-shell--home" : "",
+    location.pathname !== "/" ? "site-shell--route" : "",
+    location.pathname.startsWith("/registry") ? "site-shell--registry" : "",
+    location.pathname === "/submit" ? "site-shell--submit" : "",
+    location.pathname === "/learn" ? "site-shell--learn" : "",
+    location.pathname === "/developers" ? "site-shell--developers" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="site-shell">
+    <div className={shellClass}>
       <ScrollReset />
+      <PageMotion />
       <SiteHeader />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/registry" element={<RegistryPage />} />
-        <Route path="/registry/:slug" element={<DetailPage />} />
-        <Route path="/submit" element={<SubmitPage />} />
-        <Route path="/learn" element={<LearnPage />} />
-        <Route path="/developers" element={<DevelopersPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <Suspense fallback={<RouteLoading />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/registry" element={<RegistryPage />} />
+          <Route path="/registry/:slug" element={<DetailPage />} />
+          <Route path="/submit" element={<SubmitPage />} />
+          <Route path="/learn" element={<LearnPage />} />
+          <Route path="/developers" element={<DevelopersPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
       <SiteFooter />
     </div>
   );
