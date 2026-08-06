@@ -1880,7 +1880,10 @@ a:hover .arrow,
 
 .cine {
   position: relative;
-  min-height: 100svh;
+  /* Scroll distance for the pinned hero sequence. The stage is fixed, so this
+     height is how long the hero holds while the scrub plays its phases:
+     text out + enlarge (in place) → actions → shrink and hand to the nav. */
+  min-height: 260svh;
   background: #000;
   isolation: isolate;
 }
