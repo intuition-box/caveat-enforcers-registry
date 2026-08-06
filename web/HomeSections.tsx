@@ -521,6 +521,12 @@ function Openness() {
     >
       <div className="split split--open openness__intro">
         <div>
+          <span className="pull-stat">
+            32
+            <span className="pull-stat__label">
+              enforcers live on Intuition mainnet
+            </span>
+          </span>
           <header className="sec__head sec__head--tight">
             <h2 id="sec-open">The registry stays open.</h2>
           </header>
@@ -546,12 +552,12 @@ function Openness() {
         <ScrollStack
           className="flow__stack"
           useWindowScroll
-          itemDistance={52}
-          itemStackDistance={12}
-          stackPosition="18%"
-          scaleEndPosition="8%"
-          baseScale={0.96}
-          itemScale={0.008}
+          itemDistance={40}
+          itemStackDistance={16}
+          stackPosition="20%"
+          scaleEndPosition="10%"
+          baseScale={0.9}
+          itemScale={0.02}
           rotationAmount={0}
         >
           {FLOW.map(({ label, title, body }, index) => (

@@ -136,11 +136,12 @@
 }
 
 .resolution-intro__lede {
-  max-width: 36ch;
+  max-width: 28ch;
   margin: 0 0 0.2rem;
   color: #4f4b5c;
-  font-size: clamp(0.98rem, 1.25vw, 1.1rem);
-  line-height: 1.55;
+  font-size: clamp(1.3rem, 2vw, 1.75rem);
+  line-height: 1.38;
+  letter-spacing: -0.01em;
 }
 
 .mac-window {
@@ -2183,7 +2184,7 @@ a:hover .arrow,
 .sec__lede {
   max-width: 46ch;
   margin: 1.4rem 0 0;
-  font-size: clamp(1rem, 1.3vw, 1.14rem);
+  font-size: clamp(1.05rem, 1.4vw, 1.22rem);
   line-height: 1.62;
   opacity: 0.74;
 }
@@ -2788,7 +2789,7 @@ a:hover .arrow,
 .headline {
   margin: 0 0 1.5rem;
   font-family: var(--display);
-  font-size: clamp(1.8rem, 3.2vw, 2.9rem);
+  font-size: clamp(2rem, 3.6vw, 3.35rem);
   font-weight: 640;
   line-height: 1;
   letter-spacing: -0.035em;
@@ -2799,11 +2800,58 @@ a:hover .arrow,
 }
 
 .lede {
-  max-width: 48ch;
+  max-width: 46ch;
   margin: 1.4rem 0 0;
-  font-size: clamp(1rem, 1.3vw, 1.14rem);
+  font-size: clamp(1.02rem, 1.35vw, 1.2rem);
   line-height: 1.6;
   opacity: 0.76;
+}
+
+/* Larger lede for a section's opening statement — a deliberate step up, not a
+   new ad-hoc size. */
+.lede--lead {
+  max-width: 34ch;
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  opacity: 0.92;
+}
+
+/* A pull-stat: one oversized numeral to break the rhythm and anchor a claim. */
+.pull-stat {
+  display: block;
+  font-family: var(--display);
+  font-weight: 640;
+  font-size: clamp(3.4rem, 8vw, 6.5rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+.pull-stat__label {
+  display: block;
+  margin-top: 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.openness__intro .pull-stat {
+  margin-bottom: 1.5rem;
+  color: var(--accent, #d8492b);
+}
+.openness__intro .pull-stat__label {
+  color: var(--paper, #f3f0e8);
+}
+
+/* Intentional asymmetry: a centered statement band that breaks the left rail. */
+.statement {
+  max-width: 24ch;
+  margin-inline: auto;
+  text-align: center;
+  text-wrap: balance;
+}
+.statement .headline {
+  margin-bottom: 0;
 }
 
 /* pills */
@@ -4601,7 +4649,7 @@ main > .band:first-child {
 }
 
 .site-shell--home .flow--scroll-stack .scroll-stack-inner {
-  padding: 3.5rem var(--frame-pad) 24rem;
+  padding: 3.5rem var(--frame-pad) 12rem;
 }
 
 .site-shell--home .flow__stack-card {
@@ -4610,7 +4658,10 @@ main > .band:first-child {
   overflow: hidden;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  aspect-ratio: 16 / 9;
+  width: min(100%, 58rem);
+  margin-inline: auto;
+  aspect-ratio: 16 / 10;
+  max-height: 78vh;
   min-height: 0;
   padding: 0;
   border-color: rgba(255, 255, 255, 0.42);

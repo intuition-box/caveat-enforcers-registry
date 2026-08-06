@@ -79,6 +79,7 @@ export default function ScrollStack({
   const lenisRef = useRef<Lenis | null>(null);
   const stackCompletedRef = useRef(false);
   const isUpdatingRef = useRef(false);
+  const tickingRef = useRef(false);
   const onStackCompleteRef = useRef(onStackComplete);
 
   onStackCompleteRef.current = onStackComplete;
@@ -204,6 +205,18 @@ export default function ScrollStack({
     useWindowScroll,
   ]);
 
+  // Coalesce every scroll/resize signal into at most one transform write per
+  // animation frame. Writing styles synchronously on each raw scroll event was
+  // the main source of stutter.
+  const scheduleUpdate = useCallback(() => {
+    if (tickingRef.current) return;
+    tickingRef.current = true;
+    window.requestAnimationFrame(() => {
+      tickingRef.current = false;
+      updateCardTransforms();
+    });
+  }, [updateCardTransforms]);
+
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return undefined;
@@ -228,7 +241,7 @@ export default function ScrollStack({
     cards.forEach((card, index) => {
       if (index < cards.length - 1)
         card.style.marginBottom = `${itemDistance}px`;
-      card.style.willChange = "transform, filter";
+      card.style.willChange = "transform";
       card.style.transformOrigin = "top center";
       card.style.backfaceVisibility = "hidden";
       card.style.transform = "translate3d(0, 0, 0) scale(1) rotate(0deg)";
@@ -255,13 +268,19 @@ export default function ScrollStack({
       };
     }
 
-    const handleScroll = () => updateCardTransforms();
+    const handleScroll = () => scheduleUpdate();
     const handleResize = () => refreshLayout();
     const scrollTarget = useWindowScroll ? window : scroller;
     scrollTarget.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleResize, { passive: true });
 
-    const layoutObserver = new ResizeObserver(refreshLayout);
+    // Recache offsets when the layout actually changes (fonts, images, async
+    // content) without resetting transforms mid-scroll — a lighter touch than
+    // a full refresh, which was thrashing during scroll.
+    const layoutObserver = new ResizeObserver(() => {
+      cacheLayoutOffsets();
+      scheduleUpdate();
+    });
     layoutObserver.observe(document.body);
     let layoutFrame = window.requestAnimationFrame(() => {
       layoutFrame = window.requestAnimationFrame(refreshLayout);
@@ -310,7 +329,14 @@ export default function ScrollStack({
       lastTransformsRef.current.clear();
       isUpdatingRef.current = false;
     };
-  }, [itemDistance, scaleDuration, updateCardTransforms, useWindowScroll]);
+  }, [
+    itemDistance,
+    scaleDuration,
+    cacheLayoutOffsets,
+    updateCardTransforms,
+    scheduleUpdate,
+    useWindowScroll,
+  ]);
 
   return (
     <div

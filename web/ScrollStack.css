@@ -40,7 +40,7 @@
   transform-style: preserve-3d;
   backface-visibility: hidden;
   box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.16);
-  will-change: transform, filter;
+  will-change: transform;
 }
 
 .scroll-stack-end {
