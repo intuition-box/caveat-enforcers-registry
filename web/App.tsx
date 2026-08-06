@@ -8,11 +8,15 @@
  */
 import { lazy, Suspense, useEffect, useLayoutEffect, useState } from "react";
 import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import Lenis from "lenis";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CaveatMarkSvg, MARK_H, MARK_PATHS, MARK_W } from "./CaveatMark";
 import CinematicHero from "./CinematicHero";
 import HomeSections from "./HomeSections";
 import IntuitionLogo from "./IntuitionLogo";
 import { subscribeHeroProgress } from "./heroProgress";
+import { setLenis, scrollToTop } from "./smoothScroll";
 
 const githubBase = "https://github.com/intuition-box/caveat-enforcers-registry";
 
@@ -39,8 +43,45 @@ function ScrollReset() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" });
+    scrollToTop();
   }, [pathname]);
+
+  return null;
+}
+
+/**
+ * One page-wide Lenis smooth-scroll, driven by GSAP's ticker and wired to
+ * ScrollTrigger so the cinematic hero scrub stays in sync. This is the single
+ * biggest lever on "premium" scroll feel — it smooths the hero, the sticky card
+ * stack, and every section reveal at once. Disabled under reduced-motion.
+ */
+function SmoothScroll() {
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return undefined;
+    }
+    gsap.registerPlugin(ScrollTrigger);
+    const lenis = new Lenis({
+      lerp: 0.1,
+      smoothWheel: true,
+      wheelMultiplier: 1,
+    });
+    setLenis(lenis);
+
+    const onLenisScroll = () => ScrollTrigger.update();
+    lenis.on("scroll", onLenisScroll);
+    const onTick = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(onTick);
+    gsap.ticker.lagSmoothing(0);
+
+    return () => {
+      lenis.off("scroll", onLenisScroll);
+      gsap.ticker.remove(onTick);
+      gsap.ticker.lagSmoothing(500, 33);
+      lenis.destroy();
+      setLenis(null);
+    };
+  }, []);
 
   return null;
 }
@@ -345,6 +386,7 @@ export default function App() {
 
   return (
     <div className={shellClass}>
+      <SmoothScroll />
       <ScrollReset />
       <PageMotion />
       <SiteHeader />

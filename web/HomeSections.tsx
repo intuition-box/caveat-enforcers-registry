@@ -552,13 +552,8 @@ function Openness() {
         <ScrollStack
           className="flow__stack"
           useWindowScroll
-          itemDistance={40}
-          itemStackDistance={16}
-          stackPosition="20%"
-          scaleEndPosition="10%"
-          baseScale={0.9}
-          itemScale={0.02}
-          rotationAmount={0}
+          itemDistance={48}
+          stackPosition="6rem"
         >
           {FLOW.map(({ label, title, body }, index) => (
             <ScrollStackItem

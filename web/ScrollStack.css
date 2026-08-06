@@ -1,33 +1,25 @@
 .scroll-stack-scroller {
   position: relative;
   width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: visible;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  transform: translateZ(0);
-  will-change: scroll-position;
 }
 
 .scroll-stack-scroller--window {
   height: auto;
   overflow: visible;
-  overscroll-behavior: auto;
 }
 
+/* Sticky-stack layout (Fora pattern): cards flow in a column with a gap, each
+   one sticks at the same top offset so the next slides up and covers it. */
 .scroll-stack-inner {
-  min-height: 100%;
-  padding: 5rem 1.5rem 18rem;
-}
-
-.scroll-stack-scroller--window .scroll-stack-inner {
-  padding: 4.5rem 1.5rem 20rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap, 48px);
+  padding: 4.5rem 1.5rem 12rem;
 }
 
 .scroll-stack-card {
-  position: relative;
+  position: sticky;
+  top: var(--stack-top, 120px);
   box-sizing: border-box;
   width: 100%;
   min-height: 7.5rem;
@@ -36,32 +28,18 @@
   border-radius: 0.8rem;
   background: #151619;
   color: var(--paper);
-  transform-origin: top center;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
   box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.16);
-  will-change: transform;
-}
-
-.scroll-stack-end {
-  width: 100%;
-  height: 1px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scroll-stack-scroller {
-    scroll-behavior: auto;
-  }
-
   .scroll-stack-card {
-    transform: none !important;
-    filter: none !important;
+    position: relative;
+    top: auto;
   }
 }
 
 @media (max-width: 48rem) {
-  .scroll-stack-inner,
-  .scroll-stack-scroller--window .scroll-stack-inner {
+  .scroll-stack-inner {
     padding-right: 0;
     padding-left: 0;
     padding-bottom: 12rem;

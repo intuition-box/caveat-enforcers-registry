@@ -936,6 +936,27 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Lenis smooth-scroll (required rules; Lenis must own scroll-behavior). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+html.lenis {
+  scroll-behavior: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -4649,11 +4670,13 @@ main > .band:first-child {
 }
 
 .site-shell--home .flow--scroll-stack .scroll-stack-inner {
+  gap: 3rem;
   padding: 3.5rem var(--frame-pad) 12rem;
 }
 
 .site-shell--home .flow__stack-card {
-  position: relative;
+  position: sticky;
+  top: 6rem;
   isolation: isolate;
   overflow: hidden;
   display: grid;
@@ -4669,6 +4692,13 @@ main > .band:first-child {
   background: #151619;
   color: var(--paper);
   box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.34);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-shell--home .flow__stack-card {
+    position: relative;
+    top: auto;
+  }
 }
 
 .site-shell--home .flow__stack-card::before,
