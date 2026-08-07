@@ -24,6 +24,14 @@ import type { RpcFetcher, SubmissionInput } from "../src/validation";
 
 const INTUITION_MAINNET_HEX = "0x483";
 
+export const INTUITION_MAINNET_WALLET_CONFIG = {
+  chainId: INTUITION_MAINNET_HEX,
+  chainName: "Intuition Mainnet",
+  nativeCurrency: { name: "Trust", symbol: "TRUST", decimals: 18 },
+  rpcUrls: [INTUITION_MAINNET_RPC],
+  blockExplorerUrls: ["https://explorer.intuition.systems"],
+} as const;
+
 const intuitionMainnet = defineChain({
   id: 1155,
   name: "Intuition",
@@ -35,6 +43,12 @@ const intuitionMainnet = defineChain({
 
 type BrowserProvider = EIP1193Provider & {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+};
+
+export type BrowserWalletConnectionState = {
+  available: boolean;
+  chainId?: number;
+  onIntuition: boolean;
 };
 
 export type BrowserWallet = {
@@ -62,6 +76,36 @@ function addressFromAccount(value: unknown): Address {
   return value.toLowerCase() as Address;
 }
 
+function providerErrorCode(error: unknown): number | undefined {
+  if (!error || typeof error !== "object" || !("code" in error))
+    return undefined;
+  const value = (error as { code?: unknown }).code;
+  return typeof value === "number" ? value : undefined;
+}
+
+function providerErrorMessage(error: unknown, fallback: string): string {
+  if (providerErrorCode(error) === 4001) {
+    return "The wallet request was cancelled. Reopen your wallet and approve the request to continue.";
+  }
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+async function addIntuitionMainnet(provider: BrowserProvider): Promise<void> {
+  try {
+    await provider.request({
+      method: "wallet_addEthereumChain",
+      params: [INTUITION_MAINNET_WALLET_CONFIG],
+    });
+  } catch (error) {
+    throw new Error(
+      providerErrorMessage(
+        error,
+        "Your wallet could not add Intuition mainnet. Add chain 1155 manually, then try again.",
+      ),
+    );
+  }
+}
+
 async function ensureMainnet(provider: BrowserProvider): Promise<number> {
   let chainId = String(await provider.request({ method: "eth_chainId" }));
   if (chainId.toLowerCase() !== INTUITION_MAINNET_HEX) {
@@ -70,10 +114,30 @@ async function ensureMainnet(provider: BrowserProvider): Promise<number> {
         method: "wallet_switchEthereumChain",
         params: [{ chainId: INTUITION_MAINNET_HEX }],
       });
-    } catch {
-      throw new Error(
-        "Switch your wallet to Intuition mainnet (chain 1155) before writing.",
-      );
+    } catch (error) {
+      if (providerErrorCode(error) === 4902) {
+        await addIntuitionMainnet(provider);
+        try {
+          await provider.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: INTUITION_MAINNET_HEX }],
+          });
+        } catch (switchError) {
+          throw new Error(
+            providerErrorMessage(
+              switchError,
+              "Intuition mainnet was added, but the wallet did not switch to it.",
+            ),
+          );
+        }
+      } else {
+        throw new Error(
+          providerErrorMessage(
+            error,
+            "Switch your wallet to Intuition mainnet (chain 1155) before writing.",
+          ),
+        );
+      }
     }
     chainId = String(await provider.request({ method: "eth_chainId" }));
     if (chainId.toLowerCase() !== INTUITION_MAINNET_HEX) {
@@ -89,9 +153,37 @@ export function browserWalletAvailable(): boolean {
   return typeof window !== "undefined" && Boolean(window.ethereum);
 }
 
+export async function inspectBrowserWallet(): Promise<BrowserWalletConnectionState> {
+  if (!browserWalletAvailable()) {
+    return { available: false, onIntuition: false };
+  }
+  try {
+    const chainId = Number.parseInt(
+      String(await providerOrThrow().request({ method: "eth_chainId" })),
+      16,
+    );
+    return {
+      available: true,
+      ...(Number.isFinite(chainId) ? { chainId } : {}),
+      onIntuition: chainId === 1155,
+    };
+  } catch {
+    return { available: true, onIntuition: false };
+  }
+}
+
 export async function connectBrowserWallet(): Promise<BrowserWallet> {
   const provider = providerOrThrow();
-  await provider.request({ method: "eth_requestAccounts" });
+  try {
+    await provider.request({ method: "eth_requestAccounts" });
+  } catch (error) {
+    throw new Error(
+      providerErrorMessage(
+        error,
+        "Your wallet did not provide an account. Unlock it and try again.",
+      ),
+    );
+  }
   const chainId = await ensureMainnet(provider);
   const accounts = await provider.request({ method: "eth_accounts" });
   const first = Array.isArray(accounts) ? accounts[0] : undefined;

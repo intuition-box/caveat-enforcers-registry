@@ -3262,6 +3262,54 @@ a:hover .arrow,
   margin-top: 1.75rem;
 }
 
+.preflight .wallet-connect-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+.preflight .wallet-connect-cta--required {
+  border-color: var(--signal);
+  background: var(--signal);
+  color: var(--ink);
+  animation: wallet-connect-attention 2.6s ease-in-out infinite;
+}
+
+.preflight .wallet-connect-cta--required::before {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+.preflight .wallet-connect-cta--connected {
+  opacity: 0.62;
+}
+
+.wallet-connect-guidance {
+  margin: 0.85rem 0 0;
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+@keyframes wallet-connect-attention {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preflight .wallet-connect-cta--required {
+    animation: none;
+  }
+}
+
 .band--paper .cta--solid {
   background: var(--ink);
   color: var(--paper);

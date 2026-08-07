@@ -33,9 +33,11 @@ import {
   browserWalletAvailable,
   connectBrowserWallet,
   curateWithBrowserWallet,
+  inspectBrowserWallet,
   previewWithBrowserWallet,
   submitWithBrowserWallet,
   type BrowserWallet,
+  type BrowserWalletConnectionState,
 } from "./wallet";
 import {
   validateSubmission as validateSubmissionLocally,
@@ -1028,6 +1030,11 @@ export function SubmitPage() {
   const [amount, setAmount] = useState("1");
   const [curveId, setCurveId] = useState("1");
   const [wallet, setWallet] = useState<BrowserWallet | null>(null);
+  const [walletConnection, setWalletConnection] =
+    useState<BrowserWalletConnectionState>({
+      available: browserWalletAvailable(),
+      onIntuition: false,
+    });
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [importText, setImportText] = useState("");
@@ -1047,6 +1054,14 @@ export function SubmitPage() {
     contractAddress,
     termsJson,
   ]);
+
+  async function refreshWalletConnection() {
+    setWalletConnection(await inspectBrowserWallet());
+  }
+
+  useEffect(() => {
+    void refreshWalletConnection();
+  }, []);
 
   function applyImportedJson() {
     const raw = importText.trim();
@@ -1114,6 +1129,12 @@ export function SubmitPage() {
   }
 
   async function connectWallet() {
+    if (!walletConnection.available) {
+      setStatus(
+        "No browser wallet was detected. Open MetaMask, Rabby, Coinbase Wallet, or another EVM wallet in this browser, then connect again.",
+      );
+      return;
+    }
     setStatus("Requesting an Intuition mainnet account from your wallet…");
     try {
       const connected = await connectBrowserWallet();
@@ -1127,6 +1148,8 @@ export function SubmitPage() {
           ? error.message
           : "The browser wallet could not be connected.",
       );
+    } finally {
+      void refreshWalletConnection();
     }
   }
 
@@ -1256,9 +1279,18 @@ export function SubmitPage() {
 
   const walletLabel = wallet
     ? shortAddress(wallet.address)
-    : browserWalletAvailable()
-      ? "Available"
-      : "Not detected";
+    : !walletConnection.available
+      ? "No EVM wallet detected"
+      : walletConnection.onIntuition
+        ? "Ready on Intuition"
+        : "Intuition setup required";
+  const connectLabel = wallet
+    ? "Wallet connected"
+    : !walletConnection.available
+      ? "Open wallet to connect"
+      : walletConnection.onIntuition
+        ? "Connect Intuition wallet"
+        : "Connect & add Intuition";
 
   return (
     <main>
@@ -1558,14 +1590,26 @@ export function SubmitPage() {
               </section>
             )}
             <button
-              className="cta cta--solid"
+              className={`cta cta--solid wallet-connect-cta ${
+                wallet
+                  ? "wallet-connect-cta--connected"
+                  : "wallet-connect-cta--required"
+              }`}
               type="button"
               onClick={connectWallet}
               disabled={busy || Boolean(wallet)}
             >
-              {wallet ? "Wallet connected" : "Connect wallet"}{" "}
-              <span aria-hidden="true">→</span>
+              {connectLabel} <span aria-hidden="true">→</span>
             </button>
+            {!wallet && (
+              <p className="wallet-connect-guidance">
+                {!walletConnection.available
+                  ? "Use an EVM wallet in this browser. MetaMask and Rabby are supported injected-wallet options."
+                  : walletConnection.onIntuition
+                    ? "This wallet is already on Intuition mainnet. Connecting never exposes its recovery phrase or private key."
+                    : "Your wallet will be asked to add and switch to Intuition mainnet (chain 1155) before it can sign."}
+              </p>
+            )}
             {submissionReview && mode === "list" ? (
               <div className="transaction-plan__actions">
                 <button
