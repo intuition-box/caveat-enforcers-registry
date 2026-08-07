@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Caveat Registry">
+  <rect width="64" height="64" rx="13" fill="#000000"/>
+  <g transform="translate(10 12.46) scale(0.1949)" fill="#ffffff">
+    <path d="M171.95 0L172.4 67.84L35.95 127.37L34.95 151.3L0.46 142.84L0.04 75.84L0.95 73.97L171.95 0Z"/>
+    <path d="M225.37 46.84L225.54 98.84C149.65 146.27 134.05 200.58 35.95 200.17L35.95 151.56L172.29 91.84L172.47 68.84L172.95 68.2L225.37 46.84Z"/>
+  </g>
+</svg>
