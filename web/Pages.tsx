@@ -74,36 +74,6 @@ function Spec({ rows }: { rows: Array<[string, string]> }) {
   );
 }
 
-function RouteSignal({
-  label,
-  value,
-  variant = "ink",
-}: {
-  label: string;
-  value: string;
-  variant?: "ink" | "paper" | "signal";
-}) {
-  return (
-    <div className={`route-signal route-signal--${variant}`} aria-hidden="true">
-      <div className="route-signal__top">
-        <span>{label}</span>
-        <span>Inspectable surface</span>
-      </div>
-      <div className="route-signal__field">
-        <span className="route-signal__mark">
-          <CaveatMarkSvg />
-        </span>
-        <strong>{value}</strong>
-        <span className="route-signal__line" />
-      </div>
-      <div className="route-signal__bottom">
-        <span>Actor / Action / Boundary</span>
-        <span>01—05</span>
-      </div>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------ reference data */
 
 type Reference = {
@@ -389,7 +359,10 @@ export function RegistryPage() {
 
   return (
     <main>
-      <section className="route-hero route-hero--ink route-hero--registry scroll-reveal">
+      <section className="route-hero route-hero--visual route-hero--registry scroll-reveal">
+        <div className="route-hero__mark" aria-hidden="true">
+          <CaveatMarkSvg />
+        </div>
         <div className="route-hero__copy">
           <span className="route-kicker intuition-lockup">
             <IntuitionLogo size={17} /> Intuition 1155 / Registry
@@ -404,11 +377,6 @@ export function RegistryPage() {
             <span>Live membership when configured</span>
           </div>
         </div>
-        <RouteSignal
-          label="Resolve / Registry"
-          value="Search → inspect → decide"
-          variant="signal"
-        />
       </section>
 
       <section className="route-section route-section--ink registry-map scroll-reveal">
@@ -583,7 +551,10 @@ export function DetailPage() {
 
   return (
     <main>
-      <section className="route-hero route-hero--ink route-hero--detail scroll-reveal">
+      <section className="route-hero route-hero--visual route-hero--detail scroll-reveal">
+        <div className="route-hero__mark" aria-hidden="true">
+          <CaveatMarkSvg />
+        </div>
         <div className="route-hero__copy">
           <Link className="pill pill--back" to="/registry">
             ← Registry
@@ -624,11 +595,6 @@ export function DetailPage() {
             />
           </div>
         </div>
-        <RouteSignal
-          label="Record / Boundary"
-          value="Purpose before permission"
-          variant="paper"
-        />
       </section>
 
       <section className="route-section route-section--paper detail-workspace scroll-reveal">
@@ -943,7 +909,10 @@ export function SubmitPage() {
 
   return (
     <main>
-      <section className="route-hero route-hero--ink route-hero--submit scroll-reveal">
+      <section className="route-hero route-hero--visual route-hero--submit scroll-reveal">
+        <div className="route-hero__mark" aria-hidden="true">
+          <CaveatMarkSvg />
+        </div>
         <div className="route-hero__copy">
           <span className="route-kicker">Contribution / Public standard</span>
           <h1 className="display">Add what the ecosystem is missing.</h1>
@@ -956,11 +925,6 @@ export function SubmitPage() {
             <span>Validate → simulate → sign</span>
           </div>
         </div>
-        <RouteSignal
-          label="Contribute / Evidence"
-          value="List a missing boundary"
-          variant="signal"
-        />
       </section>
 
       <ol className="stepper scroll-reveal">
@@ -1277,7 +1241,10 @@ const PATHS = [
 export function LearnPage() {
   return (
     <main>
-      <section className="route-hero route-hero--paper route-hero--learn scroll-reveal">
+      <section className="route-hero route-hero--visual route-hero--learn scroll-reveal">
+        <div className="route-hero__mark" aria-hidden="true">
+          <CaveatMarkSvg />
+        </div>
         <div className="route-hero__copy">
           <span className="route-kicker">Learn / Read the boundary</span>
           <h1 className="display">From permission to proof.</h1>
@@ -1291,11 +1258,6 @@ export function LearnPage() {
             <span>Evidence model</span>
           </div>
         </div>
-        <RouteSignal
-          label="Learn / Resolution"
-          value="Read before signing"
-          variant="paper"
-        />
       </section>
 
       <section className="route-section route-section--paper route-section--tight learn-index scroll-reveal">
@@ -1443,7 +1405,10 @@ function RelationshipCard({
 export function ComposabilityPage() {
   return (
     <main>
-      <section className="route-hero route-hero--paper route-hero--learn scroll-reveal">
+      <section className="route-hero route-hero--visual route-hero--compose scroll-reveal">
+        <div className="route-hero__mark" aria-hidden="true">
+          <CaveatMarkSvg />
+        </div>
         <div className="route-hero__copy">
           <span className="route-kicker">Composability / Fit</span>
           <h1 className="display">Which caveats work together.</h1>
@@ -1459,11 +1424,6 @@ export function ComposabilityPage() {
             <span>Attestable triples</span>
           </div>
         </div>
-        <RouteSignal
-          label="Composability / Fit"
-          value="Reinforce, conflict, or repeat"
-          variant="paper"
-        />
       </section>
 
       <section className="route-section route-section--paper route-section--tight scroll-reveal">
@@ -1558,7 +1518,10 @@ export function DevelopersPage() {
 
   return (
     <main>
-      <section className="route-hero route-hero--ink route-hero--developers scroll-reveal">
+      <section className="route-hero route-hero--visual route-hero--developers scroll-reveal">
+        <div className="route-hero__mark" aria-hidden="true">
+          <CaveatMarkSvg />
+        </div>
         <div className="route-hero__copy">
           <span className="route-kicker intuition-lockup">
             <IntuitionLogo size={17} /> Intuition Graph
@@ -1574,11 +1537,6 @@ export function DevelopersPage() {
             <span>Evidence-first</span>
           </div>
         </div>
-        <RouteSignal
-          label="Integrate / Intuition"
-          value="One record, many surfaces"
-          variant="signal"
-        />
       </section>
 
       <section className="route-section route-section--paper developers-workspace scroll-reveal">
