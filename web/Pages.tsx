@@ -1487,60 +1487,217 @@ export function DevelopersPage() {
         <div className="route-hero__copy">
           <h1 className="display">Developers</h1>
           <p className="lede">
-            Query enforcer identity, deployment evidence, terms, relationships,
-            and community signal from Intuition.
+            The public read path for ERC-7710 caveat enforcers: deployments,
+            terms, evidence, and community signal on Intuition.
           </p>
         </div>
       </section>
 
-      <section className="route-section route-section--paper developers-workspace scroll-reveal">
-        <div className="two-col two-col--code">
-          <div>
-            <h2 className="headline">Query the evidence you need.</h2>
-            <p className="lede">
-              Start with the canonical deployment query. Keep membership,
-              source, support, and opposition visible as separate claims in your
-              interface.
-            </p>
-          </div>
-          <div className="code-shell">
-            <div className="code-shell__bar">
-              <span>registry-deployments.graphql</span>
-              <button type="button" onClick={copySnippet}>
-                {copyState === "copied"
-                  ? "Copied"
-                  : copyState === "error"
-                    ? "Copy unavailable"
-                    : "Copy query"}
-              </button>
-            </div>
-            <pre
-              className="code"
-              aria-label="Registry deployments GraphQL query"
-            >
-              <code>{snippet}</code>
-            </pre>
-            <span className="visually-hidden" role="status" aria-live="polite">
-              {copyState === "copied"
-                ? "GraphQL query copied to clipboard."
-                : copyState === "error"
-                  ? "Clipboard access is unavailable. Select the query text to copy it manually."
-                  : ""}
-            </span>
-          </div>
-        </div>
-      </section>
+      <section className="route-section route-section--paper developer-docs">
+        <div className="developer-docs__layout">
+          <aside className="developer-docs__nav" aria-label="On this page">
+            <p>Developer docs</p>
+            <nav>
+              <a href="#overview">Overview</a>
+              <a href="#scope">Scope and limits</a>
+              <a href="#capabilities">What it provides</a>
+              <a href="#integration">Integration path</a>
+              <a href="#query">Canonical query</a>
+              <a href="#resources">Resources</a>
+            </nav>
+          </aside>
 
-      <section className="route-section route-section--ink developers-close scroll-reveal">
-        <div className="two-col">
-          <div>
-            <h2 className="headline">One record, many surfaces.</h2>
+          <div className="developer-docs__content">
+            <section id="overview" className="developer-docs__section">
+              <h2>One public record for delegation boundaries.</h2>
+              <p>
+                Caveat Registry is an open registry for ERC-7710 caveat enforcer
+                deployments. It makes deployment identity, source provenance,
+                terms schemas, and evidence discoverable without making the
+                initial MetaMask collection a closed allowlist.
+              </p>
+              <p>
+                A wallet, explorer, agent, or application can resolve the same
+                record through Intuition rather than maintaining its own opaque
+                directory.
+              </p>
+            </section>
+
+            <section id="scope" className="developer-docs__section">
+              <h2>Scope and limits</h2>
+              <div className="developer-docs__split">
+                <div>
+                  <h3>It provides</h3>
+                  <ul>
+                    <li>Canonical discovery of listed deployments.</li>
+                    <li>Terms, source, release, chain, and evidence claims.</li>
+                    <li>Separate support and opposition signals.</li>
+                    <li>A permissionless path to propose another enforcer.</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3>It does not provide</h3>
+                  <ul>
+                    <li>A safety rating, audit substitute, or allowlist.</li>
+                    <li>A guarantee that a future delegation will execute.</li>
+                    <li>A replacement for wallet-level simulation.</li>
+                    <li>
+                      Hidden signing authority or custody of a user wallet.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section id="capabilities" className="developer-docs__section">
+              <h2>What the registry gives your product.</h2>
+              <dl className="developer-docs__facts">
+                <div>
+                  <dt>Discover</dt>
+                  <dd>
+                    Browse deployments using canonical Intuition term IDs, chain
+                    availability, and declared restriction domains.
+                  </dd>
+                </div>
+                <div>
+                  <dt>Inspect</dt>
+                  <dd>
+                    Resolve the claims behind one deployment: source, release,
+                    terms schema, observed code, and related evidence.
+                  </dd>
+                </div>
+                <div>
+                  <dt>Compare signal</dt>
+                  <dd>
+                    Read supporting and counter-claims independently. Neither is
+                    collapsed into one trust score.
+                  </dd>
+                </div>
+                <div>
+                  <dt>Contribute</dt>
+                  <dd>
+                    Validate and submit an unlisted enforcer through the same
+                    public standard the registry reads.
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            <section id="integration" className="developer-docs__section">
+              <h2>Integration path</h2>
+              <ol className="developer-docs__steps">
+                <li>
+                  <strong>Read membership.</strong> Query the registry boundary
+                  on Intuition mainnet using the canonical predicate and class
+                  atom IDs.
+                </li>
+                <li>
+                  <strong>Resolve the selected deployment.</strong> Fetch its
+                  subject claims and interpret them through the versioned
+                  ontology—not display labels alone.
+                </li>
+                <li>
+                  <strong>Show the boundary.</strong> Put terms, source,
+                  availability, support, and opposition beside the action your
+                  user is about to approve.
+                </li>
+                <li>
+                  <strong>Simulate before signing.</strong> Registry membership
+                  and evidence inform a decision; the intended delegation still
+                  needs wallet-level simulation.
+                </li>
+              </ol>
+            </section>
+
+            <section id="query" className="developer-docs__section">
+              <div className="developer-docs__section-head">
+                <div>
+                  <h2>Canonical membership query</h2>
+                  <p>
+                    Start here to discover listed deployments. The registry
+                    boundary uses term IDs, never a display-label search.
+                  </p>
+                </div>
+                <a href="/registry">
+                  Open registry <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+              <div className="code-shell">
+                <div className="code-shell__bar">
+                  <span>registry-deployments.graphql</span>
+                  <button type="button" onClick={copySnippet}>
+                    {copyState === "copied"
+                      ? "Copied"
+                      : copyState === "error"
+                        ? "Copy unavailable"
+                        : "Copy query"}
+                  </button>
+                </div>
+                <pre
+                  className="code"
+                  aria-label="Registry deployments GraphQL query"
+                >
+                  <code>{snippet}</code>
+                </pre>
+                <span
+                  className="visually-hidden"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {copyState === "copied"
+                    ? "GraphQL query copied to clipboard."
+                    : copyState === "error"
+                      ? "Clipboard access is unavailable. Select the query text to copy it manually."
+                      : ""}
+                </span>
+              </div>
+            </section>
+
+            <section id="resources" className="developer-docs__section">
+              <h2>Read the contract, then build.</h2>
+              <nav
+                className="developer-docs__resources"
+                aria-label="Developer resources"
+              >
+                <a
+                  href="https://github.com/intuition-box/caveat-enforcers-registry/blob/main/docs/INTEGRATION.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>Integration rules</span>
+                  <span>Canonical GraphQL queries and lifecycle</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+                <a
+                  href="https://github.com/intuition-box/caveat-enforcers-registry/blob/main/docs/SCHEMA.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>Submission schema</span>
+                  <span>Fields, validation, and evidence requirements</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+                <a
+                  href="https://github.com/intuition-box/caveat-enforcers-registry/blob/main/docs/COMPOSABILITY.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>Composability guide</span>
+                  <span>Relationship claims and supporting context</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+                <a
+                  href="https://github.com/intuition-box/caveat-enforcers-registry"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>Repository</span>
+                  <span>Source, tests, and local development</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+              </nav>
+            </section>
           </div>
-          <p className="lede">
-            Wallets, explorers, agents, and developer tools can all resolve the
-            same record. The signature prompt asks the index the site does, so a
-            user reads the same terms wherever the delegation is presented.
-          </p>
         </div>
       </section>
     </main>
