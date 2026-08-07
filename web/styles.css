@@ -2978,7 +2978,9 @@ a:hover .arrow,
 /* registry filters + table */
 .filters {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns:
+    minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr)
+    minmax(0, 1fr);
   gap: clamp(1.25rem, 3vw, 2.5rem);
   margin-bottom: clamp(2.5rem, 5vw, 4rem);
 }
@@ -7037,6 +7039,83 @@ main > .band:first-child {
   overflow-wrap: anywhere;
 }
 
+.registry-drawer .spec a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.registry-drawer code {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+}
+
+.registry-drawer__section,
+.registry-drawer__classification {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line-light);
+}
+
+.registry-drawer__section-heading h3 {
+  max-width: 18ch;
+  margin: 0.4rem 0 0;
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-weight: 580;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+.claim-ledger {
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line-light);
+}
+
+.claim-ledger li {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.claim-ledger__statement {
+  display: grid;
+  grid-template-columns: minmax(6rem, 0.4fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.claim-ledger__statement strong {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.claim-ledger__statement span,
+.claim-ledger__signal {
+  overflow-wrap: anywhere;
+}
+
+.claim-ledger__signal {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+}
+
+.registry-drawer__classification {
+  padding: 1.25rem;
+  border: 1px solid var(--line-light);
+  background: color-mix(in srgb, var(--paper-bright) 82%, var(--signal));
+}
+
+.registry-drawer__classification p {
+  margin: 0.5rem 0 0;
+  line-height: 1.55;
+}
+
 .registry-drawer__note {
   margin-top: 2.5rem;
   padding-top: 1.5rem;
@@ -7046,6 +7125,103 @@ main > .band:first-child {
 .registry-drawer__note p {
   margin-bottom: 0;
   line-height: 1.6;
+}
+
+.transaction-plan {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line-light);
+}
+
+.transaction-plan__heading h3 {
+  margin: 0.4rem 0 0;
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 580;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.transaction-plan__heading p,
+.transaction-plan__warning {
+  line-height: 1.55;
+}
+
+.transaction-plan__list {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.transaction-plan__list > li {
+  padding: 1rem;
+  border: 1px solid var(--line-light);
+  background: var(--paper);
+}
+
+.transaction-plan__list > li > div:first-child {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.transaction-plan__list .spec {
+  margin-top: 0.8rem;
+}
+
+.transaction-plan__list .spec dd {
+  max-width: 14rem;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+}
+
+.transaction-plan__list details {
+  margin-top: 1rem;
+}
+
+.transaction-plan__list summary {
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.transaction-plan__calldata {
+  display: block;
+  max-height: 8rem;
+  margin-top: 0.75rem;
+  padding: 0.8rem;
+  overflow: auto;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.transaction-plan__warning {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.transaction-plan__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  gap: 0.75rem;
+}
+
+@media (max-width: 72rem) {
+  .registry-workspace .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .registry-workspace .table__row-button {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.75fr) auto auto;
+  }
+
+  .registry-workspace .table__chain {
+    display: none;
+  }
 }
 
 .form__import {
@@ -7117,6 +7293,10 @@ main > .band:first-child {
 }
 
 @media (max-width: 60rem) {
+  .registry-workspace .filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .table__row-button {
     grid-template-columns: minmax(0, 1fr) auto;
     row-gap: 0.65rem;
@@ -7136,6 +7316,10 @@ main > .band:first-child {
   .table__row-button .pill {
     grid-column: 1 / -1;
     justify-self: start;
+  }
+
+  .transaction-plan__actions {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

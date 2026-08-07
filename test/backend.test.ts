@@ -1825,6 +1825,11 @@ test("backend execution coordinator confirms and indexes an injected submission"
   let simulated = 0;
   let sent = 0;
   let confirmed = 0;
+  const reviewed = await backend.resolveSubmission(submission, {
+    write: { atomValue: "0", tripleValue: "0" },
+  });
+  assert.equal(reviewed.status, "ready");
+  if (reviewed.status !== "ready") return;
   const result = await backend.executeSubmission(
     submission,
     {
@@ -1847,6 +1852,7 @@ test("backend execution coordinator confirms and indexes an injected submission"
     },
     {
       write: { atomValue: "0", tripleValue: "0" },
+      expectedBatch: reviewed.batch,
       indexing: { maxAttempts: 2, delayMs: 0, sleep: async () => undefined },
     },
   );

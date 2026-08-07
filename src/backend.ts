@@ -156,6 +156,23 @@ function boundedPositiveInteger(
   return Math.min(Math.max(normalized, 1), maximum);
 }
 
+function submissionBatchFingerprint(
+  batch: Extract<SubmissionWriteBatch, { status: "ready" }>,
+): string {
+  return JSON.stringify({
+    finalTripleIds: batch.finalTripleIds,
+    transactions: batch.transactions.map((transaction) => ({
+      kind: transaction.kind,
+      to: transaction.request.to.toLowerCase(),
+      data: transaction.request.data.toLowerCase(),
+      value: transaction.request.value ?? "0",
+      atomIds: transaction.atomIds ?? [],
+      tripleIds: transaction.tripleIds ?? [],
+      dependsOn: transaction.dependsOn ?? null,
+    })),
+  });
+}
+
 export class RegistryBackend {
   private readonly config: BackendConfig;
   private readonly ontology: OntologyManifest;
@@ -488,6 +505,7 @@ export class RegistryBackend {
     adapter: SubmissionWriteAdapter,
     options: {
       write?: SubmissionWriteOptions;
+      expectedBatch?: Extract<SubmissionWriteBatch, { status: "ready" }>;
       startAt?: number;
       priorTransactionHash?: string;
       priorReceiptConfirmed?: boolean;
@@ -498,6 +516,17 @@ export class RegistryBackend {
       write: options.write,
     });
     if (resolved.status !== "ready") return resolved;
+    if (
+      options.expectedBatch &&
+      submissionBatchFingerprint(options.expectedBatch) !==
+        submissionBatchFingerprint(resolved.batch)
+    ) {
+      return {
+        status: "blocked",
+        message:
+          "Registry state changed after review. Resolve and review a fresh transaction plan before signing.",
+      };
+    }
 
     const execution = await executeSubmissionWriteBatch(
       resolved.batch,

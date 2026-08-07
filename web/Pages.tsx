@@ -17,6 +17,7 @@ import {
   buildEnforcerDisplayNameMap,
   enforcerTypeDisplayName,
 } from "../src/enforcer-display-name";
+import { deriveEnforcerPresentation } from "../src/enforcer-presentation";
 import referenceDocument from "../data/metamask-v1.3.0.json";
 import composabilityDocument from "../data/composability-seed.json";
 import ComposabilityGraph from "./ComposabilityGraph";
@@ -32,6 +33,7 @@ import {
   browserWalletAvailable,
   connectBrowserWallet,
   curateWithBrowserWallet,
+  previewWithBrowserWallet,
   submitWithBrowserWallet,
   type BrowserWallet,
 } from "./wallet";
@@ -40,6 +42,8 @@ import {
   type SubmissionInput,
 } from "../src/validation";
 import type { CurationInput } from "../src/curation";
+import type { Claim, RegistrySignal } from "../src/types";
+import type { ResolvedSubmission } from "../src/backend";
 import { CaveatMarkSvg } from "./CaveatMark";
 import IntuitionLogo from "./IntuitionLogo";
 
@@ -62,7 +66,7 @@ function Pill({
   );
 }
 
-function Spec({ rows }: { rows: Array<[string, string]> }) {
+function Spec({ rows }: { rows: Array<[string, React.ReactNode]> }) {
   return (
     <dl className="spec">
       {rows.map(([label, value]) => (
@@ -84,6 +88,7 @@ type Reference = {
   canonicalName: string;
   purpose: string;
   domain: string;
+  operation: string;
   chain: string;
   state: "observed" | "review";
   address: string;
@@ -221,17 +226,15 @@ function slugify(name: string): string {
 
 export const REFERENCE: Reference[] = referenceDocument.enforcers.map(
   (entry) => {
-    const [domain, purpose] = PURPOSES[entry.name] ?? [
-      "Caveat rule",
-      "A MetaMask Delegation Framework caveat enforcer reference.",
-    ];
+    const presentation = deriveEnforcerPresentation(entry.name);
     return {
       id: entry.address,
       slug: slugify(entry.name),
       name: REFERENCE_DISPLAY_NAMES.get(entry.name) ?? entry.name,
       canonicalName: entry.name,
-      purpose,
-      domain,
+      purpose: presentation.purpose,
+      domain: presentation.domain,
+      operation: presentation.operation,
       chain: "Intuition 1155",
       state: entry.codeStatus === "observed" ? "observed" : "review",
       address: entry.address,
@@ -239,7 +242,17 @@ export const REFERENCE: Reference[] = referenceDocument.enforcers.map(
   },
 );
 
-type RegistryRow = Reference & { live?: boolean };
+type RegistryRow = Reference & {
+  live?: boolean;
+  termId?: string;
+  source?: string;
+  terms?: string;
+  audit?: string;
+  claims?: Claim[];
+  supportSignal?: RegistrySignal;
+  oppositionSignal?: RegistrySignal;
+  classificationSource?: "indexed" | "derived";
+};
 
 const REFERENCE_CANONICAL_NAMES_BY_ADDRESS = new Map(
   REFERENCE.map((entry) => [entry.address.toLowerCase(), entry.canonicalName]),
@@ -259,22 +272,74 @@ function canonicalNameForIndexedEntry(
     : entry.label;
 }
 
+function contractAddressForIndexedEntry(
+  entry: Extract<RegistryApiState, { kind: "ready" }>["entries"][number],
+): string {
+  return (
+    /caip10:eip155:\d+:(0x[a-fA-F0-9]{40})/.exec(entry.label ?? "")?.[1] ??
+    "Address unavailable"
+  );
+}
+
+function hasIndexedClassification(value: string, pending: string): boolean {
+  return Boolean(value.trim()) && value !== pending;
+}
+
 function liveRow(
   entry: Extract<RegistryApiState, { kind: "ready" }>["entries"][number],
 ): RegistryRow {
   const canonicalName = canonicalNameForIndexedEntry(entry);
+  const presentation = deriveEnforcerPresentation(canonicalName);
+  const indexedDomain = hasIndexedClassification(entry.domain, "Unclassified");
+  const indexedOperation = hasIndexedClassification(
+    entry.operation,
+    "Claim pending",
+  );
+  const genericDescription = entry.description.startsWith(
+    "Onchain registry deployment",
+  );
   return {
     id: entry.id,
     slug: entry.id,
     name: enforcerTypeDisplayName(canonicalName),
     canonicalName,
-    purpose: entry.description,
-    domain: entry.domain,
+    purpose: genericDescription ? presentation.purpose : entry.description,
+    domain: indexedDomain ? entry.domain : presentation.domain,
+    operation: indexedOperation ? entry.operation : presentation.operation,
     chain: entry.chain,
     state: "observed",
-    address: entry.deployment,
+    address: contractAddressForIndexedEntry(entry),
     live: true,
+    termId: entry.id,
+    source: entry.source,
+    terms: entry.terms,
+    audit: entry.audit,
+    claims: entry.claims,
+    supportSignal: entry.supportSignal,
+    oppositionSignal: entry.oppositionSignal,
+    classificationSource:
+      indexedDomain && indexedOperation ? "indexed" : "derived",
   };
+}
+
+function externalUrl(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function signalLabel(signal: RegistrySignal | undefined): string {
+  if (!signal) return "No indexed signal";
+  const positions = signal.positionCount
+    ? ` · ${signal.positionCount} position${signal.positionCount === "1" ? "" : "s"}`
+    : "";
+  return `${signal.label} shares${positions}`;
 }
 
 function RegistryDetailDrawer({
@@ -297,6 +362,9 @@ function RegistryDetailDrawer({
       openerRef.current?.focus();
     };
   }, []);
+
+  const sourceUrl = externalUrl(row.source);
+  const claims = row.claims ?? [];
 
   return createPortal(
     <dialog
@@ -326,6 +394,7 @@ function RegistryDetailDrawer({
           <p className="registry-drawer__purpose">{row.purpose}</p>
           <div className="pill-row">
             <Pill>{row.domain}</Pill>
+            <Pill>{row.operation}</Pill>
             <Pill tone={row.state}>
               {row.state === "observed" ? "Observed" : "Review"}
             </Pill>
@@ -335,7 +404,12 @@ function RegistryDetailDrawer({
             rows={[
               ["Canonical type", row.canonicalName],
               ["Chain", row.chain],
-              ["Deployment", row.address],
+              ["Contract address", <code>{row.address}</code>],
+              ...(row.termId
+                ? ([["Intuition term ID", <code>{row.termId}</code>]] as Array<
+                    [string, React.ReactNode]
+                  >)
+                : []),
               ["Source family", "MetaMask Delegation Framework"],
               [
                 "Registry source",
@@ -343,6 +417,70 @@ function RegistryDetailDrawer({
               ],
             ]}
           />
+
+          <section className="registry-drawer__section">
+            <div className="registry-drawer__section-heading">
+              <span className="mono-sub">Evidence</span>
+              <h3>Keep every signal separate.</h3>
+            </div>
+            <Spec
+              rows={[
+                [
+                  "Source",
+                  sourceUrl ? (
+                    <a href={sourceUrl} target="_blank" rel="noreferrer">
+                      {row.source}
+                    </a>
+                  ) : (
+                    row.source || "No source claim"
+                  ),
+                ],
+                ["Supporting signal", signalLabel(row.supportSignal)],
+                ["Opposition signal", signalLabel(row.oppositionSignal)],
+                ["Terms schema", row.terms || "No terms schema claim"],
+                ["Audit", row.audit || "No audit claim"],
+                ["Release", "No release claim"],
+              ]}
+            />
+          </section>
+
+          <section className="registry-drawer__section">
+            <div className="registry-drawer__section-heading">
+              <span className="mono-sub">Claim ledger</span>
+              <h3>{claims.length} indexed claims</h3>
+            </div>
+            {claims.length ? (
+              <ol className="claim-ledger">
+                {claims.map((claim, index) => (
+                  <li key={claim.id ?? `${claim.predicate}-${index}`}>
+                    <span className="claim-ledger__statement">
+                      <strong>{claim.predicate}</strong>
+                      <span>{claim.object}</span>
+                    </span>
+                    <span className="claim-ledger__signal">
+                      {claim.stake} support
+                      {claim.oppositionStake
+                        ? ` · ${claim.oppositionStake} opposition`
+                        : ""}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="band__note">No hydrated claims are available.</p>
+            )}
+          </section>
+
+          {row.classificationSource === "derived" && (
+            <div className="registry-drawer__classification">
+              <strong>Display classification</strong>
+              <p>
+                Constraint and operation labels are derived from the canonical
+                implementation type for search and navigation. They are not
+                persisted Intuition claims.
+              </p>
+            </div>
+          )}
 
           <div className="registry-drawer__note">
             <strong>What this record means</strong>
@@ -364,6 +502,7 @@ export function RegistryPage() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [domain, setDomain] = useState("all");
+  const [operation, setOperation] = useState("all");
   const [chain, setChain] = useState("all");
   const [apiState, setApiState] = useState<RegistryApiState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -377,12 +516,7 @@ export function RegistryPage() {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
-    void fetchRegistry({
-      query: debouncedQuery,
-      domain: domain === "all" ? undefined : domain,
-      chain: chain === "all" ? undefined : chain,
-      signal: controller.signal,
-    })
+    void fetchRegistry({ signal: controller.signal })
       .then((state) => {
         if (!controller.signal.aborted) setApiState(state);
       })
@@ -401,25 +535,56 @@ export function RegistryPage() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [debouncedQuery, domain, chain]);
+  }, []);
 
   const showingLive = apiState?.kind === "ready";
-  const liveRows = showingLive ? apiState.entries.map(liveRow) : [];
-  const filtersActive =
-    Boolean(query.trim()) || domain !== "all" || chain !== "all";
-  const showReferenceFallback =
-    !showingLive || (!liveRows.length && !filtersActive);
+  const allLiveRows = useMemo(
+    () => (showingLive ? apiState.entries.map(liveRow) : []),
+    [apiState, showingLive],
+  );
+  const showReferenceFallback = !showingLive;
+
+  const matchesFilters = (row: RegistryRow): boolean => {
+    const q = debouncedQuery.trim().toLowerCase();
+    return (
+      (domain === "all" || row.domain === domain) &&
+      (operation === "all" || row.operation === operation) &&
+      (chain === "all" || chain === "eip155:1155") &&
+      (q === "" ||
+        row.name.toLowerCase().includes(q) ||
+        row.canonicalName.toLowerCase().includes(q) ||
+        row.purpose.toLowerCase().includes(q) ||
+        row.domain.toLowerCase().includes(q) ||
+        row.operation.toLowerCase().includes(q) ||
+        row.address.toLowerCase().includes(q) ||
+        Boolean(row.source?.toLowerCase().includes(q)))
+    );
+  };
+
+  const liveRows = allLiveRows.filter(matchesFilters);
 
   const domains = useMemo(
     () =>
       Array.from(
         new Set(
-          showingLive && liveRows.length
-            ? apiState.entries.map((entry) => entry.domain)
+          showingLive && allLiveRows.length
+            ? allLiveRows.map((entry) => entry.domain)
             : REFERENCE.map((r) => r.domain),
         ),
       ).sort(),
-    [apiState, showingLive],
+    [allLiveRows, showingLive],
+  );
+
+  const operations = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          showingLive && allLiveRows.length
+            ? allLiveRows.map((entry) => entry.operation)
+            : REFERENCE.map((entry) => entry.operation),
+        ),
+      ).sort(),
+    [allLiveRows, showingLive],
   );
 
   const referenceRows = useMemo(() => {
@@ -427,20 +592,22 @@ export function RegistryPage() {
     return REFERENCE.filter(
       (r) =>
         (domain === "all" || r.domain === domain) &&
+        (operation === "all" || r.operation === operation) &&
         (chain === "all" || chain === "eip155:1155") &&
         (q === "" ||
           r.name.toLowerCase().includes(q) ||
           r.canonicalName.toLowerCase().includes(q) ||
           r.purpose.toLowerCase().includes(q) ||
           r.domain.toLowerCase().includes(q) ||
+          r.operation.toLowerCase().includes(q) ||
           r.address.toLowerCase().includes(q)),
     );
-  }, [query, domain, chain]);
+  }, [query, domain, operation, chain]);
   const rows: RegistryRow[] = showReferenceFallback ? referenceRows : liveRows;
 
   const statusLabel = loading
     ? "Connecting to registry service"
-    : liveRows.length
+    : allLiveRows.length
       ? "Live enforcers · Intuition"
       : showingLive
         ? "Reference collection · no indexed entries"
@@ -501,13 +668,27 @@ export function RegistryPage() {
               <option value="eip155:1155">Intuition 1155</option>
             </select>
           </label>
+          <label>
+            <span className="mono-label">Operation</span>
+            <select
+              value={operation}
+              onChange={(event) => setOperation(event.target.value)}
+            >
+              <option value="all">All operations</option>
+              {operations.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="rail" role="status" aria-live="polite">
           <span className="mono-sub">{statusLabel}</span>
           <span className="mono-sub">
             {rows.length}{" "}
-            {liveRows.length && !showReferenceFallback
+            {allLiveRows.length && !showReferenceFallback
               ? "indexed"
               : `of ${REFERENCE.length} reference`}{" "}
             shown
@@ -540,7 +721,7 @@ export function RegistryPage() {
           ))}
           {rows.length === 0 && (
             <li className="table__empty">
-              {liveRows.length && !showReferenceFallback
+              {allLiveRows.length && !showReferenceFallback
                 ? "No indexed membership claims match this view."
                 : "The live service is unavailable, so no reference type matches that filter."}
             </li>
@@ -548,7 +729,7 @@ export function RegistryPage() {
         </ul>
 
         <p className="band__note">
-          {liveRows.length && !showReferenceFallback
+          {allLiveRows.length && !showReferenceFallback
             ? "Live rows come from the canonical Intuition membership query. Membership is a discoverability claim, not a safety guarantee."
             : apiState?.kind === "error"
               ? `Live registry unavailable: ${apiState.message} Showing the 32-entry MetaMask reference collection without presenting it as indexed data.`
@@ -582,9 +763,16 @@ export function RegistryPage() {
               slug: entry.slug,
             }))}
             onSelect={(slug) => {
-              const row = rows.find((entry) => entry.slug === slug);
               const fallback = REFERENCE.find((entry) => entry.slug === slug);
-              setSelectedRow(row ?? fallback ?? null);
+              const indexed = fallback
+                ? allLiveRows.find(
+                    (entry) =>
+                      entry.canonicalName === fallback.canonicalName ||
+                      entry.address.toLowerCase() ===
+                        fallback.address.toLowerCase(),
+                  )
+                : undefined;
+              setSelectedRow(indexed ?? fallback ?? null);
             }}
           />
         </BrowserFrame>
@@ -797,6 +985,11 @@ function EvidenceGraph() {
 
 type ContributionMode = "list" | "attest" | "counter";
 
+type SubmissionReview = {
+  input: SubmissionInput;
+  resolved: Extract<ResolvedSubmission, { status: "ready" }>;
+};
+
 const DEFAULT_TERMS_SCHEMA = JSON.stringify(
   {
     schemaVersion: "1.0.0",
@@ -839,6 +1032,21 @@ export function SubmitPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [importText, setImportText] = useState("");
   const [importNote, setImportNote] = useState<string | null>(null);
+  const [submissionReview, setSubmissionReview] =
+    useState<SubmissionReview | null>(null);
+
+  useEffect(() => {
+    setSubmissionReview(null);
+  }, [
+    mode,
+    name,
+    category,
+    purpose,
+    sourceUrl,
+    sourceVersion,
+    contractAddress,
+    termsJson,
+  ]);
 
   function applyImportedJson() {
     const raw = importText.trim();
@@ -922,43 +1130,62 @@ export function SubmitPage() {
     }
   }
 
+  function buildSubmissionInput(activeWallet: BrowserWallet): SubmissionInput {
+    let termsSchema: unknown;
+    try {
+      termsSchema = JSON.parse(termsJson);
+    } catch {
+      throw new Error("Terms schema must be valid JSON before submitting.");
+    }
+    return {
+      chainId: 1155,
+      contractAddress,
+      enforcerName: name,
+      description: purpose,
+      type: name,
+      restrictionDomain: category,
+      operation: "Delegated contract call",
+      sourceUrl,
+      ...(sourceVersion.trim() ? { sourceVersion } : {}),
+      termsSchema: termsSchema as SubmissionInput["termsSchema"],
+      submitterWallet: activeWallet.address,
+      initialSignal: "0",
+      evidence: {
+        audit: {
+          sourceUrl,
+          scope: "Repository and deployed contract evidence",
+          ...(sourceVersion.trim() ? { sourceVersion } : {}),
+        },
+      },
+    };
+  }
+
+  function resolvedSubmissionMessage(result: ResolvedSubmission): string {
+    if (result.status === "blocked") return result.message;
+    if (result.status === "invalid") {
+      return result.issues
+        .slice(0, 3)
+        .map((issue) => `${issue.path}: ${issue.message}`)
+        .join("; ");
+    }
+    return `${result.batch.transactions.length} transaction${result.batch.transactions.length === 1 ? "" : "s"} resolved and ready for your review.`;
+  }
+
   async function submitContribution(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
-    setStatus("Preparing a wallet-owned write…");
+    setStatus(
+      mode === "list"
+        ? "Resolving and verifying the transaction plan…"
+        : "Preparing a wallet-owned signal…",
+    );
     try {
       const activeWallet = wallet ?? (await connectBrowserWallet());
       if (!wallet) setWallet(activeWallet);
 
       if (mode === "list") {
-        let termsSchema: unknown;
-        try {
-          termsSchema = JSON.parse(termsJson);
-        } catch {
-          throw new Error("Terms schema must be valid JSON before submitting.");
-        }
-        const input: SubmissionInput = {
-          chainId: 1155,
-          contractAddress,
-          enforcerName: name,
-          description: purpose,
-          type: name,
-          restrictionDomain: category,
-          operation: "Delegated contract call",
-          sourceUrl,
-          ...(sourceVersion.trim() ? { sourceVersion } : {}),
-          termsSchema: termsSchema as SubmissionInput["termsSchema"],
-          submitterWallet: activeWallet.address,
-          initialSignal: "0",
-          evidence: {
-            audit: {
-              sourceUrl,
-              scope: "Repository and deployed contract evidence",
-              ...(sourceVersion.trim() ? { sourceVersion } : {}),
-            },
-          },
-        };
+        const input = buildSubmissionInput(activeWallet);
         const validation = validateSubmissionLocally(input);
         if (!validation.valid) {
           throw new Error(
@@ -968,14 +1195,11 @@ export function SubmitPage() {
               .join("; "),
           );
         }
-        const result = await submitWithBrowserWallet(input, activeWallet);
-        setStatus(
-          "message" in result
-            ? result.message
-            : result.issues
-                .map((issue) => `${issue.path}: ${issue.message}`)
-                .join("; "),
-        );
+        const result = await previewWithBrowserWallet(input, activeWallet);
+        setStatus(resolvedSubmissionMessage(result));
+        if (result.status === "ready") {
+          setSubmissionReview({ input, resolved: result });
+        }
         return;
       }
 
@@ -993,6 +1217,37 @@ export function SubmitPage() {
         error instanceof Error
           ? error.message
           : "The contribution could not be prepared.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function approveSubmission() {
+    if (busy || !submissionReview || !wallet) return;
+    setBusy(true);
+    setStatus("Requesting approval for the reviewed transaction plan…");
+    try {
+      const result = await submitWithBrowserWallet(
+        submissionReview.input,
+        wallet,
+        submissionReview.resolved.batch,
+      );
+      setStatus(
+        "message" in result
+          ? result.message
+          : result.issues
+              .map((issue) => `${issue.path}: ${issue.message}`)
+              .join("; "),
+      );
+      if ("message" in result && result.status === "indexed") {
+        setSubmissionReview(null);
+      }
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "The reviewed transaction plan could not be submitted.",
       );
     } finally {
       setBusy(false);
@@ -1244,6 +1499,64 @@ export function SubmitPage() {
                 ["Wallet", walletLabel],
               ]}
             />
+            {submissionReview && mode === "list" && (
+              <section className="transaction-plan" aria-labelledby="tx-plan">
+                <div className="transaction-plan__heading">
+                  <span className="mono-sub">Resolved · no signature yet</span>
+                  <h3 id="tx-plan">Exact transaction plan</h3>
+                  <p>
+                    Check every target and value. After approval, each write is
+                    simulated immediately before its wallet prompt.
+                  </p>
+                </div>
+                <ol className="transaction-plan__list">
+                  {submissionReview.resolved.batch.transactions.map(
+                    (transaction, index) => {
+                      const itemCount =
+                        transaction.atomIds?.length ??
+                        transaction.tripleIds?.length ??
+                        0;
+                      return (
+                        <li key={`${transaction.kind}-${index}`}>
+                          <div>
+                            <span className="mono-sub">
+                              Transaction {index + 1}
+                            </span>
+                            <strong>
+                              {transaction.kind === "create-atoms"
+                                ? "Create missing atoms"
+                                : "Create registry claims"}
+                            </strong>
+                          </div>
+                          <Spec
+                            rows={[
+                              ["Target", <code>{transaction.request.to}</code>],
+                              ["Value (wei)", transaction.request.value ?? "0"],
+                              ["Records", String(itemCount)],
+                              [
+                                "Dependency",
+                                transaction.dependsOn
+                                  ? "After atom creation"
+                                  : "None",
+                              ],
+                            ]}
+                          />
+                          <details>
+                            <summary>Inspect calldata</summary>
+                            <code className="transaction-plan__calldata">
+                              {transaction.request.data}
+                            </code>
+                          </details>
+                        </li>
+                      );
+                    },
+                  )}
+                </ol>
+                <p className="transaction-plan__warning">
+                  {submissionReview.resolved.batch.warning}
+                </p>
+              </section>
+            )}
             <button
               className="cta cta--solid"
               type="button"
@@ -1253,19 +1566,44 @@ export function SubmitPage() {
               {wallet ? "Wallet connected" : "Connect wallet"}{" "}
               <span aria-hidden="true">→</span>
             </button>
-            <button
-              className="cta cta--dark"
-              type="submit"
-              form="contribution-form"
-              disabled={busy}
-            >
-              {busy
-                ? "Waiting for wallet…"
-                : mode === "list"
-                  ? "Review and sign"
-                  : "Review signal"}{" "}
-              <span aria-hidden="true">→</span>
-            </button>
+            {submissionReview && mode === "list" ? (
+              <div className="transaction-plan__actions">
+                <button
+                  className="cta cta--ghost"
+                  type="button"
+                  onClick={() => {
+                    setSubmissionReview(null);
+                    setStatus("Plan closed. Edit fields or prepare it again.");
+                  }}
+                  disabled={busy}
+                >
+                  Back to edit
+                </button>
+                <button
+                  className="cta cta--dark"
+                  type="button"
+                  onClick={approveSubmission}
+                  disabled={busy}
+                >
+                  {busy ? "Waiting for wallet…" : "Approve in wallet"}{" "}
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                className="cta cta--dark"
+                type="submit"
+                form="contribution-form"
+                disabled={busy}
+              >
+                {busy
+                  ? "Preparing plan…"
+                  : mode === "list"
+                    ? "Prepare transaction plan"
+                    : "Review signal"}{" "}
+                <span aria-hidden="true">→</span>
+              </button>
+            )}
             {status && (
               <p className="band__note" role="status" aria-live="polite">
                 {status}
@@ -1273,7 +1611,7 @@ export function SubmitPage() {
             )}
             <p className="band__note">
               {mode === "list"
-                ? "Validation, simulation, wallet approval, receipt verification, and indexer confirmation happen in order. The server never receives your signing key."
+                ? "Validation and an exact plan resolve before the approval button appears. After approval, each write is simulated before its wallet prompt. The server never receives your signing key."
                 : "The claim and target vault are verified before the wallet prompts for a support or opposition deposit."}
             </p>
           </aside>

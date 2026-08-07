@@ -9,6 +9,7 @@ import {
 } from "viem";
 import {
   RegistryBackend,
+  type ResolvedSubmission,
   type SubmissionExecutionResult,
 } from "../src/backend";
 import {
@@ -187,6 +188,18 @@ function writeAdapterForWallet(wallet: BrowserWallet) {
 }
 
 /**
+ * Resolve the exact Intuition write batch and complete its read-only preflight
+ * without requesting a signature. Each request is simulated immediately
+ * before execution after the user approves the displayed plan.
+ */
+export async function previewWithBrowserWallet(
+  input: SubmissionInput,
+  wallet: BrowserWallet,
+): Promise<ResolvedSubmission> {
+  return backendForWallet(wallet).resolveSubmission(input);
+}
+
+/**
  * Execute the same validation, simulation, write, receipt, and indexer
  * verification pipeline as the backend, but keep the signing key in the
  * user's injected browser wallet. No server signer is involved.
@@ -194,11 +207,13 @@ function writeAdapterForWallet(wallet: BrowserWallet) {
 export async function submitWithBrowserWallet(
   input: SubmissionInput,
   wallet: BrowserWallet,
+  expectedBatch?: Extract<ResolvedSubmission, { status: "ready" }>["batch"],
 ): Promise<SubmissionExecutionResult> {
   return backendForWallet(wallet).executeSubmission(
     input,
     writeAdapterForWallet(wallet),
     {
+      expectedBatch,
       indexing: {
         maxAttempts: 5,
         delayMs: 1500,
