@@ -1,9 +1,9 @@
 /**
  * Composability correlation graph.
  *
- * This intentionally renders only terms and relationship triples in the
+ * This intentionally renders only terms and relationship records in the
  * composability dataset. The central index is browsing structure, not an
- * additional protocol claim; solid links are the actual published claims.
+ * additional protocol claim; solid links are the documented relationships.
  */
 import { useEffect, useMemo, useState } from "react";
 
@@ -174,8 +174,8 @@ export default function ComposabilityGraph({
           <h2>Trace a boundary before you compose it.</h2>
           <p>
             Select an enforcer, scope, or line to read the exact relationship.
-            Solid links are the recorded claims; the centre only helps browse
-            them.
+            Solid links are documented relationships; the centre only helps
+            browse them.
           </p>
         </div>
         <div className="correlation-graph__legend" aria-label="Graph key">
@@ -193,7 +193,7 @@ export default function ComposabilityGraph({
           className="correlation-graph__svg"
           viewBox={`0 0 ${viewbox.width} ${viewbox.height}`}
           role="img"
-          aria-label={`${relationships.length} recorded composability relationships across ${terms.length} terms. Select the relationship ledger below to read each claim.`}
+          aria-label={`${relationships.length} documented composability relationships across ${terms.length} terms. Select the relationship ledger below to read each relationship.`}
         >
           <g aria-hidden="true" className="correlation-graph__browse-links">
             {terms.map(({ term, position }) => (
@@ -344,7 +344,7 @@ export default function ComposabilityGraph({
               <p className="correlation-graph__status">Selected term</p>
               <h3>{shortLabel(selectedTerm)}</h3>
               <p>
-                {connectedRelationships.length} recorded{" "}
+                {connectedRelationships.length} documented{" "}
                 {connectedRelationships.length === 1
                   ? "relationship"
                   : "relationships"}{" "}
@@ -357,7 +357,7 @@ export default function ComposabilityGraph({
               <p className="correlation-graph__status">Browse the graph</p>
               <h3>Every line has a readable claim.</h3>
               <p>
-                This view maps {relationships.length} published relationships
+                This view maps {relationships.length} documented relationships
                 across {terms.length} enforcers and scopes. It does not infer
                 compatibility or turn a relationship into a safety score.
               </p>
