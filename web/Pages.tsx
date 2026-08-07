@@ -1410,82 +1410,6 @@ type ComposabilityRelationship = {
 const COMPOSABILITY_RELATIONSHIPS =
   composabilityDocument.relationships as ComposabilityRelationship[];
 
-/**
- * Curated use-case presets. The grouping is presentation; every compatibility
- * claim below it comes from the composability relationship data, which is
- * published as attestable Intuition triples (not hardcoded reasoning).
- */
-const COMPOSABILITY_PRESETS: Array<{
-  id: string;
-  title: string;
-  plain: string;
-  keys: string[];
-}> = [
-  {
-    id: "scoped-agent-action",
-    title: "Scoped agent action",
-    plain:
-      "Give an agent a narrow, safe action surface: which contracts it may call, which methods, how often, and for how long.",
-    keys: [
-      "allowed-targets-methods-complement",
-      "allowed-targets-call-count-complement",
-      "allowed-targets-time-complement",
-    ],
-  },
-  {
-    id: "spending-native-value",
-    title: "Spending native value",
-    plain:
-      "Let a delegation move TRUST. The scope you choose decides whether a payable call is even possible.",
-    keys: ["function-call-payable-conflict"],
-  },
-  {
-    id: "native-transfer-with-calldata",
-    title: "Native transfer that also calls a contract",
-    plain:
-      "Move value and call a function in one delegated action. Some scopes silently block the calldata you need.",
-    keys: ["native-transfer-calldata-conflict"],
-  },
-];
-
-function RelationshipCard({
-  relationship,
-}: {
-  relationship: ComposabilityRelationship;
-}) {
-  const isConflict = relationship.relation === "conflicts";
-  return (
-    <article className="compose-card">
-      <div className="compose-card__relation">
-        <span className="compose-card__term">{relationship.subjectType}</span>
-        <Pill tone={isConflict ? "review" : "observed"}>
-          {isConflict ? "conflicts with" : "complements"}
-        </Pill>
-        <span className="compose-card__term">{relationship.relatedType}</span>
-      </div>
-      <Spec
-        rows={[
-          ["When", relationship.context],
-          ...(relationship.ordering
-            ? ([["Ordering", relationship.ordering]] as Array<[string, string]>)
-            : []),
-        ]}
-      />
-      {relationship.evidenceNote && (
-        <p className="compose-card__why">{relationship.evidenceNote}</p>
-      )}
-      <a
-        className="compose-card__evidence"
-        href={relationship.supportedBy}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Evidence source <span aria-hidden="true">↗</span>
-      </a>
-    </article>
-  );
-}
-
 export function ComposabilityPage() {
   return (
     <main>
@@ -1514,45 +1438,7 @@ export function ComposabilityPage() {
           </p>
         </div>
 
-        <BrowserFrame
-          title="Composability"
-          label="Reinforce · conflict · repeat"
-          tone="ink"
-        >
-          <ComposabilityGraph relationships={COMPOSABILITY_RELATIONSHIPS} />
-        </BrowserFrame>
-
-        <div className="compose-presets">
-          {COMPOSABILITY_PRESETS.map((preset) => {
-            const relationships = preset.keys
-              .map((key) =>
-                COMPOSABILITY_RELATIONSHIPS.find((item) => item.key === key),
-              )
-              .filter((item): item is ComposabilityRelationship =>
-                Boolean(item),
-              );
-            return (
-              <section
-                key={preset.id}
-                id={preset.id}
-                className="compose-preset"
-              >
-                <header className="compose-preset__head">
-                  <h3 className="headline headline--sm">{preset.title}</h3>
-                  <p className="lede">{preset.plain}</p>
-                </header>
-                <div className="compose-preset__grid">
-                  {relationships.map((relationship) => (
-                    <RelationshipCard
-                      key={relationship.key}
-                      relationship={relationship}
-                    />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        <ComposabilityGraph relationships={COMPOSABILITY_RELATIONSHIPS} />
       </section>
 
       <section className="route-section route-section--ink scroll-reveal">

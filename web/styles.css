@@ -5978,224 +5978,336 @@ main > .band:first-child {
   }
 }
 
-/* ------------------------------------------------------------ composability */
+/* -------------------------------------------------------- correlation graph */
 
-.compose-presets {
-  display: grid;
-  gap: clamp(2rem, 4vw, 3rem);
+.correlation-graph {
+  --correlation-conflict: color-mix(in srgb, var(--signal) 72%, var(--paper));
   margin-top: 2rem;
+  border: 1px solid var(--line-dark);
+  background: #0b0b0b;
+  color: var(--paper);
 }
 
-.compose-preset__head {
-  max-width: 60ch;
-  margin-bottom: 1.25rem;
-}
-
-.compose-preset__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
-  gap: 1rem;
-}
-
-.compose-card {
+.correlation-graph__header {
   display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  padding: clamp(1.1rem, 2.5vw, 1.5rem);
-  border: 1px solid var(--line-light);
-  border-radius: 0.5rem;
-  background: color-mix(in oklab, var(--paper, #fff) 96%, transparent);
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  border-bottom: 1px solid var(--line-dark);
 }
 
-.compose-card__relation {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.compose-card__term {
-  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.8rem;
-  line-height: 1.3;
-}
-
-.compose-card__why {
+.correlation-graph__header h2,
+.correlation-graph__header p,
+.correlation-graph__inspector h3,
+.correlation-graph__inspector p {
   margin: 0;
-  font-size: 0.9rem;
-  opacity: 0.85;
 }
 
-.compose-card__evidence {
-  margin-top: auto;
-  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.correlation-graph__header h2,
+.correlation-graph__inspector h3 {
+  font-family: var(--display);
+  font-weight: 580;
+  letter-spacing: -0.035em;
 }
 
-/* -------------------------------------------------------- composability graph */
-
-.compose-graph {
-  --compose-complement: #16855a;
-  --compose-conflict: #c23b2f;
-  margin: 1.5rem 0 2.5rem;
+.correlation-graph__header h2 {
+  max-width: 17ch;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.95;
 }
 
-.compose-graph__legend {
+.correlation-graph__header p {
+  max-width: 46ch;
+  margin-top: 0.85rem;
+  color: color-mix(in srgb, var(--paper) 68%, transparent);
+  line-height: 1.5;
+}
+
+.correlation-graph__legend {
   display: flex;
+  flex: 0 0 auto;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem 1.25rem;
-  margin-bottom: 0.75rem;
-  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  gap: 1rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
-.compose-graph__key {
+.correlation-graph__key {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
-.compose-graph__key::before {
+.correlation-graph__key::before {
+  width: 1.5rem;
+  border-top: 2px solid currentColor;
   content: "";
-  width: 1.4rem;
-  height: 0;
-  border-top: 3px solid currentColor;
-  border-radius: 0;
 }
 
-.compose-graph__key--complement {
-  color: var(--compose-complement);
-}
-.compose-graph__key--conflict {
-  color: var(--compose-conflict);
-}
-.compose-graph__hint {
-  opacity: 0.6;
-  text-transform: none;
-  letter-spacing: 0;
+.correlation-graph__key--complement {
+  color: var(--signal);
 }
 
-.compose-graph__scroll {
-  overflow-x: auto;
+.correlation-graph__key--conflict {
+  color: var(--correlation-conflict);
 }
 
-.compose-graph__svg {
-  width: 100%;
-  min-width: 40rem;
-  height: auto;
+.correlation-graph__canvas {
+  min-height: clamp(31rem, 50vw, 43rem);
+  overflow: hidden;
+  border-bottom: 1px solid var(--line-dark);
+}
+
+.correlation-graph__svg {
   display: block;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
 }
 
-.compose-graph__baseline {
-  stroke: var(--line-light, rgba(0, 0, 0, 0.18));
+.correlation-graph__browse-links line {
+  stroke: rgba(243, 240, 232, 0.1);
+  stroke-dasharray: 3 10;
   stroke-width: 1;
 }
 
-.compose-graph__arc {
-  fill: none;
-  stroke-width: 2.5;
-  transition:
-    opacity 200ms ease,
-    stroke-width 200ms ease;
-  stroke-dasharray: 1;
-  pointer-events: stroke;
+.correlation-graph__link,
+.correlation-graph__term {
   cursor: pointer;
-}
-.compose-graph__arc--complements {
-  stroke: var(--compose-complement);
-}
-.compose-graph__arc--conflicts {
-  stroke: var(--compose-conflict);
-}
-.compose-graph__arc.is-lit {
-  opacity: 0.9;
-}
-.compose-graph__arc.is-dim {
-  opacity: 0.12;
-}
-
-.compose-graph__node circle {
-  fill: var(--ink, #16130f);
-  transition:
-    opacity 200ms ease,
-    r 200ms ease;
-  cursor: pointer;
-}
-.compose-graph__node.is-dim {
-  opacity: 0.3;
-}
-.compose-graph__node.is-active circle {
-  fill: var(--accent, #d8492b);
-}
-.compose-graph__node:focus {
   outline: none;
 }
-.compose-graph__node:focus circle {
-  stroke: var(--accent, #d8492b);
+
+.correlation-graph__link-visible {
+  fill: none;
+  stroke: var(--signal);
   stroke-width: 3;
+  transition:
+    opacity 180ms ease,
+    stroke-width 180ms ease;
 }
 
-.compose-graph__label {
-  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.7rem;
-  fill: currentColor;
-  text-anchor: start;
-  dominant-baseline: middle;
+.correlation-graph__link--conflicts .correlation-graph__link-visible {
+  stroke: var(--correlation-conflict);
 }
 
-.compose-graph__readout {
-  min-height: 3.25rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--line-light, rgba(0, 0, 0, 0.14));
-  font-size: 0.92rem;
+.correlation-graph__link-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 28;
 }
-.compose-graph__readout ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.5rem;
+
+.correlation-graph__link.is-dim,
+.correlation-graph__term.is-dim {
+  opacity: 0.14;
 }
-.compose-graph__tag {
-  font-family: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.72rem;
+
+.correlation-graph__link.is-active .correlation-graph__link-visible {
+  opacity: 0.9;
+}
+
+.correlation-graph__link:focus .correlation-graph__link-visible {
+  stroke-width: 7;
+}
+
+.correlation-graph__index circle {
+  fill: var(--signal);
+}
+
+.correlation-graph__index text {
+  fill: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.67rem;
+  letter-spacing: 0.01em;
+  text-anchor: middle;
+}
+
+.correlation-graph__term {
+  transition: opacity 180ms ease;
+}
+
+.correlation-graph__term-hit {
+  fill: transparent;
+}
+
+.correlation-graph__term-dot {
+  fill: var(--paper);
+  stroke: #0b0b0b;
+  stroke-width: 5;
+  transition:
+    fill 180ms ease,
+    r 180ms ease;
+}
+
+.correlation-graph__term text {
+  fill: rgba(243, 240, 232, 0.8);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  text-anchor: middle;
+}
+
+.correlation-graph__term.is-selected .correlation-graph__term-dot,
+.correlation-graph__term:focus .correlation-graph__term-dot {
+  fill: var(--signal);
+  r: 13px;
+}
+
+.correlation-graph__term:focus-visible .correlation-graph__term-dot {
+  stroke: var(--paper);
+  stroke-width: 7;
+}
+
+.correlation-graph__inspector {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  min-height: 13rem;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  border-bottom: 1px solid var(--line-dark);
+}
+
+.correlation-graph__inspector-copy {
+  max-width: 72ch;
+}
+
+.correlation-graph__status {
+  margin-bottom: 0.75rem !important;
+  color: var(--signal);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.compose-graph__tag--complements {
-  color: var(--compose-complement);
-}
-.compose-graph__tag--conflicts {
-  color: var(--compose-conflict);
 }
 
-/* Entrance draw-in only when motion is allowed. */
-@media (prefers-reduced-motion: no-preference) {
-  .motion-ready .compose-graph__arc {
-    animation: compose-arc-draw 900ms ease forwards;
-  }
-}
-@keyframes compose-arc-draw {
-  from {
-    stroke-dasharray: 620;
-    stroke-dashoffset: 620;
-  }
-  to {
-    stroke-dasharray: 620;
-    stroke-dashoffset: 0;
-  }
+.correlation-graph__inspector h3 {
+  font-size: clamp(1.65rem, 3vw, 2.75rem);
+  line-height: 0.98;
 }
 
-@media (prefers-color-scheme: dark) {
-  .compose-graph {
-    --compose-complement: #3fbd85;
-    --compose-conflict: #ef6a5c;
+.correlation-graph__inspector p:not(.correlation-graph__status) {
+  max-width: 64ch;
+  margin-top: 0.7rem;
+  color: color-mix(in srgb, var(--paper) 78%, transparent);
+  line-height: 1.5;
+}
+
+.correlation-graph__inspector a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  margin-top: 1rem;
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.correlation-graph__clear {
+  min-height: 2.75rem;
+  flex: 0 0 auto;
+  padding: 0 0.9rem;
+  border: 1px solid var(--line-dark);
+  background: transparent;
+  color: var(--paper);
+  font: 600 0.78rem var(--body);
+  cursor: pointer;
+}
+
+.correlation-graph__ledger {
+  display: grid;
+}
+
+.correlation-graph__ledger-row {
+  display: grid;
+  grid-template-columns:
+    minmax(10rem, 1fr) minmax(8rem, 0.8fr) minmax(10rem, 1fr)
+    auto;
+  gap: 1rem;
+  min-height: 4.25rem;
+  align-items: center;
+  padding: 0.8rem clamp(1.25rem, 3vw, 2.25rem);
+  border: 0;
+  border-bottom: 1px solid var(--line-dark);
+  background: transparent;
+  color: var(--paper);
+  font: 600 0.92rem var(--body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.correlation-graph__ledger-row:last-child {
+  border-bottom: 0;
+}
+
+.correlation-graph__ledger-relation {
+  color: var(--signal);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.correlation-graph__ledger-row--conflicts .correlation-graph__ledger-relation {
+  color: var(--correlation-conflict);
+}
+
+.correlation-graph__ledger-row:hover,
+.correlation-graph__ledger-row.is-selected {
+  background: rgba(243, 240, 232, 0.06);
+}
+
+.correlation-graph__ledger-row:focus-visible,
+.correlation-graph__clear:focus-visible,
+.correlation-graph__inspector a:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: -2px;
+}
+
+@media (max-width: 48rem) {
+  .correlation-graph__header,
+  .correlation-graph__inspector {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .correlation-graph__canvas {
+    min-height: 0;
+  }
+
+  .correlation-graph__svg {
+    height: auto;
+    min-height: 0;
+  }
+
+  .correlation-graph__term text {
+    font-size: 1rem;
+  }
+
+  .correlation-graph__inspector {
+    min-height: 0;
+  }
+
+  .correlation-graph__ledger-row {
+    grid-template-columns: 1fr auto;
+    gap: 0.35rem 1rem;
+    padding-block: 1rem;
+  }
+
+  .correlation-graph__ledger-row > :nth-child(2) {
+    grid-column: 1;
+  }
+
+  .correlation-graph__ledger-row > :nth-child(3) {
+    grid-column: 1;
+  }
+
+  .correlation-graph__ledger-row > :last-child {
+    grid-column: 2;
+    grid-row: 1 / span 3;
   }
 }
 
@@ -6437,25 +6549,6 @@ main > .band:first-child {
     opacity: 1;
     transform: scale(1);
   }
-}
-
-/* Composability graph reads on the dark frame regardless of OS theme. */
-.browser-frame--ink .compose-graph {
-  --compose-complement: #3fbd85;
-  --compose-conflict: #ef6a5c;
-  color: rgba(255, 255, 255, 0.8);
-}
-.browser-frame--ink .compose-graph__baseline {
-  stroke: rgba(255, 255, 255, 0.18);
-}
-.browser-frame--ink .compose-graph__node circle {
-  fill: #fff;
-}
-.browser-frame--ink .compose-graph__label {
-  fill: rgba(255, 255, 255, 0.82);
-}
-.browser-frame--ink .compose-graph__readout {
-  border-top-color: rgba(255, 255, 255, 0.14);
 }
 
 /* --------------------------------------------------------------------------
