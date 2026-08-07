@@ -9,7 +9,8 @@
  * it once the reviewed ontology IDs are configured — the page never presents
  * reference rows as registry listings.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useParams } from "react-router-dom";
 import { registryDeploymentsQuery } from "../src/registry";
 import {
@@ -276,20 +277,108 @@ function liveRow(
   };
 }
 
+function RegistryDetailDrawer({
+  row,
+  onClose,
+}: {
+  row: RegistryRow;
+  onClose: () => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    openerRef.current = document.activeElement as HTMLElement | null;
+    dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
+      openerRef.current?.focus();
+    };
+  }, []);
+
+  return createPortal(
+    <dialog
+      ref={dialogRef}
+      className="registry-drawer"
+      aria-labelledby="registry-drawer-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <article className="registry-drawer__panel">
+        <header className="registry-drawer__header">
+          <div>
+            <span className="mono-sub">Enforcer record</span>
+            <h2 id="registry-drawer-title">{row.name}</h2>
+          </div>
+          <button type="button" onClick={onClose} autoFocus>
+            Close
+          </button>
+        </header>
+
+        <div className="registry-drawer__body">
+          <p className="registry-drawer__purpose">{row.purpose}</p>
+          <div className="pill-row">
+            <Pill>{row.domain}</Pill>
+            <Pill tone={row.state}>
+              {row.state === "observed" ? "Observed" : "Review"}
+            </Pill>
+          </div>
+
+          <Spec
+            rows={[
+              ["Canonical type", row.canonicalName],
+              ["Chain", row.chain],
+              ["Deployment", row.address],
+              ["Source family", "MetaMask Delegation Framework"],
+              [
+                "Registry source",
+                row.live ? "Intuition index" : "Reference collection",
+              ],
+            ]}
+          />
+
+          <div className="registry-drawer__note">
+            <strong>What this record means</strong>
+            <p>
+              This entry makes the deployment discoverable. It is evidence of a
+              registry claim, not an approval, audit, or safety guarantee.
+            </p>
+          </div>
+        </div>
+      </article>
+    </dialog>,
+    document.body,
+  );
+}
+
 /* -------------------------------------------------------------------- registry */
 
 export function RegistryPage() {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [domain, setDomain] = useState("all");
   const [chain, setChain] = useState("all");
   const [apiState, setApiState] = useState<RegistryApiState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedRow, setSelectedRow] = useState<RegistryRow | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(query), 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     void fetchRegistry({
-      query,
+      query: debouncedQuery,
       domain: domain === "all" ? undefined : domain,
       chain: chain === "all" ? undefined : chain,
       signal: controller.signal,
@@ -312,7 +401,7 @@ export function RegistryPage() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [query, domain, chain]);
+  }, [debouncedQuery, domain, chain]);
 
   const showingLive = apiState?.kind === "ready";
   const liveRows = showingLive ? apiState.entries.map(liveRow) : [];
@@ -372,38 +461,9 @@ export function RegistryPage() {
         </div>
       </section>
 
-      <section className="route-section route-section--ink registry-map scroll-reveal">
-        <div className="route-section__intro">
-          <div>
-            <p className="route-kicker">Seeded on mainnet</p>
-            <h2 className="headline">The whole registry at a glance.</h2>
-          </div>
-          <p className="lede">
-            Every spoke is a live membership triple on Intuition: 32 ERC-7710
-            enforcers linked to one deployment class. Coloured by what they
-            restrict.
-          </p>
-        </div>
-        <BrowserFrame
-          title="Caveat Registry"
-          label="Live · Intuition 1155"
-          tone="ink"
-        >
-          <EnforcerRadialGraph
-            nodes={REFERENCE.map((entry) => ({
-              name: entry.name,
-              domain: entry.domain,
-              address: entry.address,
-              slug: entry.slug,
-            }))}
-          />
-        </BrowserFrame>
-      </section>
-
       <section className="route-section route-section--paper registry-workspace scroll-reveal">
         <div className="route-section__intro">
           <div>
-            <p className="route-kicker">One public index</p>
             <h2 className="headline">
               Start with the rule, then inspect the record.
             </h2>
@@ -443,7 +503,7 @@ export function RegistryPage() {
           </label>
         </div>
 
-        <div className="rail">
+        <div className="rail" role="status" aria-live="polite">
           <span className="mono-sub">{statusLabel}</span>
           <span className="mono-sub">
             {rows.length}{" "}
@@ -454,10 +514,15 @@ export function RegistryPage() {
           </span>
         </div>
 
-        <ul className="table" aria-live="polite">
+        <ul className="table">
           {rows.map((r) => (
             <li key={r.slug}>
-              <Link to={`/registry/${r.slug}`}>
+              <button
+                type="button"
+                className="table__row-button"
+                onClick={() => setSelectedRow(r)}
+                aria-haspopup="dialog"
+              >
                 <span className="table__name">
                   <strong>{r.name}</strong>
                   <em>{r.purpose}</em>
@@ -467,7 +532,10 @@ export function RegistryPage() {
                 <Pill tone={r.state}>
                   {r.state === "observed" ? "Observed" : "Review"}
                 </Pill>
-              </Link>
+                <span className="table__open" aria-hidden="true">
+                  View
+                </span>
+              </button>
             </li>
           ))}
           {rows.length === 0 && (
@@ -489,6 +557,45 @@ export function RegistryPage() {
                 : "The 32-entry MetaMask collection is reference data only. Start the local registry service to inspect indexed Intuition records."}
         </p>
       </section>
+
+      <section className="route-section route-section--ink registry-map scroll-reveal">
+        <div className="route-section__intro">
+          <div>
+            <h2 className="headline">The whole registry at a glance.</h2>
+          </div>
+          <p className="lede">
+            Every spoke is a live membership triple on Intuition: 32 ERC-7710
+            enforcers linked to one deployment class. Coloured by what they
+            restrict.
+          </p>
+        </div>
+        <BrowserFrame
+          title="Caveat Registry"
+          label="Live · Intuition 1155"
+          tone="ink"
+        >
+          <EnforcerRadialGraph
+            nodes={REFERENCE.map((entry) => ({
+              name: entry.name,
+              domain: entry.domain,
+              address: entry.address,
+              slug: entry.slug,
+            }))}
+            onSelect={(slug) => {
+              const row = rows.find((entry) => entry.slug === slug);
+              const fallback = REFERENCE.find((entry) => entry.slug === slug);
+              setSelectedRow(row ?? fallback ?? null);
+            }}
+          />
+        </BrowserFrame>
+      </section>
+
+      {selectedRow && (
+        <RegistryDetailDrawer
+          row={selectedRow}
+          onClose={() => setSelectedRow(null)}
+        />
+      )}
     </main>
   );
 }
@@ -687,8 +794,6 @@ function EvidenceGraph() {
 }
 
 /* ---------------------------------------------------------------------- submit */
-
-const STEPS = ["Identity", "Deployment", "Evidence", "Review"];
 
 type ContributionMode = "list" | "attest" | "counter";
 
@@ -915,26 +1020,12 @@ export function SubmitPage() {
         </div>
       </section>
 
-      <ol className="stepper scroll-reveal">
-        {STEPS.map((step, i) => (
-          <li
-            key={step}
-            className={
-              i === (mode === "list" ? 0 : 2) ? "is-active" : undefined
-            }
-          >
-            <span className="mono-sub">{String(i + 1).padStart(2, "0")}</span>
-            <span>{step}</span>
-          </li>
-        ))}
-      </ol>
-
       <section className="route-section route-section--paper submit-workspace scroll-reveal">
         <div className="route-section__intro">
-          <p className="route-kicker">A public record starts here</p>
+          <h2 className="headline">Create a registry contribution.</h2>
           <p className="lede">
-            Describe the boundary in plain language, attach source and terms,
-            then let your wallet approve the write.
+            Choose the contribution, provide its evidence, then review the exact
+            wallet-owned write before signing.
           </p>
         </div>
         <div className="two-col two-col--form">
@@ -944,33 +1035,6 @@ export function SubmitPage() {
             onSubmit={submitContribution}
             aria-label="Contribute to the open registry"
           >
-            <label className="form__import">
-              <span className="mono-label">
-                Paste submission JSON (optional)
-              </span>
-              <textarea
-                value={importText}
-                onChange={(event) => setImportText(event.target.value)}
-                rows={4}
-                placeholder='Paste a submission JSON here and the fields below fill in automatically — e.g. { "enforcerName": "...", "contractAddress": "0x...", "termsSchema": { ... } }'
-                spellCheck={false}
-              />
-              <div className="form__import-actions">
-                <button
-                  className="cta cta--ghost"
-                  type="button"
-                  onClick={applyImportedJson}
-                >
-                  Autofill fields from JSON <span aria-hidden="true">↓</span>
-                </button>
-                {importNote && (
-                  <span className="band__note" role="status" aria-live="polite">
-                    {importNote}
-                  </span>
-                )}
-              </div>
-            </label>
-
             <label>
               <span className="mono-label">Contribution type</span>
               <select
@@ -985,66 +1049,97 @@ export function SubmitPage() {
               </select>
             </label>
 
-            <div className="form__pair">
-              <label>
-                <span className="mono-label">Enforcer name</span>
-                <input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="SessionFrequencyEnforcer"
-                  required={mode === "list"}
-                  disabled={mode !== "list"}
-                />
-              </label>
-              <label>
-                <span className="mono-label">Constraint category</span>
-                <select
-                  value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                  disabled={mode !== "list"}
-                >
-                  <option value="frequency">Frequency</option>
-                  <option value="amount">Amount limit</option>
-                  <option value="target">Target address</option>
-                  <option value="method">Callable method</option>
-                  <option value="time">Time window</option>
-                </select>
-              </label>
-            </div>
-
-            <label>
-              <span className="mono-label">Plain-language purpose</span>
-              <textarea
-                value={purpose}
-                onChange={(event) => setPurpose(event.target.value)}
-                rows={3}
-                placeholder="Limits how often a delegated session may execute within a defined interval."
-                required={mode === "list"}
-                disabled={mode !== "list"}
-              />
-            </label>
-
-            <div className="form__pair">
-              <label>
-                <span className="mono-label">Source URL</span>
-                <input
-                  value={sourceUrl}
-                  onChange={(event) => setSourceUrl(event.target.value)}
-                  placeholder="https://github.com/example/enforcers"
-                  required={mode === "list"}
-                  disabled={mode !== "list"}
-                />
-              </label>
-              <label>
-                <span className="mono-label">Chain</span>
-                <select value="1155" disabled>
-                  <option value="1155">Intuition 1155</option>
-                </select>
-              </label>
-            </div>
-
             {mode === "list" ? (
               <>
+                <details className="form__import">
+                  <summary>Have submission JSON? Autofill the form</summary>
+                  <label>
+                    <span className="mono-label">Submission JSON</span>
+                    <textarea
+                      value={importText}
+                      onChange={(event) => setImportText(event.target.value)}
+                      rows={4}
+                      placeholder='Paste JSON such as { "enforcerName": "...", "contractAddress": "0x...", "termsSchema": { ... } }'
+                      spellCheck={false}
+                    />
+                  </label>
+                  <div className="form__import-actions">
+                    <button
+                      className="cta cta--ghost"
+                      type="button"
+                      onClick={applyImportedJson}
+                    >
+                      Autofill fields from JSON
+                    </button>
+                    {importNote && (
+                      <span
+                        className="band__note"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        {importNote}
+                      </span>
+                    )}
+                  </div>
+                </details>
+
+                <div className="form__pair">
+                  <label>
+                    <span className="mono-label">Enforcer name</span>
+                    <input
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="SessionFrequencyEnforcer"
+                      maxLength={128}
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span className="mono-label">Constraint category</span>
+                    <select
+                      value={category}
+                      onChange={(event) => setCategory(event.target.value)}
+                    >
+                      <option value="frequency">Frequency</option>
+                      <option value="amount">Amount limit</option>
+                      <option value="target">Target address</option>
+                      <option value="method">Callable method</option>
+                      <option value="time">Time window</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label>
+                  <span className="mono-label">Plain-language purpose</span>
+                  <textarea
+                    value={purpose}
+                    onChange={(event) => setPurpose(event.target.value)}
+                    rows={3}
+                    maxLength={800}
+                    placeholder="Limits how often a delegated session may execute within a defined interval."
+                    required
+                  />
+                </label>
+
+                <div className="form__pair">
+                  <label>
+                    <span className="mono-label">Source URL</span>
+                    <input
+                      type="url"
+                      value={sourceUrl}
+                      onChange={(event) => setSourceUrl(event.target.value)}
+                      placeholder="https://github.com/example/enforcers"
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span className="mono-label">Chain</span>
+                    <select value="1155" disabled>
+                      <option value="1155">Intuition 1155</option>
+                    </select>
+                  </label>
+                </div>
+
                 <div className="form__pair">
                   <label>
                     <span className="mono-label">
@@ -1056,6 +1151,8 @@ export function SubmitPage() {
                         setContractAddress(event.target.value)
                       }
                       placeholder="0x…"
+                      pattern="^0x[a-fA-F0-9]{40}$"
+                      title="Enter a 20-byte EVM address beginning with 0x."
                       required
                     />
                   </label>
@@ -1065,6 +1162,7 @@ export function SubmitPage() {
                       value={sourceVersion}
                       onChange={(event) => setSourceVersion(event.target.value)}
                       placeholder="v1.0.0 or commit SHA"
+                      maxLength={128}
                     />
                   </label>
                 </div>
@@ -1088,6 +1186,8 @@ export function SubmitPage() {
                     value={claimId}
                     onChange={(event) => setClaimId(event.target.value)}
                     placeholder="0x… 32-byte Intuition triple ID"
+                    pattern="^0x[a-fA-F0-9]{64}$"
+                    title="Enter a 32-byte Intuition claim ID beginning with 0x."
                     required
                   />
                 </label>
@@ -1096,6 +1196,7 @@ export function SubmitPage() {
                     <span className="mono-label">Deposit amount (wei)</span>
                     <input
                       inputMode="numeric"
+                      pattern="[0-9]+"
                       value={amount}
                       onChange={(event) => setAmount(event.target.value)}
                       required
@@ -1105,6 +1206,7 @@ export function SubmitPage() {
                     <span className="mono-label">Curve ID</span>
                     <input
                       inputMode="numeric"
+                      pattern="[0-9]+"
                       value={curveId}
                       onChange={(event) => setCurveId(event.target.value)}
                       required
@@ -1394,10 +1496,8 @@ export function ComposabilityPage() {
         <div className="route-hero__copy">
           <h1 className="display">Composability</h1>
           <p className="lede">
-            Composability is a claim about a set of enforcers: whether they
-            reinforce the intended permission, conflict with it, or repeat a
-            restriction that is already there. Each claim below is an Intuition
-            triple the community can extend and dispute.
+            See which enforcers reinforce, conflict with, or repeat a delegation
+            boundary. Every relationship remains an inspectable Intuition claim.
           </p>
         </div>
       </section>
@@ -1508,20 +1608,13 @@ export function DevelopersPage() {
       </section>
 
       <section className="route-section route-section--paper developers-workspace scroll-reveal">
-        <div className="route-section__intro">
-          <p className="route-kicker">Integration surface</p>
-          <p className="lede">
-            Ask for the evidence your interface needs. Keep individual claims
-            visible instead of inventing a universal trust score.
-          </p>
-        </div>
         <div className="two-col two-col--code">
           <div>
-            <h2 className="headline">Ask for evidence, not assumptions.</h2>
+            <h2 className="headline">Query the evidence you need.</h2>
             <p className="lede">
-              The client takes explicit registry configuration. Products decide
-              how to present individual signals without inventing a universal
-              trust badge.
+              Start with the canonical deployment query. Keep membership,
+              source, support, and opposition visible as separate claims in your
+              interface.
             </p>
           </div>
           <div className="code-shell">

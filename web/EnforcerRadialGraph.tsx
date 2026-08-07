@@ -58,8 +58,10 @@ function polar(angle: number, radius: number): [number, number] {
 
 export default function EnforcerRadialGraph({
   nodes,
+  onSelect,
 }: {
   nodes: RadialNode[];
+  onSelect?: (slug: string) => void;
 }) {
   const [active, setActive] = useState<string | null>(null);
 
@@ -140,6 +142,13 @@ export default function EnforcerRadialGraph({
               onMouseLeave={() => setActive(null)}
               onFocus={() => setActive(node.slug)}
               onBlur={() => setActive(null)}
+              onClick={() => onSelect?.(node.slug)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onSelect?.(node.slug);
+                }
+              }}
             >
               <circle cx={node.x} cy={node.y} r={6} />
               {active === node.slug && (

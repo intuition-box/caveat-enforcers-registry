@@ -6065,7 +6065,7 @@ main > .band:first-child {
   width: 1.4rem;
   height: 0;
   border-top: 3px solid currentColor;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .compose-graph__key--complement {
@@ -6456,4 +6456,349 @@ main > .band:first-child {
 }
 .browser-frame--ink .compose-graph__readout {
   border-top-color: rgba(255, 255, 255, 0.14);
+}
+
+/* --------------------------------------------------------------------------
+   Operational routes
+   Product pages open directly into the task. The homepage keeps the authored
+   cinematic sequence; route surfaces use familiar, fast application patterns.
+---------------------------------------------------------------------------- */
+
+.site-shell--route .site-header {
+  position: sticky;
+  top: 0;
+  background: var(--ink);
+}
+
+.site-shell--route .brand,
+.site-shell--route .site-nav a,
+.site-shell--route .menu-toggle,
+.site-footer a {
+  min-height: 2.75rem;
+}
+
+.site-shell--route .brand,
+.site-shell--route .site-nav a,
+.site-footer a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.motion-ready .site-shell--route .scroll-reveal {
+  opacity: 1;
+  filter: none;
+  transform: none;
+  transition: none;
+}
+
+.site-shell--route .route-loading {
+  min-height: 16rem;
+}
+
+.route-hero--visual {
+  min-height: clamp(24rem, 50vh, 31rem);
+  justify-content: center;
+  gap: 1.75rem;
+  padding-top: clamp(3rem, 6vw, 5rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.route-hero--visual::before {
+  opacity: 0.36;
+}
+
+.route-hero--visual::after {
+  background: rgb(0 0 0 / 0.68);
+}
+
+.route-hero--visual .route-hero__mark {
+  width: clamp(5rem, 9vw, 7.5rem);
+}
+
+.route-hero--visual .route-hero__copy .display {
+  margin-bottom: 0.85rem;
+  font-size: clamp(3.4rem, 6vw, 5.8rem);
+  letter-spacing: -0.035em;
+  line-height: 0.94;
+}
+
+.route-hero--visual .route-hero__copy .lede {
+  max-width: 42rem;
+}
+
+.route-hero--visual.route-hero--detail {
+  min-height: clamp(27rem, 58vh, 35rem);
+}
+
+.route-section {
+  padding-top: clamp(3.5rem, 6vw, 6rem);
+  padding-bottom: clamp(3.5rem, 6vw, 6rem);
+}
+
+.route-section__intro {
+  margin-bottom: clamp(2.5rem, 4vw, 4rem);
+}
+
+.registry-workspace .filters {
+  margin-bottom: 2rem;
+}
+
+.table__row-button {
+  display: grid;
+  width: 100%;
+  min-height: 6.25rem;
+  grid-template-columns:
+    minmax(0, 1.6fr) minmax(0, 0.7fr) minmax(0, 0.7fr)
+    auto auto;
+  align-items: center;
+  gap: clamp(1rem, 2.5vw, 2rem);
+  padding: 1.25rem 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    padding 180ms ease,
+    background-color 180ms ease;
+}
+
+.table__row-button:hover,
+.table__row-button:focus-visible {
+  padding-inline: 1rem;
+  background: color-mix(in srgb, var(--paper-bright) 76%, var(--signal));
+}
+
+.table__row-button:hover .table__name strong {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.table__open {
+  font-size: 0.92rem;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.registry-drawer {
+  width: min(38rem, 100%);
+  max-width: none;
+  height: 100svh;
+  max-height: none;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: var(--paper-bright);
+  color: var(--ink);
+}
+
+.registry-drawer::backdrop {
+  background: rgb(5 5 5 / 0.62);
+}
+
+.registry-drawer__panel {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.registry-drawer__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--line-light);
+  background: var(--paper-bright);
+}
+
+.registry-drawer__header h2 {
+  max-width: 14ch;
+  margin: 0.35rem 0 0;
+  font-family: var(--display);
+  font-size: clamp(2.4rem, 5vw, 4.4rem);
+  font-weight: 580;
+  letter-spacing: -0.035em;
+  line-height: 0.96;
+  overflow-wrap: anywhere;
+}
+
+.registry-drawer__header button {
+  min-width: 4.25rem;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border: 1px solid var(--line-light);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: inherit;
+  font: 650 0.9rem/1 var(--body);
+  cursor: pointer;
+}
+
+.registry-drawer__header button:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.registry-drawer__body {
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.registry-drawer__purpose {
+  max-width: 34rem;
+  margin: 0;
+  font-size: 1.22rem;
+  line-height: 1.6;
+}
+
+.registry-drawer .spec dd {
+  max-width: 20rem;
+  overflow-wrap: anywhere;
+}
+
+.registry-drawer__note {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line-light);
+}
+
+.registry-drawer__note p {
+  margin-bottom: 0;
+  line-height: 1.6;
+}
+
+.form__import {
+  padding: 0;
+  border: 1px solid var(--line-light);
+  border-radius: 0.2rem;
+  background: transparent;
+}
+
+.form__import summary {
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.form__import summary::after {
+  content: "+";
+  font-family: var(--mono);
+}
+
+.form__import[open] summary::after {
+  content: "−";
+}
+
+.form__import > label,
+.form__import > .form__import-actions {
+  margin-inline: 1rem;
+}
+
+.form__import > label {
+  display: block;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-light);
+}
+
+.form__import > .form__import-actions {
+  margin-bottom: 1rem;
+}
+
+.developers-workspace .code-shell {
+  box-shadow: none;
+}
+
+.code-shell__bar button,
+.compose-card__evidence {
+  min-height: 2.75rem;
+}
+
+.compose-card__evidence {
+  display: inline-flex;
+  align-items: center;
+}
+
+.compose-preset__grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--line-light);
+}
+
+.compose-card {
+  border: 0;
+  border-bottom: 1px solid var(--line-light);
+  border-radius: 0;
+  background: transparent;
+}
+
+@media (max-width: 60rem) {
+  .table__row-button {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 0.65rem;
+  }
+
+  .table__row-button .table__name {
+    grid-column: 1;
+  }
+
+  .table__row-button .table__open {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .table__row-button .table__domain,
+  .table__row-button .table__chain,
+  .table__row-button .pill {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 48rem) {
+  .route-hero--visual {
+    min-height: 24rem;
+    gap: 1.25rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  .route-hero--visual .route-hero__mark {
+    width: 5rem;
+  }
+
+  .route-hero--visual .route-hero__copy .display {
+    font-size: 3.4rem;
+  }
+
+  .route-section {
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .registry-drawer {
+    width: 100%;
+    height: min(88svh, 48rem);
+    margin: auto 0 0;
+  }
+
+  .registry-drawer__header {
+    padding: 1.25rem;
+  }
+
+  .registry-drawer__body {
+    padding: 1.25rem;
+  }
+
+  .table__row-button .table__chain {
+    display: none;
+  }
 }

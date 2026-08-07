@@ -98,7 +98,7 @@ export default function ComposabilityGraph({
           Conflicts
         </span>
         <span className="compose-graph__hint">
-          Hover or focus a term to trace its relationships.
+          Select a term to trace its relationships.
         </span>
       </div>
 
@@ -149,6 +149,15 @@ export default function ComposabilityGraph({
                 onMouseLeave={() => setActive(null)}
                 onFocus={() => setActive(label)}
                 onBlur={() => setActive(null)}
+                onClick={() =>
+                  setActive((current) => (current === label ? null : label))
+                }
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setActive((current) => (current === label ? null : label));
+                  }
+                }}
               >
                 <circle cx={cx} cy={BASELINE} r={7} />
                 <text

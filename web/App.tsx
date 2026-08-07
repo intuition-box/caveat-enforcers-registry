@@ -95,6 +95,11 @@ function PageMotion() {
   const { pathname } = useLocation();
 
   useLayoutEffect(() => {
+    if (pathname !== "/") {
+      document.documentElement.classList.add("motion-ready");
+      return undefined;
+    }
+
     const selector = ".translation, .registry-peek, .scroll-reveal";
     const reduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
