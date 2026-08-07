@@ -5975,27 +5975,37 @@ main > .band:first-child {
 }
 
 .developer-docs__steps {
-  display: grid;
+  display: flex;
   gap: 0;
   margin: 2.25rem 0 0;
   padding: 0;
-  border-top: 1px solid var(--line-light);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border: 1px solid var(--line-light);
   list-style: none;
   counter-reset: integration;
+  scroll-padding-inline: 1px;
+  scroll-snap-type: inline mandatory;
+  scrollbar-color: var(--ink) var(--paper-bright);
+  scrollbar-width: thin;
 }
 
 .developer-docs__steps li {
   display: grid;
-  grid-template-columns: 2.8rem minmax(0, 1fr);
-  gap: 1rem;
-  padding: 1.25rem 0;
-  border-bottom: 1px solid var(--line-light);
+  min-height: 15rem;
+  flex: 0 0 min(24rem, 78%);
+  grid-template-rows: auto 1fr;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-right: 1px solid var(--line-light);
   color: color-mix(in srgb, var(--ink) 76%, transparent);
   line-height: 1.55;
   counter-increment: integration;
+  scroll-snap-align: start;
 }
 
 .developer-docs__steps li::before {
+  align-self: start;
   color: var(--signal);
   content: counter(integration, decimal-leading-zero);
   font-family: var(--mono);
@@ -6003,8 +6013,23 @@ main > .band:first-child {
   letter-spacing: 0.04em;
 }
 
+.developer-docs__steps li:last-child {
+  border-right: 0;
+}
+
 .developer-docs__steps strong {
   color: var(--ink);
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: var(--display);
+  font-size: 1.65rem;
+  font-weight: 580;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.developer-docs__steps p {
+  margin: 0;
 }
 
 .developer-docs__section-head {

@@ -1587,24 +1587,40 @@ export function DevelopersPage() {
               <h2>Integration path</h2>
               <ol className="developer-docs__steps">
                 <li>
-                  <strong>Read membership.</strong> Query the registry boundary
-                  on Intuition mainnet using the canonical predicate and class
-                  atom IDs.
+                  <div>
+                    <strong>Read membership.</strong>
+                    <p>
+                      Query the registry boundary on Intuition mainnet using the
+                      canonical predicate and class atom IDs.
+                    </p>
+                  </div>
                 </li>
                 <li>
-                  <strong>Resolve the selected deployment.</strong> Fetch its
-                  subject claims and interpret them through the versioned
-                  ontology—not display labels alone.
+                  <div>
+                    <strong>Resolve the selected deployment.</strong>
+                    <p>
+                      Fetch its subject claims and interpret them through the
+                      versioned ontology—not display labels alone.
+                    </p>
+                  </div>
                 </li>
                 <li>
-                  <strong>Show the boundary.</strong> Put terms, source,
-                  availability, support, and opposition beside the action your
-                  user is about to approve.
+                  <div>
+                    <strong>Show the boundary.</strong>
+                    <p>
+                      Put terms, source, availability, support, and opposition
+                      beside the action your user is about to approve.
+                    </p>
+                  </div>
                 </li>
                 <li>
-                  <strong>Simulate before signing.</strong> Registry membership
-                  and evidence inform a decision; the intended delegation still
-                  needs wallet-level simulation.
+                  <div>
+                    <strong>Simulate before signing.</strong>
+                    <p>
+                      Registry membership and evidence inform a decision; the
+                      intended delegation still needs wallet-level simulation.
+                    </p>
+                  </div>
                 </li>
               </ol>
             </section>
