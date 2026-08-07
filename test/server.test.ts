@@ -188,3 +188,52 @@ test("backend CORS is opt-in and supports browser preflight", async () => {
     else process.env.CORS_ORIGIN = previous;
   }
 });
+
+test("submission validation returns structured errors for malformed bodies", async () => {
+  const server = startBackendServer(0, {
+    backend: new RegistryBackend({
+      endpoint: "https://mainnet.intuition.sh/v1/graphql",
+      ontology: createOntologyManifest({ version: "unconfigured" }),
+    }),
+  });
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const address = server.address() as AddressInfo;
+  try {
+    const malformed = await fetch(
+      `http://127.0.0.1:${address.port}/api/submissions/validate`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: '{"chainId":',
+      },
+    );
+    assert.equal(malformed.status, 400);
+    assert.deepEqual(await malformed.json(), {
+      error: "Request body must be valid JSON.",
+    });
+
+    const incomplete = await fetch(
+      `http://127.0.0.1:${address.port}/api/submissions/validate`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ chainId: "not-a-chain" }),
+      },
+    );
+    assert.equal(incomplete.status, 422);
+    assert.deepEqual(await incomplete.json(), {
+      valid: false,
+      issues: [
+        {
+          path: "submission",
+          message:
+            "Provide a JSON object matching the published submission schema.",
+        },
+      ],
+    });
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});

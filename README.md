@@ -32,7 +32,9 @@ Claims are represented as Intuition atoms and triples. Support and opposition ar
 
 ## Current scope
 
-This repository is in active implementation. It defines the public product contract, contribution rules, canonical Intuition read path, validation boundary, runnable backend service, and a browser-wallet-owned MultiVault submission workflow. A proposed ontology is included for permissionless use; wallet signing and funding remain explicit user responsibilities.
+The registry is live on Intuition mainnet. Its initial 32-entry MetaMask Smart Accounts Kit reference collection is seeded as canonical membership records and is served through the public read API. The repository also defines the contribution rules, validation boundary, runnable backend service, and browser-wallet-owned MultiVault submission workflow. Wallet signing and funding remain explicit user responsibilities.
+
+The remaining open-registry proof is separate from the launch seed: an independently submitted, previously unlisted enforcer must be added through the public wallet flow and discovered through the same canonical membership query.
 
 When a submission declares a contract terms decoder, preparation also performs a read-only `eth_call` and compares the returned values with the submitted fixtures before producing the unsigned plan.
 

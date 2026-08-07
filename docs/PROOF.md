@@ -34,13 +34,28 @@ before reporting a support or opposition signal as confirmed.
 
 This proves the local workflow and ordering without claiming that a test double is a live registry entry.
 
-## Live proof still required
+## Live launch seed verified
 
-The operator must supply a write policy, signer, and funding source. The proposed ontology can be used immediately; then the same sequence must run against the canonical environment:
+The 32-entry MetaMask Smart Accounts Kit reference collection is seeded and indexed on
+Intuition mainnet. The public registry API returns 32 unique membership records using the
+canonical membership predicate and deployment-class atom. Each seeded record has independent
+membership, implementation, Intuition-chain, and MetaMask-source claims, with a non-zero support
+signal.
+
+This proves that the canonical read path, ontology boundary, and public deployment are live. It
+does not replace the open-registry proof below: the initial collection was a controlled launch
+seed, not an independently contributed entry.
+
+## Live open-registry proof still required
+
+The operator must supply a funded browser wallet and submit a genuinely new enforcer through the
+public contribution flow. The canonical environment sequence is:
 
 1. Submit a genuinely unlisted enforcer.
 2. Verify the receipt and direct MultiVault state.
 3. Poll the canonical GraphQL membership query.
 4. Capture the returned deployment as the open-registry proof.
 
-No local fixture or candidate atom is promoted into the production ontology automatically.
+No local fixture or candidate atom is promoted into the production ontology automatically. The
+submission receipt, direct MultiVault verification result, and canonical GraphQL response should
+be recorded with the final handoff.

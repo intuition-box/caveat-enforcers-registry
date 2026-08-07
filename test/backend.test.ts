@@ -183,6 +183,15 @@ test("empty runtime configuration uses the explicit permissionless ontology prop
   assert.equal(validateOntologyManifest(manifest).length, 0);
 });
 
+test("blank optional predicate variables do not override registry defaults", () => {
+  const manifest = readOntologyManifestFromEnv({
+    REGISTRY_PREDICATE_IMPLEMENTS: "",
+    REGISTRY_PREDICATE_SOURCE_AT: "   ",
+  });
+  assert.equal(manifest.predicates.implements, undefined);
+  assert.equal(manifest.predicates.sourceAt, undefined);
+});
+
 test("runtime ontology values remain overridable without a central approval gate", () => {
   const manifest = readOntologyManifestFromEnv({
     REGISTRY_ONTOLOGY_VERSION: "proposal-local",

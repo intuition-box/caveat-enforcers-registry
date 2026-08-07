@@ -16,9 +16,14 @@ write-capable service. The API uses these canonical Intuition endpoints by defau
 - JSON-RPC: `https://rpc.intuition.systems`
 - Chain: `1155`
 
-No production URL is claimed by this repository. A deployment is only complete after the
-operator records the actual frontend and API URLs, checks `/health`, verifies a read-only
-`/api/registry` response, and confirms that browser-wallet CORS preflight succeeds.
+Current public deployment:
+
+- Frontend: `https://caveat-enforcers-registry.vercel.app`
+- Read API: `https://caveat-enforcers-registry.onrender.com`
+
+The release is verified when `/health` reports chain `1155` with no ontology issues,
+`/api/registry` returns the seeded membership records, and browser-wallet CORS preflight from
+the frontend origin succeeds. The frontend never receives a private key.
 
 ## Release checks
 

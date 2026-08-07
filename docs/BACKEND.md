@@ -76,8 +76,10 @@ silently promotes a candidate.
 - No funded wallet or transaction owner is configured. The repository does not submit anything automatically; a user must connect a browser wallet and approve each prompt.
 - The service does not persist submissions or expose an unauthenticated production write endpoint. Wallet signing remains an explicit client or injected adapter responsibility.
 - No production pinning key, funded wallet, or transaction owner is configured.
-- No genuine production submission has yet been receipt- or MultiVault-verified.
-- No live open-registry proof exists until a genuine new entry is submitted and discovered through the same query.
+- The controlled 32-entry MetaMask launch seed is live and indexed on Intuition mainnet. It uses
+  the same canonical membership boundary as the public read API.
+- No live open-registry proof exists until an independently submitted, previously unlisted entry
+  is written through the browser-wallet flow and discovered through the same query.
 
 ## Safe sequence for a proposed ontology
 

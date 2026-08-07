@@ -23,6 +23,8 @@ import type {
 
 const maxBodyBytes = 2 * 1024 * 1024;
 
+class RequestBodyError extends Error {}
+
 function envValue(name: string, fallback = ""): string {
   return process.env[name]?.trim() || fallback;
 }
@@ -64,12 +66,37 @@ async function readBody(request: IncomingMessage): Promise<unknown> {
   for await (const chunk of request) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     size += buffer.length;
-    if (size > maxBodyBytes) throw new Error("Request body is too large.");
+    if (size > maxBodyBytes) {
+      throw new RequestBodyError("Request body is too large.");
+    }
     chunks.push(buffer);
   }
   const text = Buffer.concat(chunks).toString("utf8");
-  if (!text.trim()) return null;
-  return JSON.parse(text);
+  if (!text.trim()) {
+    throw new RequestBodyError("Request body must contain JSON.");
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new RequestBodyError("Request body must be valid JSON.");
+  }
+}
+
+function isSubmissionObject(value: unknown): value is SubmissionInput {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function invalidSubmissionBody(response: ServerResponse): void {
+  json(response, 422, {
+    valid: false,
+    issues: [
+      {
+        path: "submission",
+        message:
+          "Provide a JSON object matching the published submission schema.",
+      },
+    ],
+  });
 }
 
 function json(
@@ -191,8 +218,18 @@ export async function handleBackendRequest(
     }
 
     if (pathname === "/api/submissions/validate" && request.method === "POST") {
-      const body = (await readBody(request)) as SubmissionInput;
-      const result = validateSubmission(body);
+      const body = await readBody(request);
+      if (!isSubmissionObject(body)) {
+        invalidSubmissionBody(response);
+        return;
+      }
+      let result;
+      try {
+        result = validateSubmission(body);
+      } catch {
+        invalidSubmissionBody(response);
+        return;
+      }
       json(response, result.valid ? 200 : 422, result);
       return;
     }
@@ -252,7 +289,11 @@ export async function handleBackendRequest(
     }
 
     if (pathname === "/api/submissions/prepare" && request.method === "POST") {
-      const body = (await readBody(request)) as SubmissionInput;
+      const body = await readBody(request);
+      if (!isSubmissionObject(body)) {
+        invalidSubmissionBody(response);
+        return;
+      }
       const result = await backend.prepareSubmission(body);
       json(
         response,
@@ -375,9 +416,11 @@ export async function handleBackendRequest(
     }
     methodNotAllowed(response);
   } catch (error) {
-    json(response, 400, {
-      error: error instanceof Error ? error.message : "Request failed.",
-    });
+    if (error instanceof RequestBodyError) {
+      json(response, 400, { error: error.message });
+      return;
+    }
+    json(response, 500, { error: "Request could not be processed." });
   }
 }
 
