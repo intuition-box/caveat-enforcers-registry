@@ -1442,6 +1442,10 @@ export function SubmitPage() {
                       title="Enter a 20-byte EVM address beginning with 0x."
                       required
                     />
+                    <span className="form__hint">
+                      The deployed contract address, not the wallet that lists
+                      it.
+                    </span>
                   </label>
                   <label>
                     <span className="mono-label">Source version</span>
@@ -1453,6 +1457,22 @@ export function SubmitPage() {
                     />
                   </label>
                 </div>
+
+                <label>
+                  <span className="mono-label">
+                    Deployer / submitter wallet
+                  </span>
+                  <input
+                    value={wallet?.address ?? "Connect a wallet to autofill"}
+                    readOnly
+                    aria-describedby="submitter-wallet-hint"
+                  />
+                  <span id="submitter-wallet-hint" className="form__hint">
+                    Filled from the wallet you connect and used as the
+                    contribution submitter. It never replaces the deployed
+                    contract address.
+                  </span>
+                </label>
 
                 <label>
                   <span className="mono-label">Terms schema JSON</span>
