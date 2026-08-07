@@ -364,18 +364,11 @@ export function RegistryPage() {
           <CaveatMarkSvg />
         </div>
         <div className="route-hero__copy">
-          <span className="route-kicker intuition-lockup">
-            <IntuitionLogo size={17} /> Intuition 1155 / Registry
-          </span>
-          <h1 className="display">Find the boundary you need.</h1>
+          <h1 className="display">Registry</h1>
           <p className="lede">
             Search caveat enforcers by purpose, constraint, chain, or deployment
             evidence.
           </p>
-          <div className="route-hero__meta">
-            <span>32 reference types</span>
-            <span>Live membership when configured</span>
-          </div>
         </div>
       </section>
 
@@ -914,16 +907,11 @@ export function SubmitPage() {
           <CaveatMarkSvg />
         </div>
         <div className="route-hero__copy">
-          <span className="route-kicker">Contribution / Public standard</span>
-          <h1 className="display">Add what the ecosystem is missing.</h1>
+          <h1 className="display">Submit</h1>
           <p className="lede">
             List an enforcer, attest to an existing claim, or submit a
             counter-signal.
           </p>
-          <div className="route-hero__meta">
-            <span>Wallet-owned write</span>
-            <span>Validate → simulate → sign</span>
-          </div>
         </div>
       </section>
 
@@ -1246,17 +1234,11 @@ export function LearnPage() {
           <CaveatMarkSvg />
         </div>
         <div className="route-hero__copy">
-          <span className="route-kicker">Learn / Read the boundary</span>
-          <h1 className="display">From permission to proof.</h1>
+          <h1 className="display">Learn</h1>
           <p className="lede">
             Choose your starting point. Each path moves from plain language to
             inspectable implementation.
           </p>
-          <div className="route-hero__meta">
-            <span>Plain language</span>
-            <span>Encoded terms</span>
-            <span>Evidence model</span>
-          </div>
         </div>
       </section>
 
@@ -1410,19 +1392,13 @@ export function ComposabilityPage() {
           <CaveatMarkSvg />
         </div>
         <div className="route-hero__copy">
-          <span className="route-kicker">Composability / Fit</span>
-          <h1 className="display">Which caveats work together.</h1>
+          <h1 className="display">Composability</h1>
           <p className="lede">
             Composability is a claim about a set of enforcers: whether they
             reinforce the intended permission, conflict with it, or repeat a
             restriction that is already there. Each claim below is an Intuition
             triple the community can extend and dispute.
           </p>
-          <div className="route-hero__meta">
-            <span>Plain language</span>
-            <span>Chain-verified</span>
-            <span>Attestable triples</span>
-          </div>
         </div>
       </section>
 
@@ -1523,19 +1499,11 @@ export function DevelopersPage() {
           <CaveatMarkSvg />
         </div>
         <div className="route-hero__copy">
-          <span className="route-kicker intuition-lockup">
-            <IntuitionLogo size={17} /> Intuition Graph
-          </span>
-          <h1 className="display">Registry data, ready for your interface.</h1>
+          <h1 className="display">Developers</h1>
           <p className="lede">
             Query enforcer identity, deployment evidence, terms, relationships,
             and community signal from Intuition.
           </p>
-          <div className="route-hero__meta">
-            <span>GraphQL</span>
-            <span>Deployment-aware</span>
-            <span>Evidence-first</span>
-          </div>
         </div>
       </section>
 

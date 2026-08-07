@@ -5584,7 +5584,6 @@ main > .band:first-child {
 }
 
 .route-hero--visual {
-  --route-hero-tint: #22214c;
   position: relative;
   display: flex;
   min-height: min(58rem, 100svh);
@@ -5594,7 +5593,7 @@ main > .band:first-child {
   gap: clamp(2.25rem, 5vh, 5.5rem);
   overflow: hidden;
   padding-top: calc(var(--header-height) + clamp(4rem, 8vw, 7rem));
-  background: var(--route-hero-tint);
+  background: var(--ink);
   color: var(--paper-bright);
   isolation: isolate;
   text-align: center;
@@ -5613,36 +5612,12 @@ main > .band:first-child {
   background: url("/art/flow-card-cloud.png") center / cover no-repeat;
   filter: grayscale(1) contrast(1.1);
   mix-blend-mode: screen;
-  opacity: 0.82;
+  opacity: 0.48;
   transform: scale(1.025);
 }
 
 .route-hero--visual::after {
-  background: rgb(5 5 5 / 0.36);
-}
-
-.route-hero--registry {
-  --route-hero-tint: #25245d;
-}
-
-.route-hero--detail {
-  --route-hero-tint: #33284a;
-}
-
-.route-hero--submit {
-  --route-hero-tint: #5a2a2f;
-}
-
-.route-hero--learn {
-  --route-hero-tint: #1f4a42;
-}
-
-.route-hero--compose {
-  --route-hero-tint: #4a3158;
-}
-
-.route-hero--developers {
-  --route-hero-tint: #1d4257;
+  background: rgb(0 0 0 / 0.58);
 }
 
 .route-hero--visual .route-hero__mark {
@@ -5665,7 +5640,7 @@ main > .band:first-child {
 .route-hero--visual .route-hero__copy .display {
   max-width: 16ch;
   margin-bottom: 1.25rem;
-  font-size: clamp(3.5rem, 7.6vw, 8rem);
+  font-size: clamp(3.5rem, 7.6vw, 6rem);
   letter-spacing: -0.04em;
   line-height: 0.9;
 }
