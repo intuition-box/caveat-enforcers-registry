@@ -270,10 +270,28 @@ export const REFERENCE: Reference[] = referenceDocument.enforcers.map(
 
 type RegistryRow = Reference & { live?: boolean };
 
+const REFERENCE_CANONICAL_NAMES_BY_ADDRESS = new Map(
+  REFERENCE.map((entry) => [entry.address.toLowerCase(), entry.canonicalName]),
+);
+
+function canonicalNameForIndexedEntry(
+  entry: Extract<RegistryApiState, { kind: "ready" }>["entries"][number],
+): string {
+  if (entry.implementation) return entry.implementation;
+
+  const address = /caip10:eip155:\d+:(0x[a-fA-F0-9]{40})/.exec(
+    entry.label ?? "",
+  )?.[1];
+  return address
+    ? (REFERENCE_CANONICAL_NAMES_BY_ADDRESS.get(address.toLowerCase()) ??
+        entry.label)
+    : entry.label;
+}
+
 function liveRow(
   entry: Extract<RegistryApiState, { kind: "ready" }>["entries"][number],
 ): RegistryRow {
-  const canonicalName = entry.implementation ?? entry.label;
+  const canonicalName = canonicalNameForIndexedEntry(entry);
   return {
     id: entry.id,
     slug: entry.id,
@@ -364,7 +382,7 @@ export function RegistryPage() {
   const statusLabel = loading
     ? "Connecting to registry service"
     : liveRows.length
-      ? "Indexed Intuition records"
+      ? "Live enforcers · Intuition"
       : showingLive
         ? "Reference collection · no indexed entries"
         : "Reference collection · read only";
