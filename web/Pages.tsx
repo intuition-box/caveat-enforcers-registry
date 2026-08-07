@@ -12,6 +12,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { registryDeploymentsQuery } from "../src/registry";
+import {
+  buildEnforcerDisplayNameMap,
+  enforcerTypeDisplayName,
+} from "../src/enforcer-display-name";
 import referenceDocument from "../data/metamask-v1.3.0.json";
 import composabilityDocument from "../data/composability-seed.json";
 import ComposabilityGraph from "./ComposabilityGraph";
@@ -106,12 +110,17 @@ type Reference = {
   id: string;
   slug: string;
   name: string;
+  canonicalName: string;
   purpose: string;
   domain: string;
   chain: string;
   state: "observed" | "review";
   address: string;
 };
+
+const REFERENCE_DISPLAY_NAMES = buildEnforcerDisplayNameMap(
+  referenceDocument.enforcers.map((entry) => entry.name),
+);
 
 const PURPOSES: Record<string, [string, string]> = {
   AllowedCalldataEnforcer: [
@@ -248,7 +257,8 @@ export const REFERENCE: Reference[] = referenceDocument.enforcers.map(
     return {
       id: entry.address,
       slug: slugify(entry.name),
-      name: entry.name,
+      name: REFERENCE_DISPLAY_NAMES.get(entry.name) ?? entry.name,
+      canonicalName: entry.name,
       purpose,
       domain,
       chain: "Intuition 1155",
@@ -263,10 +273,12 @@ type RegistryRow = Reference & { live?: boolean };
 function liveRow(
   entry: Extract<RegistryApiState, { kind: "ready" }>["entries"][number],
 ): RegistryRow {
+  const canonicalName = entry.implementation ?? entry.label;
   return {
     id: entry.id,
     slug: entry.id,
-    name: entry.implementation ?? entry.label,
+    name: enforcerTypeDisplayName(canonicalName),
+    canonicalName,
     purpose: entry.description,
     domain: entry.domain,
     chain: entry.chain,
@@ -341,6 +353,7 @@ export function RegistryPage() {
         (chain === "all" || chain === "eip155:1155") &&
         (q === "" ||
           r.name.toLowerCase().includes(q) ||
+          r.canonicalName.toLowerCase().includes(q) ||
           r.purpose.toLowerCase().includes(q) ||
           r.domain.toLowerCase().includes(q) ||
           r.address.toLowerCase().includes(q)),
@@ -535,8 +548,13 @@ export function DetailPage() {
     detailState?.kind === "ready" ? detailState.summary : undefined;
   const name =
     record?.name ??
+    (summary?.implementation
+      ? enforcerTypeDisplayName(summary.implementation)
+      : undefined) ??
     (detailState?.kind === "ready" ? detailState.label : undefined) ??
     "Indexed deployment";
+  const canonicalName =
+    record?.canonicalName ?? summary?.implementation ?? "Type claim pending";
   const purpose =
     record?.purpose ??
     summary?.description ??
@@ -574,6 +592,7 @@ export function DetailPage() {
               rows={[
                 ["Chain", "eip155:1155"],
                 ["Address", address],
+                ["Canonical type", canonicalName],
                 ["Source family", "MetaMask Delegation Framework"],
                 [
                   "Registry state",

@@ -11,6 +11,19 @@
 7. Every contributor uses the same submission schema.
 8. A new indexed entry must be discoverable without an application release.
 
+## Presentation names
+
+Compact enforcer names are deterministic presentation metadata derived from the
+canonical enforcer type. They are not submission requirements, canonical IDs,
+or separately seeded claims. The shared generator considers the asset family,
+primary restriction, behavior, and execution mode; it preserves the canonical
+type as the searchable fallback and adds a stable suffix only if two generated
+names collide.
+
+Changing the presentation-name algorithm requires a version increment. Clients
+must continue to display the canonical type in record details so a compact name
+can never obscure which implementation a record describes.
+
 ## Entities
 
 | Entity          | Purpose                                                                      |
