@@ -4,7 +4,7 @@
 
 - Intuition chain ID: `1155`
 - Mainnet GraphQL endpoint: `https://mainnet.intuition.sh/v1/graphql`
-- Mainnet JSON-RPC: `https://rpc.intuition.systems`
+- Mainnet JSON-RPC: `https://rpc.intuition.systems/http`
 - MultiVault: `0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e`
 - DelegationManager: `0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3`
 

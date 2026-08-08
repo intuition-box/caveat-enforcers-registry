@@ -1,7 +1,7 @@
 export const INTUITION_MAINNET_CHAIN_ID = "1155";
 export const INTUITION_MAINNET_GRAPHQL =
   "https://mainnet.intuition.sh/v1/graphql";
-export const INTUITION_MAINNET_RPC = "https://rpc.intuition.systems";
+export const INTUITION_MAINNET_RPC = "https://rpc.intuition.systems/http";
 export const INTUITION_MAINNET_MULTIVAULT =
   "0x6E35cF57A41fA15eA0EaE9C33e751b01A784Fe7e";
 export const INTUITION_MAINNET_DELEGATION_MANAGER =

@@ -6,7 +6,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: INTUITION_RPC_URL
-        value: https://rpc.intuition.systems
+        value: https://rpc.intuition.systems/http
       - key: REGISTRY_GRAPHQL_ENDPOINT
         value: https://mainnet.intuition.sh/v1/graphql
       - key: REGISTRY_PREDICATE_IMPLEMENTS

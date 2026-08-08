@@ -13,7 +13,7 @@ frontend origin, for example `https://registry.example`, rather than using a wil
 write-capable service. The API uses these canonical Intuition endpoints by default:
 
 - GraphQL: `https://mainnet.intuition.sh/v1/graphql`
-- JSON-RPC: `https://rpc.intuition.systems`
+- JSON-RPC: `https://rpc.intuition.systems/http`
 - Chain: `1155`
 
 Current public deployment:

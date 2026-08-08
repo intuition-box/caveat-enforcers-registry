@@ -10,6 +10,7 @@
  * reference rows as registry listings.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { formatEther } from "viem";
 import { createPortal } from "react-dom";
 import { Link, useParams } from "react-router-dom";
 import { registryDeploymentsQuery } from "../src/registry";
@@ -35,6 +36,7 @@ import {
   curateWithBrowserWallet,
   inspectBrowserWallet,
   previewWithBrowserWallet,
+  subscribeBrowserWallet,
   submitWithBrowserWallet,
   type BrowserWallet,
   type BrowserWalletConnectionState,
@@ -1063,6 +1065,12 @@ export function SubmitPage() {
 
   useEffect(() => {
     void refreshWalletConnection();
+    return subscribeBrowserWallet(() => {
+      setWallet(null);
+      setSubmissionReview(null);
+      setStatus("Wallet account or network changed. Reconnect to continue.");
+      void refreshWalletConnection();
+    });
   }, []);
 
   function applyImportedJson() {
@@ -1200,6 +1208,9 @@ export function SubmitPage() {
     const message = error instanceof Error ? error.message : "";
     if (/failed to fetch dynamically imported module/i.test(message)) {
       return "A newer version of Caveat Registry is available. Reload this page, reconnect your wallet, then prepare the transaction plan again.";
+    }
+    if (/rlp: non-canonical integer|DynamicFeeTx/i.test(message)) {
+      return "Your wallet used an incompatible dynamic-fee transaction. Reload, reconnect, and prepare a fresh plan; Caveat Registry will use Intuition's compatible legacy fee mode.";
     }
     return message || fallback;
   }
@@ -1577,6 +1588,20 @@ export function SubmitPage() {
                   <p>
                     Check every target and value. After approval, each write is
                     simulated immediately before its wallet prompt.
+                  </p>
+                  <p>
+                    Required deposits:{" "}
+                    <strong>
+                      {formatEther(
+                        submissionReview.resolved.batch.transactions.reduce(
+                          (total, transaction) =>
+                            total + BigInt(transaction.request.value ?? "0"),
+                          0n,
+                        ),
+                      )}{" "}
+                      TRUST
+                    </strong>{" "}
+                    plus network gas.
                   </p>
                 </div>
                 <ol className="transaction-plan__list">

@@ -2,13 +2,14 @@ import {
   createPublicClient,
   createWalletClient,
   custom,
-  defineChain,
+  decodeFunctionData,
+  formatEther,
   http,
   type Address,
   type EIP1193Provider,
   type Hex,
 } from "viem";
-import { MultiVaultAbi } from "@0xintuition/protocol";
+import { intuitionMainnet, MultiVaultAbi } from "@0xintuition/protocol";
 import {
   RegistryBackend,
   type ResolvedSubmission,
@@ -21,10 +22,12 @@ import {
   INTUITION_MAINNET_RPC,
 } from "../src/ontology";
 import type { IntuitionPublicClient } from "../src/intuition";
-import { createViemSubmissionWriteAdapter } from "../src/viem-adapter";
 import type { CurationExecution, CurationInput } from "../src/curation";
 import type { RpcFetcher, SubmissionInput } from "../src/validation";
-import type { SubmissionWriteOptions } from "../src/write-workflow";
+import type {
+  SubmissionWriteAdapter,
+  SubmissionWriteOptions,
+} from "../src/write-workflow";
 
 const INTUITION_MAINNET_HEX = "0x483";
 
@@ -36,17 +39,13 @@ export const INTUITION_MAINNET_WALLET_CONFIG = {
   blockExplorerUrls: ["https://explorer.intuition.systems"],
 } as const;
 
-const intuitionMainnet = defineChain({
-  id: 1155,
-  name: "Intuition",
-  nativeCurrency: { name: "Trust", symbol: "TRUST", decimals: 18 },
-  rpcUrls: {
-    default: { http: [INTUITION_MAINNET_RPC] },
-  },
-});
-
 type BrowserProvider = EIP1193Provider & {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+  on?: (event: string, listener: (...args: unknown[]) => void) => void;
+  removeListener?: (
+    event: string,
+    listener: (...args: unknown[]) => void,
+  ) => void;
 };
 
 export type BrowserWalletConnectionState = {
@@ -212,6 +211,18 @@ export async function connectBrowserWallet(): Promise<BrowserWallet> {
   };
 }
 
+export function subscribeBrowserWallet(listener: () => void): () => void {
+  if (!browserWalletAvailable()) return () => undefined;
+  const provider = providerOrThrow();
+  const handleChange = () => listener();
+  provider.on?.("accountsChanged", handleChange);
+  provider.on?.("chainChanged", handleChange);
+  return () => {
+    provider.removeListener?.("accountsChanged", handleChange);
+    provider.removeListener?.("chainChanged", handleChange);
+  };
+}
+
 const directIntuitionRpcFetcher: RpcFetcher = (_input, init) =>
   fetch(INTUITION_MAINNET_RPC, init);
 
@@ -225,32 +236,160 @@ function backendForWallet(wallet: BrowserWallet): RegistryBackend {
   });
 }
 
-function writeAdapterForWallet(wallet: BrowserWallet) {
-  return createViemSubmissionWriteAdapter({
-    publicClient: {
-      call: async ({ to, data, value }) =>
-        wallet.publicClient.call({
-          to,
-          data,
-          value,
-          account: wallet.address,
-        }),
-      waitForTransactionReceipt: ({ hash }) =>
-        wallet.publicClient.waitForTransactionReceipt({ hash }),
+function transactionAddress(value: string): Address {
+  if (!/^0x[0-9a-f]{40}$/i.test(value)) {
+    throw new Error("The reviewed transaction target is invalid.");
+  }
+  return value.toLowerCase() as Address;
+}
+
+function transactionData(value: string): Hex {
+  if (!/^0x(?:[0-9a-f]{2})*$/i.test(value)) {
+    throw new Error("The reviewed transaction calldata is invalid.");
+  }
+  return value.toLowerCase() as Hex;
+}
+
+function transactionValue(value?: string): bigint {
+  try {
+    const parsed = BigInt(value ?? "0");
+    if (parsed < 0n) throw new Error();
+    return parsed;
+  } catch {
+    throw new Error("The reviewed transaction value is invalid.");
+  }
+}
+
+function transactionFingerprint(request: {
+  to: string;
+  data: string;
+  value?: string;
+}): string {
+  return `${request.to.toLowerCase()}:${request.data.toLowerCase()}:${request.value ?? "0"}`;
+}
+
+function bufferedGas(value: bigint): bigint {
+  return (value * 120n + 99n) / 100n;
+}
+
+export function createBrowserSubmissionWriteAdapter(
+  wallet: BrowserWallet,
+): SubmissionWriteAdapter {
+  let prepared:
+    | {
+        fingerprint: string;
+        to: Address;
+        data: Hex;
+        value: bigint;
+        gas: bigint;
+        gasPrice: bigint;
+      }
+    | undefined;
+
+  return {
+    simulate: async (request) => {
+      await ensureMainnet(wallet.provider);
+      const to = transactionAddress(request.to);
+      const data = transactionData(request.data);
+      const value = transactionValue(request.value);
+      if (to.toLowerCase() !== INTUITION_MAINNET_MULTIVAULT.toLowerCase()) {
+        throw new Error("The reviewed write does not target MultiVault.");
+      }
+      const decoded = decodeFunctionData({ abi: MultiVaultAbi, data });
+      if (
+        decoded.functionName !== "createAtoms" &&
+        decoded.functionName !== "createTriples" &&
+        decoded.functionName !== "deposit"
+      ) {
+        throw new Error("The reviewed MultiVault function is not supported.");
+      }
+
+      // This is the official viem/Intuition pattern: simulate the ABI-aware
+      // contract request with a public client before asking the wallet to sign.
+      await wallet.publicClient.simulateContract({
+        account: wallet.address,
+        address: to,
+        abi: MultiVaultAbi,
+        functionName: decoded.functionName,
+        args: decoded.args,
+        value,
+      } as never);
+
+      const gasPrice = await wallet.publicClient.getGasPrice();
+      const gas = await wallet.publicClient.estimateGas({
+        account: wallet.address,
+        to,
+        data,
+        value,
+        gasPrice,
+        type: "legacy",
+      });
+      prepared = {
+        fingerprint: transactionFingerprint(request),
+        to,
+        data,
+        value,
+        gas: bufferedGas(gas),
+        gasPrice,
+      };
     },
-    walletClient: {
-      account: wallet.address,
-      sendTransaction: ({ to, data, value }) =>
-        wallet.walletClient.sendTransaction({
-          account: wallet.address,
-          chain: intuitionMainnet,
-          to,
-          data,
-          value,
-        }),
+    send: async (request) => {
+      await ensureMainnet(wallet.provider);
+      if (
+        !prepared ||
+        prepared.fingerprint !== transactionFingerprint(request)
+      ) {
+        throw new Error(
+          "The transaction changed after simulation. Prepare it again before signing.",
+        );
+      }
+      const transaction = prepared;
+      prepared = undefined;
+      // Intuition accepts legacy transactions. Pinning gasPrice avoids the
+      // malformed DynamicFeeTx signature returned by some injected wallets on
+      // this Orbit chain, while preserving the exact simulated call.
+      return wallet.walletClient.sendTransaction({
+        account: wallet.address,
+        chain: intuitionMainnet,
+        to: transaction.to,
+        data: transaction.data,
+        value: transaction.value,
+        gas: transaction.gas,
+        gasPrice: transaction.gasPrice,
+        type: "legacy",
+      });
     },
-    account: wallet.address,
-  });
+    waitForConfirmation: async (transactionHash) => {
+      const hash = transactionHash as Hex;
+      try {
+        const receipt = await wallet.publicClient.waitForTransactionReceipt({
+          hash,
+          confirmations: 1,
+          timeout: 120_000,
+        });
+        return receipt.status === "success"
+          ? {
+              status: "confirmed" as const,
+              transactionHash: hash,
+              blockNumber: receipt.blockNumber.toString(),
+            }
+          : {
+              status: "failed" as const,
+              transactionHash: hash,
+              message: "The transaction reverted on Intuition mainnet.",
+            };
+      } catch (error) {
+        return {
+          status: "error" as const,
+          transactionHash: hash,
+          message: providerErrorMessage(
+            error,
+            "The transaction receipt could not be confirmed.",
+          ),
+        };
+      }
+    },
+  };
 }
 
 /**
@@ -302,7 +441,23 @@ export async function previewWithBrowserWallet(
     tripleAsset: tripleCost,
     tripleValue: (tripleCost * BigInt(tripleCount)).toString(),
   };
-  return { result: await backend.resolveSubmission(input, { write }), write };
+  const result = await backend.resolveSubmission(input, { write });
+  if (result.status === "ready") {
+    const requiredValue = result.batch.transactions.reduce(
+      (total, transaction) =>
+        total + transactionValue(transaction.request.value),
+      0n,
+    );
+    const balance = await wallet.publicClient.getBalance({
+      address: wallet.address,
+    });
+    if (balance <= requiredValue) {
+      throw new Error(
+        `This wallet has ${formatEther(balance)} TRUST but the reviewed records require ${formatEther(requiredValue)} TRUST plus gas.`,
+      );
+    }
+  }
+  return { result, write };
 }
 
 /**
@@ -318,7 +473,7 @@ export async function submitWithBrowserWallet(
 ): Promise<SubmissionExecutionResult> {
   return backendForWallet(wallet).executeSubmission(
     input,
-    writeAdapterForWallet(wallet),
+    createBrowserSubmissionWriteAdapter(wallet),
     {
       write,
       expectedBatch,
@@ -338,7 +493,7 @@ export async function curateWithBrowserWallet(
 ): Promise<CurationExecution> {
   return backendForWallet(wallet).executeCuration(
     input,
-    writeAdapterForWallet(wallet),
+    createBrowserSubmissionWriteAdapter(wallet),
   );
 }
 
