@@ -1194,6 +1194,14 @@ export function SubmitPage() {
     return `${result.batch.transactions.length} transaction${result.batch.transactions.length === 1 ? "" : "s"} resolved and ready for your review.`;
   }
 
+  function contributionErrorMessage(error: unknown, fallback: string): string {
+    const message = error instanceof Error ? error.message : "";
+    if (/failed to fetch dynamically imported module/i.test(message)) {
+      return "A newer version of Caveat Registry is available. Reload this page, reconnect your wallet, then prepare the transaction plan again.";
+    }
+    return message || fallback;
+  }
+
   async function submitContribution(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
@@ -1237,9 +1245,10 @@ export function SubmitPage() {
       setStatus(result.message);
     } catch (error) {
       setStatus(
-        error instanceof Error
-          ? error.message
-          : "The contribution could not be prepared.",
+        contributionErrorMessage(
+          error,
+          "The contribution could not be prepared.",
+        ),
       );
     } finally {
       setBusy(false);
@@ -1268,9 +1277,10 @@ export function SubmitPage() {
       }
     } catch (error) {
       setStatus(
-        error instanceof Error
-          ? error.message
-          : "The reviewed transaction plan could not be submitted.",
+        contributionErrorMessage(
+          error,
+          "The reviewed transaction plan could not be submitted.",
+        ),
       );
     } finally {
       setBusy(false);
