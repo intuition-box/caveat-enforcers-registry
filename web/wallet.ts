@@ -7,6 +7,7 @@ import {
   type EIP1193Provider,
   type Hex,
 } from "viem";
+import { MultiVaultAbi } from "@0xintuition/protocol";
 import {
   RegistryBackend,
   type ResolvedSubmission,
@@ -15,12 +16,14 @@ import {
 import {
   PROPOSED_ONTOLOGY_MANIFEST,
   INTUITION_MAINNET_GRAPHQL,
+  INTUITION_MAINNET_MULTIVAULT,
   INTUITION_MAINNET_RPC,
 } from "../src/ontology";
 import type { IntuitionPublicClient } from "../src/intuition";
 import { createViemSubmissionWriteAdapter } from "../src/viem-adapter";
 import type { CurationExecution, CurationInput } from "../src/curation";
 import type { RpcFetcher, SubmissionInput } from "../src/validation";
+import type { SubmissionWriteOptions } from "../src/write-workflow";
 
 const INTUITION_MAINNET_HEX = "0x483";
 
@@ -287,8 +290,48 @@ function writeAdapterForWallet(wallet: BrowserWallet) {
 export async function previewWithBrowserWallet(
   input: SubmissionInput,
   wallet: BrowserWallet,
-): Promise<ResolvedSubmission> {
-  return backendForWallet(wallet).resolveSubmission(input);
+): Promise<{
+  result: ResolvedSubmission;
+  write?: SubmissionWriteOptions;
+}> {
+  const backend = backendForWallet(wallet);
+  // Resolve once to learn the exact number of missing records. MultiVault
+  // creation is payable, so a zero-value preview is only an accounting pass;
+  // no simulation or signature is requested here.
+  const unpriced = await backend.resolveSubmission(input);
+  if (unpriced.status !== "ready") return { result: unpriced };
+
+  const [atomCost, tripleCost] = await Promise.all([
+    wallet.publicClient.readContract({
+      address: INTUITION_MAINNET_MULTIVAULT,
+      abi: MultiVaultAbi,
+      functionName: "getAtomCost",
+    }),
+    wallet.publicClient.readContract({
+      address: INTUITION_MAINNET_MULTIVAULT,
+      abi: MultiVaultAbi,
+      functionName: "getTripleCost",
+    }),
+  ]);
+  if (typeof atomCost !== "bigint" || typeof tripleCost !== "bigint") {
+    throw new Error("Intuition returned invalid live creation costs.");
+  }
+
+  const atomCount =
+    unpriced.batch.transactions.find(
+      (transaction) => transaction.kind === "create-atoms",
+    )?.atomIds?.length ?? 0;
+  const tripleCount =
+    unpriced.batch.transactions.find(
+      (transaction) => transaction.kind === "create-triples",
+    )?.tripleIds?.length ?? 0;
+  const write: SubmissionWriteOptions = {
+    atomAsset: atomCost,
+    atomValue: (atomCost * BigInt(atomCount)).toString(),
+    tripleAsset: tripleCost,
+    tripleValue: (tripleCost * BigInt(tripleCount)).toString(),
+  };
+  return { result: await backend.resolveSubmission(input, { write }), write };
 }
 
 /**
@@ -300,11 +343,13 @@ export async function submitWithBrowserWallet(
   input: SubmissionInput,
   wallet: BrowserWallet,
   expectedBatch?: Extract<ResolvedSubmission, { status: "ready" }>["batch"],
+  write?: SubmissionWriteOptions,
 ): Promise<SubmissionExecutionResult> {
   return backendForWallet(wallet).executeSubmission(
     input,
     writeAdapterForWallet(wallet),
     {
+      write,
       expectedBatch,
       indexing: {
         maxAttempts: 5,

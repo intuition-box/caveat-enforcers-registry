@@ -46,6 +46,7 @@ import {
 import type { CurationInput } from "../src/curation";
 import type { Claim, RegistrySignal } from "../src/types";
 import type { ResolvedSubmission } from "../src/backend";
+import type { SubmissionWriteOptions } from "../src/write-workflow";
 import { CaveatMarkSvg } from "./CaveatMark";
 import IntuitionLogo from "./IntuitionLogo";
 
@@ -990,6 +991,7 @@ type ContributionMode = "list" | "attest" | "counter";
 type SubmissionReview = {
   input: SubmissionInput;
   resolved: Extract<ResolvedSubmission, { status: "ready" }>;
+  write: SubmissionWriteOptions;
 };
 
 const DEFAULT_TERMS_SCHEMA = JSON.stringify(
@@ -1226,10 +1228,15 @@ export function SubmitPage() {
               .join("; "),
           );
         }
-        const result = await previewWithBrowserWallet(input, activeWallet);
+        const preview = await previewWithBrowserWallet(input, activeWallet);
+        const result = preview.result;
         setStatus(resolvedSubmissionMessage(result));
         if (result.status === "ready") {
-          setSubmissionReview({ input, resolved: result });
+          setSubmissionReview({
+            input,
+            resolved: result,
+            write: preview.write ?? {},
+          });
         }
         return;
       }
@@ -1264,6 +1271,7 @@ export function SubmitPage() {
         submissionReview.input,
         wallet,
         submissionReview.resolved.batch,
+        submissionReview.write,
       );
       setStatus(
         "message" in result
