@@ -3,6 +3,7 @@ import {
   createWalletClient,
   custom,
   defineChain,
+  http,
   type Address,
   type EIP1193Provider,
   type Hex,
@@ -191,66 +192,36 @@ export async function connectBrowserWallet(): Promise<BrowserWallet> {
   const accounts = await provider.request({ method: "eth_accounts" });
   const first = Array.isArray(accounts) ? accounts[0] : undefined;
   const address = addressFromAccount(first);
-  const transport = custom(provider);
+  const walletTransport = custom(provider);
   return {
     address,
     chainId,
     provider,
-    publicClient: createPublicClient({ chain: intuitionMainnet, transport }),
+    // Keep reads and simulations on the canonical Intuition RPC. Some injected
+    // wallet providers proxy eth_call through their own transaction encoder,
+    // which can corrupt the simulation before a wallet signature is requested.
+    publicClient: createPublicClient({
+      chain: intuitionMainnet,
+      transport: http(INTUITION_MAINNET_RPC),
+    }),
     walletClient: createWalletClient({
       account: address,
       chain: intuitionMainnet,
-      transport,
+      transport: walletTransport,
     }),
   };
 }
 
-function browserRpcFetcher(provider: BrowserProvider): RpcFetcher {
-  return async (_input, init) => {
-    const body = JSON.parse(init.body) as {
-      id?: number;
-      method?: string;
-      params?: unknown[];
-    };
-    if (!body.method) {
-      return {
-        ok: false,
-        status: 400,
-        json: async () => ({ error: { message: "RPC method is required." } }),
-      };
-    }
-    try {
-      const result = await provider.request({
-        method: body.method,
-        params: body.params,
-      });
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({ id: body.id ?? 1, result }),
-      };
-    } catch (error) {
-      return {
-        ok: false,
-        status: 502,
-        json: async () => ({
-          error: {
-            message:
-              error instanceof Error ? error.message : "Wallet RPC failed.",
-          },
-        }),
-      };
-    }
-  };
-}
+const directIntuitionRpcFetcher: RpcFetcher = (_input, init) =>
+  fetch(INTUITION_MAINNET_RPC, init);
 
 function backendForWallet(wallet: BrowserWallet): RegistryBackend {
   return new RegistryBackend({
     endpoint: INTUITION_MAINNET_GRAPHQL,
-    rpcEndpoint: "browser-wallet-provider",
+    rpcEndpoint: INTUITION_MAINNET_RPC,
     ontology: PROPOSED_ONTOLOGY_MANIFEST,
     publicClient: wallet.publicClient as unknown as IntuitionPublicClient,
-    rpcFetcher: browserRpcFetcher(wallet.provider),
+    rpcFetcher: directIntuitionRpcFetcher,
   });
 }
 
