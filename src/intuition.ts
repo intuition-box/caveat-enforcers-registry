@@ -103,6 +103,14 @@ function readError(error: unknown): string {
   return error instanceof Error ? error.message : "Onchain read failed.";
 }
 
+// Unlike atoms, MultiVault has no isTripleCreated view. Its getTriple call
+// reverts with this custom error when a deterministic triple ID has not been
+// created yet. That is an expected state while planning a contribution, not a
+// failed read: the write batch needs to create that triple.
+function isMissingTripleError(error: unknown): boolean {
+  return /MultiVaultCore_TripleDoesNotExist(?:\(|\b)/i.test(readError(error));
+}
+
 export async function verifyIntuitionTerm(
   publicClient: IntuitionPublicClient,
   termId: string,
@@ -215,6 +223,9 @@ export async function verifyIntuitionTriple(
       objectId: ids[2]!,
     };
   } catch (error) {
+    if (isMissingTripleError(error)) {
+      return { status: "missing", tripleId: normalized };
+    }
     return { status: "error", tripleId: normalized, message: readError(error) };
   }
 }

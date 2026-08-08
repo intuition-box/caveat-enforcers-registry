@@ -895,6 +895,26 @@ test("Intuition adapter verifies terms, triples, vaults, and encodes writes", as
   );
 });
 
+test("Intuition adapter treats MultiVault's missing-triple revert as missing", async () => {
+  const tripleId = intuitionTripleIdFromComponents(
+    intuitionAtomIdFromText("missing triple subject"),
+    intuitionAtomIdFromText("missing triple predicate"),
+    intuitionAtomIdFromText("missing triple object"),
+  );
+  const result = await verifyIntuitionTriple(
+    {
+      readContract: async () => {
+        throw new Error(
+          'The contract function "getTriple" reverted. Error: MultiVaultCore_TripleDoesNotExist(bytes32 termId)',
+        );
+      },
+    },
+    tripleId,
+  );
+
+  assert.deepEqual(result, { status: "missing", tripleId });
+});
+
 test("Intuition adapter rejects RPC data whose IDs do not match", async () => {
   const expectedAtom = intuitionAtomIdFromText("expected");
   const wrongAtom = intuitionAtomIdFromText("wrong");
