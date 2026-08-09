@@ -3,11 +3,87 @@
   "chainId": "1155",
   "status": "canonical-id-plan",
   "source": {
-    "repository": "https://github.com/intuition-box/delegation",
+    "repository": "https://github.com/intuition-box/caveat-enforcers-registry",
     "chain": "Intuition 1155",
-    "providedVerification": "Team addendum, 2026-08-03"
+    "providedVerification": "Each relationship carries its own pinned primary evidence URL"
   },
   "triples": [
+    {
+      "key": "erc20-amount-timestamp-complement",
+      "relationship": {
+        "id": "0x991a60f3971da213d98f1db3fa89773933e0b6b30d4eb026cdf82d4a963dd21c",
+        "subject": {
+          "label": "ERC20TransferAmountEnforcer",
+          "id": "0xa2e5fbd1c44d74b5e63bcc7704b7c08de334b2822d5c960978d7d04f0f48c0fb"
+        },
+        "predicate": {
+          "label": "complements",
+          "id": "0x1185fe25f14560074c18ba04e54dd87bda9cf94517a87fe7aebea726e9a6b318",
+          "source": "permissionless derived atom"
+        },
+        "object": {
+          "label": "TimestampEnforcer",
+          "id": "0xb1070aac86a6628baf691531407422a70945fedd7d61795dce2370190aae1201"
+        }
+      },
+      "context": {
+        "id": "0xd72cf1199e912a72b6f8b4603b3132d05626f8ebd361e469fe4fa91c424cb066",
+        "subjectId": "0x991a60f3971da213d98f1db3fa89773933e0b6b30d4eb026cdf82d4a963dd21c",
+        "predicateId": "0x2221a9913138f0b959ce3819c122c9c579b882d1d59c1e47ee0e5c9e6f0f9bbb",
+        "object": {
+          "label": "An ERC-20 transfer delegation that must enforce both a maximum token amount and a validity window",
+          "id": "0xc0365a54322bd2b3293710a41a772d6e026a16415c78411bdc1f8d94b431655a"
+        }
+      },
+      "evidence": {
+        "id": "0xeaa125bcd6714ca20a509e6ec887208f4b74eb108193149155cf7d6df8a7cc7d",
+        "subjectId": "0x991a60f3971da213d98f1db3fa89773933e0b6b30d4eb026cdf82d4a963dd21c",
+        "predicateId": "0xffb5cca1253d9f3c9f7ecd2bdcb7952bc5238ef964fbf53eaa1d238a6371b8fe",
+        "object": {
+          "label": "https://github.com/MetaMask/smart-accounts-kit/tree/d3f1dd8b1682ec5b2c961e450d9847d54eb72268/packages/delegation-core/src/caveats",
+          "id": "0x882f81b367129ed4f526ba016241ba14f5990ce94bf81b733467dd6737859ac6"
+        }
+      },
+      "evidenceNote": "ERC20TransferAmountEnforcer caps the selected token amount while TimestampEnforcer independently restricts redemption to a time window; neither restriction replaces the other."
+    },
+    {
+      "key": "exact-batch-limited-calls-complement",
+      "relationship": {
+        "id": "0xbf0a041e02262d994189698a6af1b1475f4a872bdc4ff03d670afaaa74a9800d",
+        "subject": {
+          "label": "ExactExecutionBatchEnforcer",
+          "id": "0x5e653dd4431c5704ea8d3eca346eb212553a81795938cd05021f700eba90c9b6"
+        },
+        "predicate": {
+          "label": "complements",
+          "id": "0x1185fe25f14560074c18ba04e54dd87bda9cf94517a87fe7aebea726e9a6b318",
+          "source": "permissionless derived atom"
+        },
+        "object": {
+          "label": "LimitedCallsEnforcer",
+          "id": "0xc0b5d35a1651bfa52d003724fb615fd32eb7ced074005ba96a2b9b67fe9fff20"
+        }
+      },
+      "context": {
+        "id": "0xa461f27586f0af2e1f49e713943324856521cb064a5fe10a9e4caf10aebc9995",
+        "subjectId": "0xbf0a041e02262d994189698a6af1b1475f4a872bdc4ff03d670afaaa74a9800d",
+        "predicateId": "0x2221a9913138f0b959ce3819c122c9c579b882d1d59c1e47ee0e5c9e6f0f9bbb",
+        "object": {
+          "label": "An exact execution batch that may be redeemed only a bounded number of times",
+          "id": "0x6c1daf7a7730427c99527575c8bc17ff255c2a1cdcbcc380a77b8aa05e33463c"
+        }
+      },
+      "evidence": {
+        "id": "0x94cbb00f291546d6b7a7aa308c601d6bc1b75681ecbe8194ddd2785bf9b8c2a4",
+        "subjectId": "0xbf0a041e02262d994189698a6af1b1475f4a872bdc4ff03d670afaaa74a9800d",
+        "predicateId": "0xffb5cca1253d9f3c9f7ecd2bdcb7952bc5238ef964fbf53eaa1d238a6371b8fe",
+        "object": {
+          "label": "https://github.com/MetaMask/smart-accounts-kit/tree/d3f1dd8b1682ec5b2c961e450d9847d54eb72268/packages/delegation-core/src/caveats",
+          "id": "0x882f81b367129ed4f526ba016241ba14f5990ce94bf81b733467dd6737859ac6"
+        }
+      },
+      "evidenceNote": "ExactExecutionBatchEnforcer fixes every target, value, and calldata item in the batch while LimitedCallsEnforcer independently caps how many times the delegation may be redeemed."
+    },
     {
       "key": "function-call-payable-conflict",
       "relationship": {

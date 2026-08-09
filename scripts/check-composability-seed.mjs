@@ -27,6 +27,32 @@ if (seed.status !== "portable-seed")
   errors.push("seed must remain portable-seed");
 if (!Array.isArray(seed.relationships) || seed.relationships.length < 3)
   errors.push("seed must contain at least three relationships");
+const requiredPresetRelationships = [
+  "erc20-amount-timestamp-complement",
+  "exact-batch-limited-calls-complement",
+  "allowed-targets-methods-complement",
+  "allowed-targets-call-count-complement",
+  "allowed-targets-time-complement",
+];
+const relationshipsByKey = new Map(
+  (seed.relationships ?? []).map((relationship) => [
+    relationship.key,
+    relationship,
+  ]),
+);
+for (const key of requiredPresetRelationships) {
+  const relationship = relationshipsByKey.get(key);
+  if (!relationship) {
+    errors.push(`missing preset relationship ${key}`);
+    continue;
+  }
+  if (
+    !relationship.subjectType?.endsWith("Enforcer") ||
+    !relationship.relatedType?.endsWith("Enforcer")
+  ) {
+    errors.push(`${key} must connect two enforcer types`);
+  }
+}
 if (triples.status !== "canonical-id-plan")
   errors.push("generated triples must be canonical-id-plan");
 if (triples.triples?.length !== seed.relationships?.length)

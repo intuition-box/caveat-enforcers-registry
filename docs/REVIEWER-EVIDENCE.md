@@ -19,7 +19,7 @@ an explicit funded-wallet or external-publication approval.
 | Detail evidence                                          | Deployment and type claims, support/opposition per claim, terms JSON, usage, source, registry transaction, and block                                    | Implemented; enriched fields appear after enrichment write and API redeploy      |
 | Permissionless submit                                    | Browser-wallet atom/triple flow with preview, simulation, receipts, direct MultiVault verification, and indexing states                                 | Live proof: `AllowedTimeOfDayEnforcer`, transactions in [`PROOF.md`](./PROOF.md) |
 | Support/dispute any claim                                | Direct support and opposition controls, exact counter-vault resolution, explicit TRUST amount, simulation, receipt, and explorer result                 | Implemented; one independent claim-level mainnet proof pending approval          |
-| Three composability presets                              | Plain-language and developer views backed by a deterministic 5-relationship/13-context-triple plan                                                      | Implemented; live relationship write pending approval                            |
+| Three composability presets                              | Three enforcer-to-enforcer presets plus two scope conflicts, backed by a deterministic 7-relationship/17-context-triple plan                            | Implemented; live relationship write pending approval                            |
 | Composability is graph-backed                            | UI asks the API for exact relationship IDs and labels a relationship Live only after Intuition returns it                                               | Implemented; mainnet seed pending approval                                       |
 | Canonical GraphQL query                                  | Runnable membership/detail queries and direct-GraphQL wallet-picker example in [`INTEGRATION.md`](./INTEGRATION.md); latest run returned all 33 records | Live and independently runnable                                                  |
 | Contributor-readable schema                              | Ontology, CAIP-10 identity, submission JSON Schema, example, transaction order, and verification sequence                                               | Implemented                                                                      |
@@ -62,7 +62,7 @@ signal.
 1. Broadcast the reviewed 32-record enrichment plan. Current read-only estimate:
    `38.600000000651 TRUST` plus gas.
 2. Broadcast the composability plan. Last read-only estimate:
-   `3.400000000052 TRUST` plus gas; re-run after enrichment because shared atoms
+   `4.300000000067 TRUST` plus gas; re-run after enrichment because shared atoms
    can reduce the amount.
 3. Deposit a small opposition signal against the incorrect audit claim on the
    open contribution, then verify both vault balances and capture the receipt.

@@ -2368,14 +2368,14 @@ const COMPOSABILITY_TRIPLE_PLANS = composabilityTriplesDocument.triples as
 
 const COMPOSABILITY_PRESETS = [
   {
-    title: "Payable function-call boundary",
-    keys: ["function-call-payable-conflict"],
-    body: "A FunctionCall scope pins native value to zero. Read this conflict before composing a payable call.",
+    title: "Time-gated token transfer",
+    keys: ["erc20-amount-timestamp-complement"],
+    body: "Cap the ERC-20 amount and independently limit when the delegation may be redeemed. Both terms must describe the same intended transfer.",
   },
   {
-    title: "Native transfer with calldata",
-    keys: ["native-transfer-calldata-conflict"],
-    body: "A native-token transfer scope blocks calldata by default. This preset makes the incompatible call shape explicit.",
+    title: "Exact batch with a redemption cap",
+    keys: ["exact-batch-limited-calls-complement"],
+    body: "Fix every call in the batch, then independently cap how many times that exact delegation may be redeemed.",
   },
   {
     title: "Scoped agent action",

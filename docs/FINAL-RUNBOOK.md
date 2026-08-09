@@ -9,15 +9,15 @@ key into chat, a command argument, a committed file, or a frontend environment v
 The reviewed actions are:
 
 1. create the missing atoms and triples in the 32-record reference enrichment plan;
-2. create the five composability relationships and their context, ordering, and evidence triples;
+2. create the seven composability relationships and their context, ordering, and evidence triples;
 3. deposit `0.1 TRUST` into the counter vault for the incorrect audit claim on the open entry.
 
 At the 2026-08-09 read-only state, the maximum protocol deposits before shared-atom savings are:
 
 - enrichment: `38.600000000651 TRUST`;
-- composability: `3.400000000052 TRUST`;
+- composability: `4.300000000067 TRUST`;
 - opposition proof: `0.1 TRUST`;
-- maximum total: `42.100000000703 TRUST`, plus gas.
+- maximum total: `43.000000000718 TRUST`, plus gas.
 
 The composability plan must be recalculated after enrichment. Shared atoms can reduce its live
 cost. Stop if any command reports a larger total, a different chain, a different MultiVault, or
@@ -136,7 +136,7 @@ on Render and run:
 pnpm check:production:final
 ```
 
-Strict production verification must pass all eight checks, including enriched fields, all 18
+Strict production verification must pass all eight checks, including enriched fields, all 24
 planned composability triples, and a material opposition balance in the target counter vault.
 
 ## 8. Evidence and community publication

@@ -4,11 +4,29 @@
   "status": "portable-seed",
   "note": "These records are canonical Intuition ID plans, not claims already written onchain. A connected wallet must create the missing atoms and triples before the registry can display them as live evidence.",
   "source": {
-    "repository": "https://github.com/intuition-box/delegation",
+    "repository": "https://github.com/intuition-box/caveat-enforcers-registry",
     "chain": "Intuition 1155",
-    "providedVerification": "Team addendum, 2026-08-03"
+    "providedVerification": "Each relationship carries its own pinned primary evidence URL"
   },
   "relationships": [
+    {
+      "key": "erc20-amount-timestamp-complement",
+      "subjectType": "ERC20TransferAmountEnforcer",
+      "relation": "complements",
+      "relatedType": "TimestampEnforcer",
+      "context": "An ERC-20 transfer delegation that must enforce both a maximum token amount and a validity window",
+      "evidenceNote": "ERC20TransferAmountEnforcer caps the selected token amount while TimestampEnforcer independently restricts redemption to a time window; neither restriction replaces the other.",
+      "supportedBy": "https://github.com/MetaMask/smart-accounts-kit/tree/d3f1dd8b1682ec5b2c961e450d9847d54eb72268/packages/delegation-core/src/caveats"
+    },
+    {
+      "key": "exact-batch-limited-calls-complement",
+      "subjectType": "ExactExecutionBatchEnforcer",
+      "relation": "complements",
+      "relatedType": "LimitedCallsEnforcer",
+      "context": "An exact execution batch that may be redeemed only a bounded number of times",
+      "evidenceNote": "ExactExecutionBatchEnforcer fixes every target, value, and calldata item in the batch while LimitedCallsEnforcer independently caps how many times the delegation may be redeemed.",
+      "supportedBy": "https://github.com/MetaMask/smart-accounts-kit/tree/d3f1dd8b1682ec5b2c961e450d9847d54eb72268/packages/delegation-core/src/caveats"
+    },
     {
       "key": "function-call-payable-conflict",
       "subjectType": "ScopeType.FunctionCall",
