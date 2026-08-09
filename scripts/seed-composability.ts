@@ -177,6 +177,7 @@ async function sendAndConfirm(
   const to = seedAddress(request.to);
   const data = seedHex(request.data);
   const value = request.value === undefined ? 0n : BigInt(request.value);
+  const gasPrice = await publicClient.getGasPrice();
   await publicClient.call({ account: account.address, to, data, value });
   const hash = await walletClient.sendTransaction({
     account,
@@ -184,6 +185,8 @@ async function sendAndConfirm(
     to,
     data,
     value,
+    gasPrice,
+    type: "legacy",
   });
   console.log(`${label}: ${hash}`);
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -286,6 +289,26 @@ async function main(): Promise<void> {
   );
   console.log(`MultiVault: ${INTUITION_MAINNET_MULTIVAULT}`);
 
+  const [atomCost, tripleCost] = (await Promise.all([
+    publicClient.readContract({
+      address: INTUITION_MAINNET_MULTIVAULT,
+      abi: MultiVaultAbi,
+      functionName: "getAtomCost",
+    }),
+    publicClient.readContract({
+      address: INTUITION_MAINNET_MULTIVAULT,
+      abi: MultiVaultAbi,
+      functionName: "getTripleCost",
+    }),
+  ])) as [bigint, bigint];
+  const required =
+    atomCost * BigInt(atomsToCreate.length) +
+    tripleCost * BigInt(relToCreate.length + depToCreate.length);
+  console.log(
+    `Per-term cost: ${formatEther(atomCost)} TRUST/atom, ${formatEther(tripleCost)} TRUST/triple`,
+  );
+  console.log(`Required deposits: ${formatEther(required)} TRUST (plus gas)`);
+
   if (!options.execute) {
     console.log("DRY RUN: no transactions were broadcast.");
     return;
@@ -305,22 +328,6 @@ async function main(): Promise<void> {
   });
   console.log(`Execution wallet: ${account.address}`);
 
-  const [atomCost, tripleCost] = (await Promise.all([
-    publicClient.readContract({
-      address: INTUITION_MAINNET_MULTIVAULT,
-      abi: MultiVaultAbi,
-      functionName: "getAtomCost",
-    }),
-    publicClient.readContract({
-      address: INTUITION_MAINNET_MULTIVAULT,
-      abi: MultiVaultAbi,
-      functionName: "getTripleCost",
-    }),
-  ])) as [bigint, bigint];
-
-  const required =
-    atomCost * BigInt(atomsToCreate.length) +
-    tripleCost * BigInt(relToCreate.length + depToCreate.length);
   const balance = await publicClient.getBalance({ address: account.address });
   console.log(
     `Required deposits: ${formatEther(required)} TRUST (plus gas); wallet holds ${formatEther(balance)} TRUST`,

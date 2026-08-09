@@ -16,6 +16,10 @@ export type GraphRelationship = {
   ordering?: string;
   evidenceNote?: string;
   supportedBy: string;
+  claimId?: string;
+  live?: boolean;
+  support?: string;
+  opposition?: string;
 };
 
 type Position = { x: number; y: number };
@@ -311,9 +315,9 @@ export default function ComposabilityGraph({
           {selectedRelationship ? (
             <>
               <p className="correlation-graph__status">
-                {selectedRelationship.relation === "conflicts"
-                  ? "Conflict"
-                  : "Complement"}
+                {selectedRelationship.live
+                  ? "Live Intuition claim"
+                  : "Canonical plan"}
               </p>
               <h3>
                 {shortLabel(selectedRelationship.subjectType)}{" "}
@@ -329,6 +333,19 @@ export default function ComposabilityGraph({
               {selectedRelationship.evidenceNote && (
                 <p>
                   <strong>Why:</strong> {selectedRelationship.evidenceNote}
+                </p>
+              )}
+              {selectedRelationship.claimId && (
+                <p className="correlation-graph__claim-id">
+                  <strong>Claim:</strong> {selectedRelationship.claimId}
+                </p>
+              )}
+              {selectedRelationship.live && (
+                <p>
+                  <strong>Signal:</strong> {selectedRelationship.support ?? "0"}{" "}
+                  support
+                  {" · "}
+                  {selectedRelationship.opposition ?? "0"} opposition
                 </p>
               )}
               <a
@@ -396,7 +413,9 @@ export default function ComposabilityGraph({
                   : "complements"}
               </span>
               <span>{shortLabel(relationship.relatedType)}</span>
-              <span aria-hidden="true">↗</span>
+              <span className="correlation-graph__ledger-state">
+                {relationship.live ? "Live" : "Plan"}
+              </span>
             </button>
           );
         })}

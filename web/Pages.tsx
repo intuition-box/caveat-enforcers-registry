@@ -21,11 +21,13 @@ import {
 import { deriveEnforcerPresentation } from "../src/enforcer-presentation";
 import referenceDocument from "../data/metamask-v1.3.0.json";
 import composabilityDocument from "../data/composability-seed.json";
+import composabilityTriplesDocument from "../data/composability-seed.triples.json";
 import ComposabilityGraph from "./ComposabilityGraph";
 import EnforcerRadialGraph from "./EnforcerRadialGraph";
 import BrowserFrame from "./BrowserFrame";
 import {
   fetchRegistry,
+  fetchComposability,
   fetchRegistryDetail,
   type RegistryApiState,
   type RegistryDetailResponse,
@@ -53,6 +55,7 @@ import type {
   CurationPlan,
 } from "../src/curation";
 import type { Claim, RegistrySignal } from "../src/types";
+import type { ComposabilityClaim } from "../src/composability";
 import type { ResolvedSubmission } from "../src/backend";
 import type { SubmissionWriteOptions } from "../src/write-workflow";
 import {
@@ -2170,10 +2173,128 @@ type ComposabilityRelationship = {
   supportedBy: string;
 };
 
+type ComposabilityTriplePlan = {
+  key: string;
+  relationship: {
+    id: string;
+    subject: { id: string };
+  };
+};
+
+type DisplayComposabilityRelationship = ComposabilityRelationship & {
+  claimId: string;
+  live: boolean;
+  support?: string;
+  opposition?: string;
+};
+
 const COMPOSABILITY_RELATIONSHIPS =
   composabilityDocument.relationships as ComposabilityRelationship[];
+const COMPOSABILITY_TRIPLE_PLANS = composabilityTriplesDocument.triples as
+  ComposabilityTriplePlan[] | undefined;
+
+const COMPOSABILITY_PRESETS = [
+  {
+    title: "Payable function-call boundary",
+    keys: ["function-call-payable-conflict"],
+    body: "A FunctionCall scope pins native value to zero. Read this conflict before composing a payable call.",
+  },
+  {
+    title: "Native transfer with calldata",
+    keys: ["native-transfer-calldata-conflict"],
+    body: "A native-token transfer scope blocks calldata by default. This preset makes the incompatible call shape explicit.",
+  },
+  {
+    title: "Scoped agent action",
+    keys: [
+      "allowed-targets-methods-complement",
+      "allowed-targets-call-count-complement",
+      "allowed-targets-time-complement",
+    ],
+    body: "Target, method, call-count, and time-window restrictions reinforce one another when their terms describe the same delegation.",
+  },
+] as const;
 
 export function ComposabilityPage() {
+  const [claims, setClaims] = useState<Map<string, ComposabilityClaim>>(
+    () => new Map(),
+  );
+  const [liveStatus, setLiveStatus] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const subjectIds = Array.from(
+      new Set(
+        (COMPOSABILITY_TRIPLE_PLANS ?? []).map(
+          (plan) => plan.relationship.subject.id,
+        ),
+      ),
+    );
+    void Promise.all(
+      subjectIds.map((subjectId) =>
+        fetchComposability(subjectId, controller.signal),
+      ),
+    )
+      .then((states) => {
+        if (controller.signal.aborted) return;
+        const next = new Map<string, ComposabilityClaim>();
+        for (const state of states) {
+          if (state.kind !== "ready") continue;
+          for (const claim of state.claims) next.set(claim.id, claim);
+        }
+        setClaims(next);
+        setLiveStatus("ready");
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setLiveStatus("error");
+      });
+    return () => controller.abort();
+  }, []);
+
+  const relationships = useMemo<DisplayComposabilityRelationship[]>(() => {
+    const plans = new Map(
+      (COMPOSABILITY_TRIPLE_PLANS ?? []).map((plan) => [plan.key, plan]),
+    );
+    return COMPOSABILITY_RELATIONSHIPS.map((relationship) => {
+      const plan = plans.get(relationship.key);
+      const claim = plan ? claims.get(plan.relationship.id) : undefined;
+      const context = claim?.context.find(
+        (item) => item.kind === "applies-in-context",
+      );
+      const ordering = claim?.context.find(
+        (item) => item.kind === "requires-ordering",
+      );
+      const evidence = claim?.context.find(
+        (item) => item.kind === "supported-by",
+      );
+      return {
+        ...relationship,
+        claimId: plan?.relationship.id ?? "",
+        live: Boolean(claim),
+        ...(claim?.kind === "conflicts" || claim?.kind === "complements"
+          ? { relation: claim.kind }
+          : {}),
+        ...(claim?.relatedLabel ? { relatedType: claim.relatedLabel } : {}),
+        ...(context?.objectLabel ? { context: context.objectLabel } : {}),
+        ...(ordering?.objectLabel ? { ordering: ordering.objectLabel } : {}),
+        ...(externalUrl(evidence?.objectLabel ?? undefined)
+          ? { supportedBy: evidence!.objectLabel! }
+          : {}),
+        ...(claim
+          ? {
+              support: formatTrustSignal(claim.support.value),
+              opposition: formatTrustSignal(claim.opposition.value),
+            }
+          : {}),
+      };
+    });
+  }, [claims]);
+  const liveCount = relationships.filter(
+    (relationship) => relationship.live,
+  ).length;
+
   return (
     <main>
       <section className="route-hero route-hero--visual route-hero--compose scroll-reveal">
@@ -2201,7 +2322,58 @@ export function ComposabilityPage() {
           </p>
         </div>
 
-        <ComposabilityGraph relationships={COMPOSABILITY_RELATIONSHIPS} />
+        <div
+          className="composability-live-status"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="mono-sub">
+            {liveStatus === "loading"
+              ? "Resolving Intuition claims"
+              : liveStatus === "error"
+                ? "Intuition claims unavailable"
+                : `${liveCount} of ${relationships.length} relationship claims live`}
+          </span>
+          <span>
+            {liveStatus === "ready" && liveCount === relationships.length
+              ? "Graph, context, ordering, and signal are resolved from Intuition mainnet."
+              : "Unpublished relationships remain visibly labelled as canonical plans."}
+          </span>
+        </div>
+
+        <ComposabilityGraph relationships={relationships} />
+
+        <section
+          className="composability-presets"
+          aria-labelledby="preset-heading"
+        >
+          <div className="composability-presets__heading">
+            <span className="mono-sub">Three starting presets</span>
+            <h2 id="preset-heading">Compose from an outcome, not a label.</h2>
+          </div>
+          <div className="composability-presets__grid">
+            {COMPOSABILITY_PRESETS.map((preset, index) => {
+              const presetRelationships = relationships.filter((relationship) =>
+                preset.keys.includes(relationship.key as never),
+              );
+              const presetLiveCount = presetRelationships.filter(
+                (relationship) => relationship.live,
+              ).length;
+              return (
+                <article key={preset.title}>
+                  <span className="mono-sub">0{index + 1}</span>
+                  <h3>{preset.title}</h3>
+                  <p>{preset.body}</p>
+                  <span className="composability-presets__state">
+                    {presetLiveCount === presetRelationships.length
+                      ? "Live on Intuition"
+                      : `${presetLiveCount}/${presetRelationships.length} claims live`}
+                  </span>
+                </article>
+              );
+            })}
+          </div>
+        </section>
       </section>
 
       <section className="route-section route-section--ink scroll-reveal">
@@ -2210,12 +2382,11 @@ export function ComposabilityPage() {
             <h2 className="headline">Represented as triples, not UI rules.</h2>
           </div>
           <p className="lede">
-            Every relationship here is published to Intuition as a triple with
-            its use-case context, ordering, and evidence. Anyone can stake
-            $TRUST to support or dispute a claim, and any wallet or SDK can read
-            the same relationships through the documented GraphQL pattern. The
-            registry surfaces community signal; it does not invent a universal
-            score.
+            Published relationships are resolved from Intuition as triples with
+            their use-case context, ordering, evidence, and separate community
+            signals. Canonical plans stay marked as plans until those exact IDs
+            exist onchain. Anyone can support or dispute a live claim with
+            TRUST; the registry never turns that signal into a universal score.
           </p>
         </div>
       </section>

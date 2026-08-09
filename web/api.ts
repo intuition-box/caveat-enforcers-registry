@@ -1,4 +1,5 @@
 import type { RegistryEntry, RegistryState } from "../src/registry";
+import type { ComposabilityState } from "../src/composability";
 
 const configuredBase = (
   import.meta.env.VITE_REGISTRY_API_BASE_URL ?? ""
@@ -82,6 +83,16 @@ export async function fetchRegistryDetail(
 ): Promise<RegistryDetailResponse> {
   return getJson<RegistryDetailResponse>(
     `/api/registry/${encodeURIComponent(deploymentId)}?pageSize=100&maxPages=100`,
+    signal,
+  );
+}
+
+export async function fetchComposability(
+  subjectId: string,
+  signal?: AbortSignal,
+): Promise<ComposabilityState> {
+  return getJson<ComposabilityState>(
+    `/api/registry/${encodeURIComponent(subjectId)}/composability?limit=100`,
     signal,
   );
 }

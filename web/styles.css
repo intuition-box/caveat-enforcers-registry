@@ -6592,6 +6592,21 @@ main > .band:first-child {
   text-transform: uppercase;
 }
 
+.correlation-graph__ledger-state {
+  color: color-mix(in srgb, var(--paper) 58%, transparent);
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.correlation-graph__claim-id {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
 .correlation-graph__ledger-row--conflicts .correlation-graph__ledger-relation {
   color: var(--correlation-conflict);
 }
@@ -6649,6 +6664,104 @@ main > .band:first-child {
   .correlation-graph__ledger-row > :last-child {
     grid-column: 2;
     grid-row: 1 / span 3;
+  }
+}
+
+.composability-live-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin: 2rem 0 0;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line-light);
+  border-bottom: 1px solid var(--line-light);
+}
+
+.composability-live-status > span:last-child {
+  max-width: 46rem;
+  color: var(--muted);
+  line-height: 1.5;
+  text-align: right;
+}
+
+.composability-presets {
+  margin-top: clamp(4rem, 8vw, 8rem);
+}
+
+.composability-presets__heading h2 {
+  max-width: 15ch;
+  margin: 0.65rem 0 0;
+  font-family: var(--display);
+  font-size: clamp(2.3rem, 5vw, 4.8rem);
+  font-weight: 580;
+  letter-spacing: -0.04em;
+  line-height: 0.94;
+}
+
+.composability-presets__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--line-light);
+  border-left: 1px solid var(--line-light);
+}
+
+.composability-presets article {
+  display: grid;
+  min-height: 22rem;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-right: 1px solid var(--line-light);
+  border-bottom: 1px solid var(--line-light);
+  background: var(--paper-bright);
+}
+
+.composability-presets h3,
+.composability-presets p {
+  margin: 0;
+}
+
+.composability-presets h3 {
+  font-family: var(--display);
+  font-size: clamp(1.65rem, 2.7vw, 2.5rem);
+  font-weight: 580;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.composability-presets p {
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.composability-presets__state {
+  align-self: end;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 60rem) {
+  .composability-presets__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .composability-presets article {
+    min-height: 17rem;
+  }
+}
+
+@media (max-width: 48rem) {
+  .composability-live-status {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .composability-live-status > span:last-child {
+    text-align: left;
   }
 }
 
