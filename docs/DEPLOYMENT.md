@@ -25,6 +25,23 @@ The release is verified when `/health` reports chain `1155` with no ontology iss
 `/api/registry` returns the seeded membership records, and browser-wallet CORS preflight from
 the frontend origin succeeds. The frontend never receives a private key.
 
+Run the public production smoke check without a wallet:
+
+```bash
+pnpm check:production
+```
+
+After the reviewed enrichment, composability, and curation writes are indexed and the API is
+redeployed, run the strict acceptance check:
+
+```bash
+pnpm check:production:final
+```
+
+The strict mode additionally requires the reference record's domain, operation, terms, audit,
+and usage evidence; every planned relationship/context/ordering/evidence triple; and the funded
+counter-vault proof. It reads the public frontend, API, and Intuition GraphQL endpoint directly.
+
 ## Release checks
 
 ```bash

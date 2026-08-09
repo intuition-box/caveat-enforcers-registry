@@ -17,6 +17,8 @@
     "check:reference-metadata": "tsx scripts/generate-reference-metadata.ts --check",
     "generate:composability-seed": "node scripts/generate-composability-triples.mjs",
     "check:composability-seed": "node scripts/check-composability-seed.mjs",
+    "check:production": "node scripts/check-production.mjs",
+    "check:production:final": "node scripts/check-production.mjs --require-final",
     "query:registry": "node scripts/query-registry.mjs",
     "example:wallet-picker": "node examples/wallet-picker.mjs",
     "check:local-proof": "node_modules/.bin/tsx --test --test-name-pattern=\"backend execution coordinator confirms and indexes an injected submission\" test/backend.test.ts",

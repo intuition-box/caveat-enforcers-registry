@@ -52,6 +52,11 @@ pnpm format:check
 pnpm build
 ```
 
+The public release can be checked independently with `pnpm check:production`. After the final
+approved writes and API redeploy, `pnpm check:production:final` additionally proves enriched
+ontology fields, every planned composability triple, and the claim-opposition counter-vault
+signal.
+
 ## Remaining irreversible gates
 
 1. Broadcast the reviewed 32-record enrichment plan. Current read-only estimate:
