@@ -47,6 +47,7 @@ When a submission declares a contract terms decoder, preparation also performs a
 - [Backend implementation status](docs/BACKEND.md)
 - [Acceptance proof](docs/PROOF.md)
 - [Reviewer evidence matrix](docs/REVIEWER-EVIDENCE.md)
+- [Final mainnet and publication runbook](docs/FINAL-RUNBOOK.md)
 - [ERC-7710 community proposal draft](docs/COMMUNITY-PROPOSAL.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)

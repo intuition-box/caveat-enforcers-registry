@@ -71,20 +71,26 @@ the frontend, or paste it into chat. The script defaults to dry-run and requires
 `--execute` and `--confirm-mainnet` before it can broadcast.
 
 ```bash
-export INTUITION_SEED_PRIVATE_KEY='0x…'
+read -r -s INTUITION_SEED_PRIVATE_KEY
+export INTUITION_SEED_PRIVATE_KEY
+printf '\n'
 pnpm seed:reference -- --execute --confirm-mainnet
 ```
 
 For the enrichment plan, use the same controlled key injection and explicit gate:
 
 ```bash
-export INTUITION_SEED_PRIVATE_KEY='0x…'
+read -r -s INTUITION_SEED_PRIVATE_KEY
+export INTUITION_SEED_PRIVATE_KEY
+printf '\n'
 pnpm seed:reference-enrichment -- --execute --confirm-mainnet
+unset INTUITION_SEED_PRIVATE_KEY
 ```
 
 Both commands are idempotent. The enrichment runner also pins legacy fee mode for Intuition and
 prints the live atom/triple deposit requirement before any broadcast.
 
-The runner confirms every receipt, re-reads every atom and triple, and then waits up to two
-minutes for the 32 membership records to appear in the canonical GraphQL index. If indexing is
-still pending, it exits after reporting the confirmed-onchain count; re-running is safe.
+The runner confirms every receipt and re-reads every atom and triple directly from MultiVault.
+GraphQL indexing is asynchronous and must be verified separately after the writes. Re-running
+the idempotent dry-run is safe. The complete execution and production-verification sequence is
+in [`FINAL-RUNBOOK.md`](./FINAL-RUNBOOK.md).

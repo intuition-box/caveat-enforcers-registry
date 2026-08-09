@@ -11,6 +11,7 @@ const requiredFiles = [
   "docs/AUDIT-EVIDENCE.md",
   "docs/PROOF.md",
   "docs/REVIEWER-EVIDENCE.md",
+  "docs/FINAL-RUNBOOK.md",
 ];
 
 const forbiddenCharacters = /[\u2013\u2014]/u;
