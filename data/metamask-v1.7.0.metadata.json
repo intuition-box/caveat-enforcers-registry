@@ -1,0 +1,1597 @@
+{
+  "source": {
+    "project": "MetaMask Smart Accounts Kit",
+    "smartAccountsKitVersion": "1.7.0",
+    "delegationCoreVersion": "2.2.1",
+    "delegationCoreCommit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+    "repository": "https://github.com/MetaMask/smart-accounts-kit",
+    "referenceDataset": "data/metamask-v1.3.0.json",
+    "generationMethod": "Fixtures are produced through the package builders and decoded through the package decoder; semantic domains are the conservative implementation review in docs/ENFORCER-TAXONOMY-REVIEW.md.",
+    "status": "reviewed-enrichment-proposal"
+  },
+  "enforcers": [
+    {
+      "name": "AllowedCalldataEnforcer",
+      "address": "0xc2b0d624c1c4319760c96503ba27c347f3260f55",
+      "restrictionDomains": ["calldata"],
+      "operation": "Contract call",
+      "purpose": "Pins the calldata a delegation may pass.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "AllowedCalldataEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/allowedCalldata.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "startIndex",
+              "type": "uint256",
+              "offset": 0,
+              "bytes": 32
+            },
+            { "name": "value", "type": "bytes", "offset": 32, "bytes": 4 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x000000000000000000000000000000000000000000000000000000000000000411223344",
+            "decoded": { "startIndex": "4", "value": "0x11223344" }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "AllowedMethodsEnforcer",
+      "address": "0x2c21fd0cb9dc8445cb3fb0dc5e7bb0aca01842b5",
+      "restrictionDomains": ["method"],
+      "operation": "Contract call",
+      "purpose": "Limits execution to approved function selectors.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "AllowedMethodsEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/allowedMethods.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            { "name": "selectors", "type": "bytes4[]", "offset": 0, "bytes": 8 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0xa9059cbb095ea7b3",
+            "decoded": { "selectors": ["0xa9059cbb", "0x095ea7b3"] }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "AllowedTargetsEnforcer",
+      "address": "0x7f20f61b1f09b08d970938f6fa563634d65c4eeb",
+      "restrictionDomains": ["target"],
+      "operation": "Contract call",
+      "purpose": "Restricts calls to approved contract addresses.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "AllowedTargetsEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/allowedTargets.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            { "name": "targets", "type": "address[]", "offset": 0, "bytes": 40 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x11111111111111111111111111111111111111112222222222222222222222222222222222222222",
+            "decoded": {
+              "targets": [
+                "0x1111111111111111111111111111111111111111",
+                "0x2222222222222222222222222222222222222222"
+              ]
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ApprovalRevocationEnforcer",
+      "address": "0xe264f1f09a19505a1ca1a86d5b01e8bfdb64324a",
+      "restrictionDomains": ["approval"],
+      "operation": "Token approval",
+      "purpose": "Requires token approvals to be revoked after delegated use.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ApprovalRevocationEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/approvalRevocationEnforcer.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 1,
+          "fields": [
+            {
+              "name": "revocationFlags",
+              "type": "uint8",
+              "offset": 0,
+              "bytes": 1
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1.",
+          "One-byte bitmask: bits 0-5 enable ERC-20 approve, ERC-721 approve, setApprovalForAll, Permit2 approve, Permit2 lockdown, and Permit2 nonce invalidation."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          { "terms": "0x3f", "decoded": { "revocationFlags": "63" } }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ArgsEqualityCheckEnforcer",
+      "address": "0x44b8c6ae3c304213c3e298495e12497ed3e56e41",
+      "restrictionDomains": ["arguments"],
+      "operation": "Contract call",
+      "purpose": "Checks equality between call arguments.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ArgsEqualityCheckEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/argsEqualityCheck.ts"
+        },
+        "encoding": {
+          "kind": "raw",
+          "fields": [
+            { "name": "args", "type": "bytes", "offset": 0, "bytes": 4 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          { "terms": "0x11223344", "decoded": { "args": "0x11223344" } }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "BlockNumberEnforcer",
+      "address": "0x5d9818df0ae3f66e9c3d0c5029daf99d1823ca6c",
+      "restrictionDomains": ["block"],
+      "operation": "Execution eligibility",
+      "purpose": "Constrains execution to a block range.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "BlockNumberEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/blockNumber.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 32,
+          "fields": [
+            {
+              "name": "afterThreshold",
+              "type": "uint128",
+              "offset": 0,
+              "bytes": 16
+            },
+            {
+              "name": "beforeThreshold",
+              "type": "uint128",
+              "offset": 16,
+              "bytes": 16
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x00000000000000000000000000000064000000000000000000000000000000c8",
+            "decoded": { "afterThreshold": "100", "beforeThreshold": "200" }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "DeployedEnforcer",
+      "address": "0x24ff2aa430d53a8cd6788018e902e098083dccd2",
+      "restrictionDomains": ["deployment"],
+      "operation": "Contract call",
+      "purpose": "Checks that an enforcer is deployed at a target address.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "DeployedEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/deployed.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "contractAddress",
+              "type": "address",
+              "offset": 0,
+              "bytes": 20
+            },
+            { "name": "salt", "type": "bytes32", "offset": 20, "bytes": 32 },
+            { "name": "bytecode", "type": "bytes", "offset": 52, "bytes": 4 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x1111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000260006000",
+            "decoded": {
+              "contractAddress": "0x1111111111111111111111111111111111111111",
+              "salt": "0x0000000000000000000000000000000000000000000000000000000000000002",
+              "bytecode": "0x60006000"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ERC1155BalanceChangeEnforcer",
+      "address": "0x63c322732695cafbbd488fc6937a0a7b66fc001a",
+      "restrictionDomains": ["balance"],
+      "operation": "ERC-1155 transfer",
+      "purpose": "Constrains ERC-1155 balance changes.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ERC1155BalanceChangeEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/erc1155BalanceChange.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 105,
+          "fields": [
+            { "name": "changeType", "type": "uint8", "offset": 0, "bytes": 1 },
+            {
+              "name": "tokenAddress",
+              "type": "address",
+              "offset": 1,
+              "bytes": 20
+            },
+            {
+              "name": "recipient",
+              "type": "address",
+              "offset": 21,
+              "bytes": 20
+            },
+            { "name": "tokenId", "type": "uint256", "offset": 41, "bytes": 32 },
+            { "name": "balance", "type": "uint256", "offset": 73, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x00111111111111111111111111111111111111111122222222222222222222222222222222222222220000000000000000000000000000000000000000000000000000000000000007000000000000000000000000000000000000000000000000000000000000000a",
+            "decoded": {
+              "changeType": "0",
+              "tokenAddress": "0x1111111111111111111111111111111111111111",
+              "recipient": "0x2222222222222222222222222222222222222222",
+              "tokenId": "7",
+              "balance": "10"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ERC20BalanceChangeEnforcer",
+      "address": "0xcdf6ab796408598cea671d79506d7d48e97a5437",
+      "restrictionDomains": ["balance"],
+      "operation": "ERC-20 transfer",
+      "purpose": "Constrains the change in an ERC-20 balance.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ERC20BalanceChangeEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/erc20BalanceChange.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 73,
+          "fields": [
+            { "name": "changeType", "type": "uint8", "offset": 0, "bytes": 1 },
+            {
+              "name": "tokenAddress",
+              "type": "address",
+              "offset": 1,
+              "bytes": 20
+            },
+            {
+              "name": "recipient",
+              "type": "address",
+              "offset": 21,
+              "bytes": 20
+            },
+            { "name": "balance", "type": "uint256", "offset": 41, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x0011111111111111111111111111111111111111112222222222222222222222222222222222222222000000000000000000000000000000000000000000000000000000000000000a",
+            "decoded": {
+              "changeType": "0",
+              "tokenAddress": "0x1111111111111111111111111111111111111111",
+              "recipient": "0x2222222222222222222222222222222222222222",
+              "balance": "10"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ERC20PeriodTransferEnforcer",
+      "address": "0x474e3ae7e169e940607cc624da8a15eb120139ab",
+      "restrictionDomains": ["amount", "time"],
+      "operation": "ERC-20 transfer",
+      "purpose": "Limits ERC-20 transfers inside a recurring period.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ERC20PeriodTransferEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/erc20TokenPeriodTransfer.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 116,
+          "fields": [
+            {
+              "name": "tokenAddress",
+              "type": "address",
+              "offset": 0,
+              "bytes": 20
+            },
+            {
+              "name": "periodAmount",
+              "type": "uint256",
+              "offset": 20,
+              "bytes": 32
+            },
+            {
+              "name": "periodDuration",
+              "type": "uint256",
+              "offset": 52,
+              "bytes": 32
+            },
+            {
+              "name": "startDate",
+              "type": "uint256",
+              "offset": 84,
+              "bytes": 32
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x111111111111111111111111111111111111111100000000000000000000000000000000000000000000000000000000000003e80000000000000000000000000000000000000000000000000000000000015180000000000000000000000000000000000000000000000000000000006553f100",
+            "decoded": {
+              "tokenAddress": "0x1111111111111111111111111111111111111111",
+              "periodAmount": "1000",
+              "periodDuration": "86400",
+              "startDate": "1700000000"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ERC20StreamingEnforcer",
+      "address": "0x56c97ae02f233b29fa03502ecc0457266d9be00e",
+      "restrictionDomains": ["amount", "rate", "time"],
+      "operation": "ERC-20 transfer",
+      "purpose": "Controls the rate of an ERC-20 stream.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ERC20StreamingEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/erc20Streaming.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 148,
+          "fields": [
+            {
+              "name": "tokenAddress",
+              "type": "address",
+              "offset": 0,
+              "bytes": 20
+            },
+            {
+              "name": "initialAmount",
+              "type": "uint256",
+              "offset": 20,
+              "bytes": 32
+            },
+            {
+              "name": "maxAmount",
+              "type": "uint256",
+              "offset": 52,
+              "bytes": 32
+            },
+            {
+              "name": "amountPerSecond",
+              "type": "uint256",
+              "offset": 84,
+              "bytes": 32
+            },
+            {
+              "name": "startTime",
+              "type": "uint256",
+              "offset": 116,
+              "bytes": 32
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x1111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000003e80000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000006553f100",
+            "decoded": {
+              "tokenAddress": "0x1111111111111111111111111111111111111111",
+              "initialAmount": "10",
+              "maxAmount": "1000",
+              "amountPerSecond": "1",
+              "startTime": "1700000000"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ERC20TransferAmountEnforcer",
+      "address": "0xf100b0819427117ecf76ed94b358b1a5b5c6d2fc",
+      "restrictionDomains": ["amount", "target"],
+      "operation": "ERC-20 transfer",
+      "purpose": "Limits cumulative ERC-20 transfer value.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ERC20TransferAmountEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/erc20TransferAmount.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 52,
+          "fields": [
+            {
+              "name": "tokenAddress",
+              "type": "address",
+              "offset": 0,
+              "bytes": 20
+            },
+            {
+              "name": "maxAmount",
+              "type": "uint256",
+              "offset": 20,
+              "bytes": 32
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x111111111111111111111111111111111111111100000000000000000000000000000000000000000000000000000000000003e8",
+            "decoded": {
+              "tokenAddress": "0x1111111111111111111111111111111111111111",
+              "maxAmount": "1000"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ERC721BalanceChangeEnforcer",
+      "address": "0x8afdf96edbbe7e1ed3f5cd89c7e084841e12a09e",
+      "restrictionDomains": ["balance"],
+      "operation": "ERC-721 transfer",
+      "purpose": "Constrains ERC-721 balance changes.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ERC721BalanceChangeEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/erc721BalanceChange.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 73,
+          "fields": [
+            { "name": "changeType", "type": "uint8", "offset": 0, "bytes": 1 },
+            {
+              "name": "tokenAddress",
+              "type": "address",
+              "offset": 1,
+              "bytes": 20
+            },
+            {
+              "name": "recipient",
+              "type": "address",
+              "offset": 21,
+              "bytes": 20
+            },
+            { "name": "amount", "type": "uint256", "offset": 41, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x00111111111111111111111111111111111111111122222222222222222222222222222222222222220000000000000000000000000000000000000000000000000000000000000001",
+            "decoded": {
+              "changeType": "0",
+              "tokenAddress": "0x1111111111111111111111111111111111111111",
+              "recipient": "0x2222222222222222222222222222222222222222",
+              "amount": "1"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ERC721TransferEnforcer",
+      "address": "0x3790e6b7233f779b09da74c72b6e94813925b9af",
+      "restrictionDomains": ["target"],
+      "operation": "ERC-721 transfer",
+      "purpose": "Constrains ERC-721 transfers.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ERC721TransferEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/erc721Transfer.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 52,
+          "fields": [
+            {
+              "name": "tokenAddress",
+              "type": "address",
+              "offset": 0,
+              "bytes": 20
+            },
+            { "name": "tokenId", "type": "uint256", "offset": 20, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x11111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000007",
+            "decoded": {
+              "tokenAddress": "0x1111111111111111111111111111111111111111",
+              "tokenId": "7"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ExactCalldataBatchEnforcer",
+      "address": "0x982fd5c86bbf425d7d1451f974192d4525113dfd",
+      "restrictionDomains": ["calldata"],
+      "operation": "Batch contract call",
+      "purpose": "Pins a batch of calldata values.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ExactCalldataBatchEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/exactCalldataBatch.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "executions",
+              "type": "(address,uint256,bytes)[]",
+              "offset": 0,
+              "bytes": 256
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1.",
+          "Terms use ABI encoding for an array of (address target, uint256 value, bytes callData) tuples."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000011111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000041122334400000000000000000000000000000000000000000000000000000000",
+            "decoded": {
+              "executions": [
+                {
+                  "target": "0x1111111111111111111111111111111111111111",
+                  "value": "0",
+                  "callData": "0x11223344"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ExactCalldataEnforcer",
+      "address": "0x99f2e9bf15ce5ec84685604836f71ab835dbbded",
+      "restrictionDomains": ["calldata"],
+      "operation": "Contract call",
+      "purpose": "Pins the calldata for an execution.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ExactCalldataEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/exactCalldata.ts"
+        },
+        "encoding": {
+          "kind": "raw",
+          "fields": [
+            { "name": "calldata", "type": "bytes", "offset": 0, "bytes": 4 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          { "terms": "0x11223344", "decoded": { "calldata": "0x11223344" } }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ExactExecutionBatchEnforcer",
+      "address": "0x1e141e455d08721dd5bcda1baa6ea5633afd5017",
+      "restrictionDomains": ["execution"],
+      "operation": "Batch contract call",
+      "purpose": "Constrains a batch of exact executions.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ExactExecutionBatchEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/exactExecutionBatch.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "executions",
+              "type": "(address,uint256,bytes)[]",
+              "offset": 0,
+              "bytes": 256
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1.",
+          "Terms use ABI encoding for an array of (address target, uint256 value, bytes callData) tuples."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000011111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000041122334400000000000000000000000000000000000000000000000000000000",
+            "decoded": {
+              "executions": [
+                {
+                  "target": "0x1111111111111111111111111111111111111111",
+                  "value": "0",
+                  "callData": "0x11223344"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ExactExecutionEnforcer",
+      "address": "0x146713078d39ecc1f5338309c28405ccf85abfbb",
+      "restrictionDomains": ["execution"],
+      "operation": "Contract call",
+      "purpose": "Constrains the target, value, and calldata of an execution.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ExactExecutionEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/exactExecution.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "execution",
+              "type": "(address,uint256,bytes packed)",
+              "offset": 0,
+              "bytes": 56
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x1111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000011223344",
+            "decoded": {
+              "execution": {
+                "target": "0x1111111111111111111111111111111111111111",
+                "value": "0",
+                "callData": "0x11223344"
+              }
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "IdEnforcer",
+      "address": "0xc8b5d93463c893401094cc70e66a206fb5987997",
+      "restrictionDomains": ["single-use identifier"],
+      "operation": "Delegation redemption",
+      "purpose": "Binds a caveat to a specific delegation identity.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "IdEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/id.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 32,
+          "fields": [
+            { "name": "id", "type": "uint256", "offset": 0, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x0000000000000000000000000000000000000000000000000000000000000007",
+            "decoded": { "id": "7" }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "LimitedCallsEnforcer",
+      "address": "0x04658b29f6b82ed55274221a06fc97d318e25416",
+      "restrictionDomains": ["count"],
+      "operation": "Delegation redemption",
+      "purpose": "Limits how many calls a delegation may make.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "LimitedCallsEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/limitedCalls.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 32,
+          "fields": [
+            { "name": "limit", "type": "uint256", "offset": 0, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x0000000000000000000000000000000000000000000000000000000000000005",
+            "decoded": { "limit": "5" }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "MultiTokenPeriodEnforcer",
+      "address": "0xfb2f1a9bd76d3701b730e5d69c3219d42d80ebb7",
+      "restrictionDomains": ["amount", "time"],
+      "operation": "Token transfer",
+      "purpose": "Limits multi-token movement inside a recurring period.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "MultiTokenPeriodEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/multiTokenPeriod.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "tokenConfigs",
+              "type": "(address,uint256,uint256,uint256)[] packed",
+              "offset": 0,
+              "bytes": 116
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x111111111111111111111111111111111111111100000000000000000000000000000000000000000000000000000000000003e80000000000000000000000000000000000000000000000000000000000015180000000000000000000000000000000000000000000000000000000006553f100",
+            "decoded": {
+              "tokenConfigs": [
+                {
+                  "token": "0x1111111111111111111111111111111111111111",
+                  "periodAmount": "1000",
+                  "periodDuration": "86400",
+                  "startDate": "1700000000"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "NativeBalanceChangeEnforcer",
+      "address": "0xbd7b277507723490cd50b12eaafe87c616be6880",
+      "restrictionDomains": ["balance"],
+      "operation": "Native token transfer",
+      "purpose": "Constrains native-token balance changes.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "NativeBalanceChangeEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/nativeBalanceChange.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 53,
+          "fields": [
+            { "name": "changeType", "type": "uint8", "offset": 0, "bytes": 1 },
+            {
+              "name": "recipient",
+              "type": "address",
+              "offset": 1,
+              "bytes": 20
+            },
+            { "name": "balance", "type": "uint256", "offset": 21, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x002222222222222222222222222222222222222222000000000000000000000000000000000000000000000000000000000000000a",
+            "decoded": {
+              "changeType": "0",
+              "recipient": "0x2222222222222222222222222222222222222222",
+              "balance": "10"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "NativeTokenPaymentEnforcer",
+      "address": "0x4803a326dded6ddbc60e659e5ed12d85c7582811",
+      "restrictionDomains": ["amount", "payment recipient"],
+      "operation": "Native token payment",
+      "purpose": "Requires a native-token payment under the delegation.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "NativeTokenPaymentEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/nativeTokenPayment.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 52,
+          "fields": [
+            {
+              "name": "recipient",
+              "type": "address",
+              "offset": 0,
+              "bytes": 20
+            },
+            { "name": "amount", "type": "uint256", "offset": 20, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x22222222222222222222222222222222222222220000000000000000000000000000000000000000000000000000000000000064",
+            "decoded": {
+              "recipient": "0x2222222222222222222222222222222222222222",
+              "amount": "100"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "NativeTokenPeriodTransferEnforcer",
+      "address": "0x9bc0faf4aca5ae429f4c06aeeac517520cb16bd9",
+      "restrictionDomains": ["amount", "time"],
+      "operation": "Native token transfer",
+      "purpose": "Limits native-token transfers inside a recurring period.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "NativeTokenPeriodTransferEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/nativeTokenPeriodTransfer.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 96,
+          "fields": [
+            {
+              "name": "periodAmount",
+              "type": "uint256",
+              "offset": 0,
+              "bytes": 32
+            },
+            {
+              "name": "periodDuration",
+              "type": "uint256",
+              "offset": 32,
+              "bytes": 32
+            },
+            {
+              "name": "startDate",
+              "type": "uint256",
+              "offset": 64,
+              "bytes": 32
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x00000000000000000000000000000000000000000000000000000000000003e80000000000000000000000000000000000000000000000000000000000015180000000000000000000000000000000000000000000000000000000006553f100",
+            "decoded": {
+              "periodAmount": "1000",
+              "periodDuration": "86400",
+              "startDate": "1700000000"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "NativeTokenStreamingEnforcer",
+      "address": "0xd10b97905a320b13a0608f7e9cc506b56747df19",
+      "restrictionDomains": ["amount", "rate", "time"],
+      "operation": "Native token transfer",
+      "purpose": "Controls the rate of a native-token stream.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "NativeTokenStreamingEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/nativeTokenStreaming.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 128,
+          "fields": [
+            {
+              "name": "initialAmount",
+              "type": "uint256",
+              "offset": 0,
+              "bytes": 32
+            },
+            {
+              "name": "maxAmount",
+              "type": "uint256",
+              "offset": 32,
+              "bytes": 32
+            },
+            {
+              "name": "amountPerSecond",
+              "type": "uint256",
+              "offset": 64,
+              "bytes": 32
+            },
+            {
+              "name": "startTime",
+              "type": "uint256",
+              "offset": 96,
+              "bytes": 32
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000003e80000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000006553f100",
+            "decoded": {
+              "initialAmount": "10",
+              "maxAmount": "1000",
+              "amountPerSecond": "1",
+              "startTime": "1700000000"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "NativeTokenTransferAmountEnforcer",
+      "address": "0xf71af580b9c3078fbc2bbf16fbb8eed82b330320",
+      "restrictionDomains": ["amount"],
+      "operation": "Native token transfer",
+      "purpose": "Caps native-token transfers.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "NativeTokenTransferAmountEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/nativeTokenTransferAmount.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 32,
+          "fields": [
+            { "name": "maxAmount", "type": "uint256", "offset": 0, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x00000000000000000000000000000000000000000000000000000000000003e8",
+            "decoded": { "maxAmount": "1000" }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "NonceEnforcer",
+      "address": "0xde4f2fac4b3d87a1d9953ca5fc09fca7f366254f",
+      "restrictionDomains": ["nonce"],
+      "operation": "Delegation redemption",
+      "purpose": "Constrains reuse of a delegation nonce.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "NonceEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/nonce.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 32,
+          "fields": [
+            { "name": "nonce", "type": "bytes32", "offset": 0, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "decoded": {
+              "nonce": "0x0000000000000000000000000000000000000000000000000000000000000001"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "OwnershipTransferEnforcer",
+      "address": "0x7eef9734e7092032b5c56310eb9bbd1f4a524681",
+      "restrictionDomains": ["ownership", "target"],
+      "operation": "Ownership transfer",
+      "purpose": "Controls an ownership transfer path.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "OwnershipTransferEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/ownershipTransfer.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 20,
+          "fields": [
+            {
+              "name": "contractAddress",
+              "type": "address",
+              "offset": 0,
+              "bytes": 20
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x1111111111111111111111111111111111111111",
+            "decoded": {
+              "contractAddress": "0x1111111111111111111111111111111111111111"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "RedeemerEnforcer",
+      "address": "0xe144b0b2618071b4e56f746313528a669c7e65c5",
+      "restrictionDomains": ["actor access"],
+      "operation": "Delegation redemption",
+      "purpose": "Restricts who may redeem a delegation.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "RedeemerEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/redeemer.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "redeemers",
+              "type": "address[]",
+              "offset": 0,
+              "bytes": 40
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x22222222222222222222222222222222222222223333333333333333333333333333333333333333",
+            "decoded": {
+              "redeemers": [
+                "0x2222222222222222222222222222222222222222",
+                "0x3333333333333333333333333333333333333333"
+              ]
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "SpecificActionERC20TransferBatchEnforcer",
+      "address": "0x6649b61c873f6f9686a1e1ae9ee98ac380c7ba13",
+      "restrictionDomains": ["execution", "amount"],
+      "operation": "ERC-20 batch transfer",
+      "purpose": "Constrains a specific ERC-20 transfer batch.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "SpecificActionERC20TransferBatchEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/specificActionERC20TransferBatch.ts"
+        },
+        "encoding": {
+          "kind": "custom",
+          "fields": [
+            {
+              "name": "tokenAddress",
+              "type": "address",
+              "offset": 0,
+              "bytes": 20
+            },
+            {
+              "name": "recipient",
+              "type": "address",
+              "offset": 20,
+              "bytes": 20
+            },
+            { "name": "amount", "type": "uint256", "offset": 40, "bytes": 32 },
+            { "name": "target", "type": "address", "offset": 72, "bytes": 20 },
+            { "name": "calldata", "type": "bytes", "offset": 92, "bytes": 4 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x111111111111111111111111111111111111111122222222222222222222222222222222222222220000000000000000000000000000000000000000000000000000000000000064333333333333333333333333333333333333333311223344",
+            "decoded": {
+              "tokenAddress": "0x1111111111111111111111111111111111111111",
+              "recipient": "0x2222222222222222222222222222222222222222",
+              "amount": "100",
+              "target": "0x3333333333333333333333333333333333333333",
+              "calldata": "0x11223344"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "TimestampEnforcer",
+      "address": "0x1046bb45c8d673d4ea75321280db34899413c069",
+      "restrictionDomains": ["time"],
+      "operation": "Execution eligibility",
+      "purpose": "Sets a valid time window for execution.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "TimestampEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/timestamp.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 32,
+          "fields": [
+            {
+              "name": "afterThreshold",
+              "type": "uint128",
+              "offset": 0,
+              "bytes": 16
+            },
+            {
+              "name": "beforeThreshold",
+              "type": "uint128",
+              "offset": 16,
+              "bytes": 16
+            }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x0000000000000000000000006553f1000000000000000000000000006b49d200",
+            "decoded": {
+              "afterThreshold": "1700000000",
+              "beforeThreshold": "1800000000"
+            }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    },
+    {
+      "name": "ValueLteEnforcer",
+      "address": "0x92bf12322527caa612fd31a0e810472bbb106a8f",
+      "restrictionDomains": ["native execution value"],
+      "operation": "Contract call",
+      "purpose": "Caps the native value attached to an execution.",
+      "termsSchema": {
+        "schemaVersion": "1.0.0",
+        "enforcer": "ValueLteEnforcer",
+        "source": {
+          "repository": "https://github.com/MetaMask/smart-accounts-kit",
+          "commit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
+          "path": "packages/delegation-core/src/caveats/valueLte.ts"
+        },
+        "encoding": {
+          "kind": "packed",
+          "totalBytes": 32,
+          "fields": [
+            { "name": "maxValue", "type": "uint256", "offset": 0, "bytes": 32 }
+          ]
+        },
+        "constraints": [
+          "Fixture encoded and decoded with @metamask/delegation-core@2.2.1."
+        ],
+        "malformedInputBehavior": "Exact rejection behavior is defined by the pinned implementation; malformed or semantically invalid terms may revert.",
+        "fixtures": [
+          {
+            "terms": "0x0000000000000000000000000000000000000000000000000000000000000064",
+            "decoded": { "maxValue": "100" }
+          }
+        ]
+      },
+      "usage": [
+        {
+          "name": "MetaMask Smart Accounts Kit 1.7.0",
+          "sourceUrl": "https://github.com/MetaMask/smart-accounts-kit/tree/@metamask/smart-accounts-kit@1.7.0"
+        }
+      ]
+    }
+  ]
+}

@@ -136,6 +136,12 @@ export {
 } from "./viem-adapter.js";
 export { verifyTermsDecoder, type TermsDecoderCheck } from "./terms-decoder.js";
 export type { Claim, EnforcerRecord, RegistrySignal } from "./types.js";
+export {
+  buildReferenceEnrichmentPlan,
+  type ReferenceEnrichmentPlan,
+  type ReferenceMetadataDocument,
+  type ReferenceMetadataEntry,
+} from "./reference-enrichment.js";
 export { sumNumericStrings } from "./signals.js";
 export {
   RegistryBackend,

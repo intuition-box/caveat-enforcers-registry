@@ -1,0 +1,294 @@
+import { stringToHex } from "viem";
+import {
+  intuitionAtomIdFromText,
+  intuitionTripleIdFromComponents,
+} from "./intuition.js";
+import { PROPOSED_ONTOLOGY_MANIFEST } from "./ontology.js";
+import { canonicalJson } from "./submission.js";
+import type {
+  ReferenceSeedAtom,
+  ReferenceSeedDocument,
+  ReferenceSeedTriple,
+} from "./reference-seed.js";
+import {
+  buildCaip10,
+  normalizeEvmAddress,
+  validateTermsSchema,
+  type SubmissionUsageEvidence,
+  type TermsSchema,
+} from "./validation.js";
+
+export type ReferenceMetadataEntry = {
+  name: string;
+  address: string;
+  restrictionDomains: string[];
+  operation: string;
+  purpose: string;
+  termsSchema: TermsSchema;
+  usage: SubmissionUsageEvidence[];
+};
+
+export type ReferenceMetadataDocument = {
+  source: {
+    repository: string;
+    delegationCoreCommit: string;
+    status: string;
+  };
+  enforcers: ReferenceMetadataEntry[];
+};
+
+export type ReferenceEnrichmentPlan = {
+  chainId: string;
+  sourceRelease: string;
+  atoms: ReferenceSeedAtom[];
+  triples: ReferenceSeedTriple[];
+};
+
+const CHAIN_ID = "1155";
+const PREDICATE_LABELS = {
+  hasTermsSchema: "has terms schema",
+  restricts: "restricts",
+  affectsOperation: "affects operation",
+  describedBy: "described by",
+  partOfRelease: "part of release",
+  usedBy: "used by",
+} as const;
+
+function requiredText(value: unknown, label: string): string {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`${label} must be a non-empty string.`);
+  }
+  return value.trim();
+}
+
+function addAtom(
+  atoms: Map<string, ReferenceSeedAtom>,
+  key: string,
+  content: string,
+): ReferenceSeedAtom {
+  const normalized = requiredText(content, `${key} content`);
+  const id = intuitionAtomIdFromText(normalized);
+  const existing = atoms.get(id.toLowerCase());
+  if (existing) {
+    if (existing.content !== normalized) {
+      throw new Error(`Atom ID collision detected for ${key}.`);
+    }
+    return existing;
+  }
+  const atom = {
+    key,
+    content: normalized,
+    data: stringToHex(normalized),
+    id,
+  };
+  atoms.set(id.toLowerCase(), atom);
+  return atom;
+}
+
+function addTriple(
+  triples: Map<string, ReferenceSeedTriple>,
+  key: string,
+  enforcerName: string,
+  subjectId: string,
+  predicateId: string,
+  objectId: string,
+): void {
+  const tripleId = intuitionTripleIdFromComponents(
+    subjectId,
+    predicateId,
+    objectId,
+  );
+  if (triples.has(tripleId.toLowerCase())) return;
+  triples.set(tripleId.toLowerCase(), {
+    key,
+    enforcerName,
+    subjectId: subjectId.toLowerCase(),
+    predicateId: predicateId.toLowerCase(),
+    objectId: objectId.toLowerCase(),
+    tripleId,
+  });
+}
+
+function requiredPredicate(key: keyof typeof PREDICATE_LABELS): {
+  id: string;
+  label: string;
+} {
+  const label = PREDICATE_LABELS[key];
+  const id = PROPOSED_ONTOLOGY_MANIFEST.predicates[key];
+  if (!id) throw new Error(`Missing ontology predicate: ${key}.`);
+  const derived = intuitionAtomIdFromText(label);
+  if (derived.toLowerCase() !== id.toLowerCase()) {
+    throw new Error(`Ontology predicate ${key} does not match ${label}.`);
+  }
+  return { id, label };
+}
+
+/**
+ * Build the reviewed, idempotent enrichment plan for the 32 already-seeded
+ * MetaMask deployments. This plan adds source-derived semantics and codec
+ * evidence; it never writes an audit claim without an exact external audit.
+ */
+export function buildReferenceEnrichmentPlan(
+  metadata: ReferenceMetadataDocument,
+  reference: ReferenceSeedDocument,
+): ReferenceEnrichmentPlan {
+  if (metadata.enforcers.length !== 32 || reference.enforcers.length !== 32) {
+    throw new Error("Reference enrichment requires exactly 32 enforcers.");
+  }
+  const referenceByName = new Map(
+    reference.enforcers.map((entry) => [entry.name, entry]),
+  );
+  const atoms = new Map<string, ReferenceSeedAtom>();
+  const triples = new Map<string, ReferenceSeedTriple>();
+  const seenNames = new Set<string>();
+  const seenAddresses = new Set<string>();
+  const predicates = Object.fromEntries(
+    Object.keys(PREDICATE_LABELS).map((key) => [
+      key,
+      requiredPredicate(key as keyof typeof PREDICATE_LABELS),
+    ]),
+  ) as Record<keyof typeof PREDICATE_LABELS, { id: string; label: string }>;
+
+  for (const [key, predicate] of Object.entries(predicates)) {
+    const atom = addAtom(atoms, `ontology-predicate:${key}`, predicate.label);
+    if (atom.id.toLowerCase() !== predicate.id.toLowerCase()) {
+      throw new Error(`Derived predicate mismatch for ${key}.`);
+    }
+  }
+
+  const repository = requiredText(
+    metadata.source.repository,
+    "source.repository",
+  );
+  const sourceCommit = requiredText(
+    metadata.source.delegationCoreCommit,
+    "source.delegationCoreCommit",
+  );
+  const sourceRelease = `${repository} @ ${sourceCommit}`;
+  const releaseAtom = addAtom(atoms, "source-release", sourceRelease);
+
+  for (const entry of metadata.enforcers) {
+    const name = requiredText(entry.name, "enforcer.name");
+    const address = normalizeEvmAddress(entry.address);
+    const referenceEntry = referenceByName.get(name);
+    if (!address) throw new Error(`Invalid address for ${name}.`);
+    if (!referenceEntry)
+      throw new Error(`Unknown reference enforcer: ${name}.`);
+    if (normalizeEvmAddress(referenceEntry.address) !== address) {
+      throw new Error(`Reference address mismatch for ${name}.`);
+    }
+    if (seenNames.has(name) || seenAddresses.has(address)) {
+      throw new Error(`Duplicate enrichment identity: ${name}.`);
+    }
+    seenNames.add(name);
+    seenAddresses.add(address);
+    if (
+      !Array.isArray(entry.restrictionDomains) ||
+      !entry.restrictionDomains.length
+    ) {
+      throw new Error(`${name} needs at least one restriction domain.`);
+    }
+    const schemaIssues = validateTermsSchema(entry.termsSchema);
+    if (schemaIssues.length) {
+      throw new Error(
+        `Invalid terms schema for ${name}: ${schemaIssues[0]?.path} ${schemaIssues[0]?.message}`,
+      );
+    }
+    if (entry.termsSchema.enforcer !== name) {
+      throw new Error(`Terms schema identity mismatch for ${name}.`);
+    }
+
+    const deployment = addAtom(
+      atoms,
+      `deployment:${name}`,
+      buildCaip10(CHAIN_ID, address),
+    );
+    const type = addAtom(atoms, `enforcer-type:${name}`, name);
+    const operation = addAtom(
+      atoms,
+      `operation:${entry.operation}`,
+      requiredText(entry.operation, `${name}.operation`),
+    );
+    const purpose = addAtom(
+      atoms,
+      `description:${name}`,
+      requiredText(entry.purpose, `${name}.purpose`),
+    );
+    const terms = addAtom(
+      atoms,
+      `terms-schema:${name}`,
+      canonicalJson(entry.termsSchema),
+    );
+
+    for (const domainValue of entry.restrictionDomains) {
+      const domain = addAtom(
+        atoms,
+        `restriction-domain:${domainValue}`,
+        requiredText(domainValue, `${name}.restrictionDomains`),
+      );
+      addTriple(
+        triples,
+        `restricts:${domain.content}`,
+        name,
+        type.id,
+        predicates.restricts.id,
+        domain.id,
+      );
+    }
+    addTriple(
+      triples,
+      "affects-operation",
+      name,
+      type.id,
+      predicates.affectsOperation.id,
+      operation.id,
+    );
+    addTriple(
+      triples,
+      "described-by",
+      name,
+      type.id,
+      predicates.describedBy.id,
+      purpose.id,
+    );
+    addTriple(
+      triples,
+      "has-terms-schema",
+      name,
+      deployment.id,
+      predicates.hasTermsSchema.id,
+      terms.id,
+    );
+    addTriple(
+      triples,
+      "part-of-release",
+      name,
+      deployment.id,
+      predicates.partOfRelease.id,
+      releaseAtom.id,
+    );
+
+    for (const [index, usage] of entry.usage.entries()) {
+      const usageContent = canonicalJson(usage);
+      const usageAtom = addAtom(atoms, `usage:${name}:${index}`, usageContent);
+      addTriple(
+        triples,
+        `used-by:${index}`,
+        name,
+        deployment.id,
+        predicates.usedBy.id,
+        usageAtom.id,
+      );
+    }
+  }
+
+  if (seenNames.size !== referenceByName.size) {
+    throw new Error("Reference metadata does not cover the complete seed set.");
+  }
+  return {
+    chainId: CHAIN_ID,
+    sourceRelease,
+    atoms: [...atoms.values()],
+    triples: [...triples.values()],
+  };
+}

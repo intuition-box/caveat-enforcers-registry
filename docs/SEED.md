@@ -18,8 +18,18 @@ The seed writes the minimal launch graph for each deployment:
 - the proposed deployment-class atom and proposed predicate atoms when missing;
 - membership, implementation, deployed-on, and source-at triples.
 
-It does not invent terms schemas or audit claims that are not present in the reference dataset.
-Those richer claims should be added through reviewed submissions later.
+The launch seed deliberately did not invent terms schemas or audit claims that were absent from
+the deployment dataset. The reviewed enrichment is a second, idempotent operation. It derives
+codec fixtures through the pinned MetaMask package builders and decoders, applies the conservative
+implementation taxonomy in `docs/ENFORCER-TAXONOMY-REVIEW.md`, and adds:
+
+- type definitions and restriction-domain claims;
+- affected-operation claims;
+- versioned terms-schema documents with executable fixtures;
+- immutable package-release provenance; and
+- official Smart Accounts Kit usage evidence.
+
+It still does not write `covered by audit` for any deployment without an exact external audit.
 
 ## Dry run
 
@@ -28,6 +38,19 @@ pnpm seed:reference -- --dry-run
 ```
 
 The dry run is read-only and prints the planned totals and currently missing totals.
+
+Run the reviewed enrichment independently:
+
+```bash
+pnpm generate:reference-metadata
+pnpm check:reference-metadata
+pnpm seed:reference-enrichment -- --dry-run
+```
+
+`data/metamask-v1.7.0.metadata.json` is reproducible from
+`@metamask/smart-accounts-kit@1.7.0` and `@metamask/delegation-core@2.2.1` at commit
+`d3f1dd8b1682ec5b2c961e450d9847d54eb72268`. CI fails when the committed document differs from
+the package-generated result.
 
 ## Controlled execution
 
@@ -39,6 +62,16 @@ the frontend, or paste it into chat. The script defaults to dry-run and requires
 export INTUITION_SEED_PRIVATE_KEY='0x…'
 pnpm seed:reference -- --execute --confirm-mainnet
 ```
+
+For the enrichment plan, use the same controlled key injection and explicit gate:
+
+```bash
+export INTUITION_SEED_PRIVATE_KEY='0x…'
+pnpm seed:reference-enrichment -- --execute --confirm-mainnet
+```
+
+Both commands are idempotent. The enrichment runner also pins legacy fee mode for Intuition and
+prints the live atom/triple deposit requirement before any broadcast.
 
 The runner confirms every receipt, re-reads every atom and triple, and then waits up to two
 minutes for the 32 membership records to appear in the canonical GraphQL index. If indexing is
