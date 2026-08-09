@@ -78,3 +78,15 @@ implemented and tested. Their permanent proof transactions are intentionally not
 here until a funded wallet explicitly approves them. The reviewed enrichment and audit
 mapping are also dry-run only until that approval. See
 [`REVIEWER-EVIDENCE.md`](./REVIEWER-EVIDENCE.md) for the exact remaining gates.
+
+The curation proof target can be checked without broadcasting:
+
+```bash
+pnpm curate:claim -- \
+  --claim-id 0x55ae5374e58d54e10124bfc39273a7297bce98ab3b68ef010b8d1da57128cb04 \
+  --action oppose --amount 0.1 --receiver 0x... --dry-run
+```
+
+It resolves the canonical counter vault and prints its current balance. Execution
+requires the separate `--execute --confirm-mainnet` gate and verifies that the
+receipt succeeds and the target vault increases.

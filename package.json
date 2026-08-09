@@ -29,7 +29,8 @@
     "preview": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "seed:composability": "tsx scripts/seed-composability.ts"
+    "seed:composability": "tsx scripts/seed-composability.ts",
+    "curate:claim": "tsx scripts/curate-claim.ts"
   },
   "devDependencies": {
     "@metamask/smart-accounts-kit": "^1.7.0",
