@@ -269,6 +269,10 @@ type RegistryRow = Reference & {
   claims?: Claim[];
   supportSignal?: RegistrySignal;
   oppositionSignal?: RegistrySignal;
+  usage?: string[];
+  createdAt?: string;
+  transactionHash?: string;
+  blockNumber?: string;
   classificationSource?: "indexed" | "derived";
 };
 
@@ -335,6 +339,10 @@ function liveRow(
     claims: entry.claims,
     supportSignal: entry.supportSignal,
     oppositionSignal: entry.oppositionSignal,
+    usage: entry.usage,
+    createdAt: entry.createdAt,
+    transactionHash: entry.transactionHash,
+    blockNumber: entry.blockNumber,
     classificationSource:
       indexedDomain && indexedOperation ? "indexed" : "derived",
   };
@@ -366,6 +374,30 @@ function formatTrustSignal(value: string | undefined): string {
   const [integer, fraction = ""] = trust.split(".");
   const readableFraction = fraction.slice(0, 4).replace(/0+$/, "");
   return `${integer}${readableFraction ? `.${readableFraction}` : ""} TRUST`;
+}
+
+function hasAuditClaim(row: RegistryRow): boolean {
+  const audit = row.audit?.trim().toLowerCase() ?? "";
+  return Boolean(
+    audit &&
+    audit !== "no audit claim" &&
+    audit !== "audit claim pending" &&
+    audit !== "no audit evidence",
+  );
+}
+
+function signalValue(row: RegistryRow): bigint {
+  const value = row.supportSignal?.value;
+  return value && /^\d+$/.test(value) ? BigInt(value) : 0n;
+}
+
+function formattedTermsSchema(value: string | undefined): string {
+  if (!value) return "No terms schema claim";
+  try {
+    return JSON.stringify(JSON.parse(value), null, 2);
+  } catch {
+    return value;
+  }
 }
 
 function RegistryDetailDrawer({
@@ -557,11 +589,34 @@ function RegistryDetailDrawer({
                 ],
                 ["Supporting signal", signalLabel(row.supportSignal)],
                 ["Opposition signal", signalLabel(row.oppositionSignal)],
-                ["Terms schema", row.terms || "No terms schema claim"],
-                ["Audit", row.audit || "No audit claim"],
-                ["Release", "No release claim"],
+                [
+                  "Audit evidence",
+                  hasAuditClaim(row) ? row.audit : "No audit claim",
+                ],
+                [
+                  "Known usage",
+                  row.usage?.length ? row.usage.join(" · ") : "No usage claim",
+                ],
+                [
+                  "Registry record",
+                  row.transactionHash ? (
+                    <a
+                      href={`https://explorer.intuition.systems/tx/${row.transactionHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Block {row.blockNumber ?? "confirmed"} ↗
+                    </a>
+                  ) : (
+                    "Transaction unavailable"
+                  ),
+                ],
               ]}
             />
+            <details className="terms-schema" open>
+              <summary>Terms encoding / ABI schema</summary>
+              <pre>{formattedTermsSchema(row.terms)}</pre>
+            </details>
           </section>
 
           <section className="registry-drawer__section">
@@ -738,6 +793,9 @@ export function RegistryPage() {
   const [domain, setDomain] = useState("all");
   const [operation, setOperation] = useState("all");
   const [chain, setChain] = useState("all");
+  const [audit, setAudit] = useState("all");
+  const [minimumTrust, setMinimumTrust] = useState("0");
+  const [sort, setSort] = useState("trust-desc");
   const [apiState, setApiState] = useState<RegistryApiState | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState<RegistryRow | null>(null);
@@ -780,10 +838,14 @@ export function RegistryPage() {
 
   const matchesFilters = (row: RegistryRow): boolean => {
     const q = debouncedQuery.trim().toLowerCase();
+    const minimumSignal = parseEther(minimumTrust);
     return (
       (domain === "all" || row.domain === domain) &&
       (operation === "all" || row.operation === operation) &&
       (chain === "all" || chain === "eip155:1155") &&
+      (audit === "all" ||
+        (audit === "with-claim" ? hasAuditClaim(row) : !hasAuditClaim(row))) &&
+      signalValue(row) >= minimumSignal &&
       (q === "" ||
         row.name.toLowerCase().includes(q) ||
         row.canonicalName.toLowerCase().includes(q) ||
@@ -823,11 +885,14 @@ export function RegistryPage() {
 
   const referenceRows = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const minimumSignal = parseEther(minimumTrust);
     return REFERENCE.filter(
       (r) =>
         (domain === "all" || r.domain === domain) &&
         (operation === "all" || r.operation === operation) &&
         (chain === "all" || chain === "eip155:1155") &&
+        (audit === "all" || audit === "without-claim") &&
+        signalValue(r) >= minimumSignal &&
         (q === "" ||
           r.name.toLowerCase().includes(q) ||
           r.canonicalName.toLowerCase().includes(q) ||
@@ -836,8 +901,25 @@ export function RegistryPage() {
           r.operation.toLowerCase().includes(q) ||
           r.address.toLowerCase().includes(q)),
     );
-  }, [query, domain, operation, chain]);
-  const rows: RegistryRow[] = showReferenceFallback ? referenceRows : liveRows;
+  }, [query, domain, operation, chain, audit, minimumTrust]);
+  const unsortedRows: RegistryRow[] = showReferenceFallback
+    ? referenceRows
+    : liveRows;
+  const rows = [...unsortedRows].sort((left, right) => {
+    if (sort === "name") return left.name.localeCompare(right.name);
+    if (sort === "newest")
+      return (right.createdAt ?? "").localeCompare(left.createdAt ?? "");
+    const leftSignal = signalValue(left);
+    const rightSignal = signalValue(right);
+    if (leftSignal === rightSignal) return left.name.localeCompare(right.name);
+    return sort === "trust-asc"
+      ? leftSignal < rightSignal
+        ? -1
+        : 1
+      : leftSignal > rightSignal
+        ? -1
+        : 1;
+  });
 
   const statusLabel = loading
     ? "Connecting to registry service"
@@ -916,6 +998,41 @@ export function RegistryPage() {
               ))}
             </select>
           </label>
+          <label>
+            <span className="mono-label">Audit evidence</span>
+            <select
+              value={audit}
+              onChange={(event) => setAudit(event.target.value)}
+            >
+              <option value="all">All audit states</option>
+              <option value="with-claim">Audit claim present</option>
+              <option value="without-claim">No audit claim</option>
+            </select>
+          </label>
+          <label>
+            <span className="mono-label">Minimum TRUST</span>
+            <select
+              value={minimumTrust}
+              onChange={(event) => setMinimumTrust(event.target.value)}
+            >
+              <option value="0">Any signal</option>
+              <option value="0.1">0.1 TRUST</option>
+              <option value="1">1 TRUST</option>
+              <option value="10">10 TRUST</option>
+            </select>
+          </label>
+          <label>
+            <span className="mono-label">Sort records</span>
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value)}
+            >
+              <option value="trust-desc">Highest TRUST</option>
+              <option value="trust-asc">Lowest TRUST</option>
+              <option value="newest">Newest claim</option>
+              <option value="name">Name A–Z</option>
+            </select>
+          </label>
         </div>
 
         <div className="rail" role="status" aria-live="polite">
@@ -944,8 +1061,11 @@ export function RegistryPage() {
                 </span>
                 <span className="table__domain">{r.domain}</span>
                 <span className="table__chain">{r.chain}</span>
-                <Pill tone={r.state}>
-                  {r.state === "observed" ? "Observed" : "Review"}
+                <span className="table__trust">
+                  {formatTrustSignal(r.supportSignal?.value)}
+                </span>
+                <Pill tone={hasAuditClaim(r) ? "observed" : "review"}>
+                  {hasAuditClaim(r) ? "Audit claim" : "No audit claim"}
                 </Pill>
                 <span className="table__open" aria-hidden="true">
                   View

@@ -77,6 +77,8 @@ type RawTriple = {
   term_id?: string | null;
   subject_id?: string | null;
   created_at?: string | null;
+  transaction_hash?: string | null;
+  block_number?: string | number | null;
   subject?: RawTerm | null;
   predicate?: RawTerm | null;
   object?: RawTerm | null;
@@ -117,6 +119,8 @@ export const registryDeploymentsQuery = `
       term_id
       subject_id
       created_at
+      transaction_hash
+      block_number
       subject {
         term_id
         label
@@ -156,6 +160,8 @@ export const deploymentClaimsQuery = `
     ) {
       term_id
       created_at
+      transaction_hash
+      block_number
       subject { term_id label data image type }
       predicate { term_id label data type }
       object { term_id label data type }
@@ -278,6 +284,11 @@ function claimFromTriple(triple: RawTriple): Claim {
     objectValue: triple.object?.value ?? undefined,
     objectType: triple.object?.type ?? undefined,
     createdAt: triple.created_at ?? undefined,
+    transactionHash: triple.transaction_hash ?? undefined,
+    blockNumber:
+      triple.block_number === undefined || triple.block_number === null
+        ? undefined
+        : String(triple.block_number),
     oppositionStake: opposition.value,
   };
 }
@@ -309,6 +320,11 @@ function entryFromMembership(triple: RawTriple): RegistryEntry {
     usage: [],
     supportSignal,
     oppositionSignal,
+    transactionHash: triple.transaction_hash ?? undefined,
+    blockNumber:
+      triple.block_number === undefined || triple.block_number === null
+        ? undefined
+        : String(triple.block_number),
   };
 }
 

@@ -7087,6 +7087,7 @@ main > .band:first-child {
 }
 
 .registry-workspace .filters {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 2rem;
 }
 
@@ -7095,8 +7096,8 @@ main > .band:first-child {
   width: 100%;
   min-height: 6.25rem;
   grid-template-columns:
-    minmax(0, 1.6fr) minmax(0, 0.7fr) minmax(0, 0.7fr)
-    auto auto;
+    minmax(0, 1.6fr) minmax(0, 0.62fr) minmax(0, 0.62fr)
+    minmax(7rem, 0.5fr) auto auto;
   align-items: center;
   gap: clamp(1rem, 2.5vw, 2rem);
   padding: 1.25rem 0;
@@ -7127,6 +7128,12 @@ main > .band:first-child {
   font-weight: 650;
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+
+.table__trust {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 .registry-drawer {
@@ -7224,6 +7231,30 @@ main > .band:first-child {
   margin-top: 2.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--line-light);
+}
+
+.terms-schema {
+  margin-top: 1.5rem;
+  border: 1px solid var(--line-light);
+}
+
+.terms-schema summary {
+  padding: 1rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.terms-schema pre {
+  max-height: 24rem;
+  margin: 0;
+  padding: 1rem;
+  overflow: auto;
+  border-top: 1px solid var(--line-light);
+  background: var(--ink);
+  color: var(--paper);
+  font: 0.72rem/1.6 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .registry-drawer__section-heading h3 {
@@ -7582,7 +7613,7 @@ main > .band:first-child {
   }
 
   .registry-workspace .table__row-button {
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.75fr) auto auto;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.75fr) auto auto auto;
   }
 
   .registry-workspace .table__chain {
@@ -7679,6 +7710,7 @@ main > .band:first-child {
 
   .table__row-button .table__domain,
   .table__row-button .table__chain,
+  .table__row-button .table__trust,
   .table__row-button .pill {
     grid-column: 1 / -1;
     justify-self: start;

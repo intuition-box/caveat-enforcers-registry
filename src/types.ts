@@ -14,6 +14,8 @@ export type Claim = {
   objectValue?: string | null;
   objectType?: string | null;
   createdAt?: string;
+  transactionHash?: string;
+  blockNumber?: string;
   oppositionStake?: string;
 };
 
@@ -43,4 +45,6 @@ export type EnforcerRecord = {
   usage: string[];
   supportSignal?: RegistrySignal;
   oppositionSignal?: RegistrySignal;
+  transactionHash?: string;
+  blockNumber?: string;
 };

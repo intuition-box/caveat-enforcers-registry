@@ -244,6 +244,8 @@ test("registry reader sends canonical IDs and parses signals", async () => {
               term_id: "membership-1",
               subject_id: address,
               created_at: "2026-08-02T00:00:00Z",
+              transaction_hash: termId("a"),
+              block_number: "1234",
               subject: { term_id: address, label: "Example Enforcer" },
               term: {
                 vaults: [
@@ -268,6 +270,8 @@ test("registry reader sends canonical IDs and parses signals", async () => {
   assert.equal(result.entries[0].label, "Example Enforcer");
   assert.equal(result.entries[0].supportSignal.value, "19");
   assert.equal(result.entries[0].oppositionSignal.value, "4");
+  assert.equal(result.entries[0].transactionHash, termId("a"));
+  assert.equal(result.entries[0].blockNumber, "1234");
 
   const body = JSON.parse(requestBody) as {
     variables: Record<string, unknown>;
@@ -345,6 +349,8 @@ test("deployment claims preserve canonical predicate and object IDs", async () =
             {
               term_id: "claim-1",
               created_at: "2026-08-02T00:00:00Z",
+              transaction_hash: termId("b"),
+              block_number: 5678,
               subject: { term_id: address, label: "Example Deployment" },
               predicate: { term_id: "predicate-source", label: "source at" },
               object: {
@@ -369,6 +375,8 @@ test("deployment claims preserve canonical predicate and object IDs", async () =
   assert.equal(result.claims[0].predicateId, "predicate-source");
   assert.equal(result.claims[0].objectId, "atom-source");
   assert.equal(result.claims[0].oppositionStake, "1");
+  assert.equal(result.claims[0].transactionHash, termId("b"));
+  assert.equal(result.claims[0].blockNumber, "5678");
 });
 
 test("backend detail hydrates bounded claim pages without silent truncation", async () => {
