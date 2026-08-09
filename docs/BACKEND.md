@@ -45,7 +45,7 @@ The backend is a typed, backend-neutral registry client. It reads the canonical 
 
 The mainnet schema smoke was run on 2026-08-03. It confirmed the `triples`, `atoms`, `terms.vaults`, `total_assets`, and `counter_term` selections used by the reader. Atom `value` is a nested object in the live schema, so the reader intentionally uses the verified scalar `data` field instead of selecting `value` as a scalar.
 
-See [the acceptance proof](./PROOF.md) for the distinction between the hermetic local workflow test and the still-required live registry proof.
+See [the acceptance proof](./PROOF.md) for the distinction between the hermetic local workflow test and the verified live registry proof.
 
 Run the same read-only check again with:
 
@@ -78,8 +78,8 @@ silently promotes a candidate.
 - No production pinning key, funded wallet, or transaction owner is configured.
 - The controlled 32-entry MetaMask launch seed is live and indexed on Intuition mainnet. It uses
   the same canonical membership boundary as the public read API.
-- No live open-registry proof exists until an independently submitted, previously unlisted entry
-  is written through the browser-wallet flow and discovered through the same query.
+- The live open-registry proof is complete: `AllowedTimeOfDayEnforcer` was written through the
+  browser-wallet flow and discovered through the same canonical query as the launch seed.
 
 ## Safe sequence for a proposed ontology
 

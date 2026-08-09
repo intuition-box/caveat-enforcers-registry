@@ -49,6 +49,10 @@ import type { CurationInput } from "../src/curation";
 import type { Claim, RegistrySignal } from "../src/types";
 import type { ResolvedSubmission } from "../src/backend";
 import type { SubmissionWriteOptions } from "../src/write-workflow";
+import {
+  submissionOutcomeFromResult,
+  type SubmissionOutcome,
+} from "./submission-outcome";
 import { CaveatMarkSvg } from "./CaveatMark";
 import IntuitionLogo from "./IntuitionLogo";
 
@@ -1045,6 +1049,8 @@ export function SubmitPage() {
   const [importNote, setImportNote] = useState<string | null>(null);
   const [submissionReview, setSubmissionReview] =
     useState<SubmissionReview | null>(null);
+  const [submissionOutcome, setSubmissionOutcome] =
+    useState<SubmissionOutcome | null>(null);
 
   useEffect(() => {
     setSubmissionReview(null);
@@ -1276,6 +1282,17 @@ export function SubmitPage() {
   async function approveSubmission() {
     if (busy || !submissionReview || !wallet) return;
     setBusy(true);
+    setSubmissionOutcome({
+      tone: "progress",
+      title: "Complete the wallet prompts",
+      message:
+        "Keep this page open. Caveat Registry will confirm each approved transaction and then check the public index.",
+      transactionHashes: [],
+      confirmedTransactions: 0,
+      totalTransactions: submissionReview.resolved.batch.transactions.length,
+      indexed: false,
+      deploymentId: submissionReview.resolved.prepared.plan.deployment,
+    });
     setStatus("Requesting approval for the reviewed transaction plan…");
     try {
       const result = await submitWithBrowserWallet(
@@ -1284,6 +1301,7 @@ export function SubmitPage() {
         submissionReview.resolved.batch,
         submissionReview.write,
       );
+      setSubmissionOutcome(submissionOutcomeFromResult(result));
       setStatus(
         "message" in result
           ? result.message
@@ -1710,6 +1728,85 @@ export function SubmitPage() {
                     : "Review signal"}{" "}
                 <span aria-hidden="true">→</span>
               </button>
+            )}
+            {submissionOutcome && mode === "list" && (
+              <section
+                className={`submission-outcome submission-outcome--${submissionOutcome.tone}`}
+                role="status"
+                aria-live="polite"
+                aria-labelledby="submission-outcome-title"
+              >
+                <div className="submission-outcome__icon" aria-hidden="true">
+                  {submissionOutcome.tone === "success"
+                    ? "✓"
+                    : submissionOutcome.tone === "progress"
+                      ? "↻"
+                      : "!"}
+                </div>
+                <div className="submission-outcome__content">
+                  <span className="mono-sub">
+                    {submissionOutcome.indexed
+                      ? "Mainnet · indexed"
+                      : submissionOutcome.transactionHashes.length
+                        ? "Intuition mainnet"
+                        : "Submission status"}
+                  </span>
+                  <h3 id="submission-outcome-title">
+                    {submissionOutcome.title}
+                  </h3>
+                  <p>{submissionOutcome.message}</p>
+                  {submissionOutcome.totalTransactions > 0 && (
+                    <div className="submission-outcome__progress">
+                      <span>
+                        {submissionOutcome.confirmedTransactions}/
+                        {submissionOutcome.totalTransactions} transactions
+                        confirmed
+                      </span>
+                      <span>
+                        {submissionOutcome.indexed
+                          ? "Registry indexed"
+                          : "Indexing status checked"}
+                      </span>
+                    </div>
+                  )}
+                  {submissionOutcome.transactionHashes.length > 0 && (
+                    <ol className="submission-outcome__transactions">
+                      {submissionOutcome.transactionHashes.map(
+                        (hash, index) => (
+                          <li key={hash}>
+                            <span>Transaction {index + 1}</span>
+                            <a
+                              href={`https://explorer.intuition.systems/tx/${hash}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {shortAddress(hash)} ↗
+                            </a>
+                          </li>
+                        ),
+                      )}
+                    </ol>
+                  )}
+                  <div className="submission-outcome__actions">
+                    <Link className="cta cta--solid" to="/registry">
+                      Open live registry <span aria-hidden="true">→</span>
+                    </Link>
+                    {submissionOutcome.deploymentId && (
+                      <button
+                        className="cta cta--ghost"
+                        type="button"
+                        onClick={() =>
+                          void navigator.clipboard.writeText(
+                            submissionOutcome.deploymentId ?? "",
+                          )
+                        }
+                      >
+                        Copy record ID
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </section>
             )}
             {status && (
               <p className="band__note" role="status" aria-live="polite">
