@@ -370,9 +370,13 @@ function signalLabel(signal: RegistrySignal | undefined): string {
 
 function formatTrustSignal(value: string | undefined): string {
   if (!value || !/^\d+$/.test(value)) return "No indexed signal";
-  const trust = formatEther(BigInt(value));
+  const wei = BigInt(value);
+  const trust = formatEther(wei);
   const [integer, fraction = ""] = trust.split(".");
   const readableFraction = fraction.slice(0, 4).replace(/0+$/, "");
+  if (wei > 0n && integer === "0" && !readableFraction) {
+    return "<0.0001 TRUST";
+  }
   return `${integer}${readableFraction ? `.${readableFraction}` : ""} TRUST`;
 }
 

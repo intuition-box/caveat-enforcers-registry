@@ -181,6 +181,16 @@ async function fetchEnforcerPicker() {
 Sort the returned options by `trustStaked` to surface the most community-endorsed enforcers first,
 then run the deployment detail query below for the one the user selects.
 
+The repository also includes a dependency-free, runnable version that resolves
+canonical implementation names and keeps support and opposition separate:
+
+```bash
+pnpm example:wallet-picker
+```
+
+It talks directly to Intuition GraphQL and prints portable JSON. It does not call
+the registry dapp API, require an Intuition SDK, connect a wallet, or write state.
+
 ### Deployment detail query
 
 After selecting a deployment, fetch every claim where that deployment is the subject. Resolve
