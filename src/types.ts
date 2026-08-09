@@ -1,4 +1,6 @@
 export type Claim = {
+  subjectId?: string;
+  subjectLabel?: string | null;
   predicate: string;
   object: string;
   stake: string;

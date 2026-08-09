@@ -183,13 +183,19 @@ test("empty runtime configuration uses the explicit permissionless ontology prop
   assert.equal(validateOntologyManifest(manifest).length, 0);
 });
 
-test("blank optional predicate variables do not override registry defaults", () => {
+test("blank optional predicate variables preserve registry defaults", () => {
   const manifest = readOntologyManifestFromEnv({
     REGISTRY_PREDICATE_IMPLEMENTS: "",
     REGISTRY_PREDICATE_SOURCE_AT: "   ",
   });
-  assert.equal(manifest.predicates.implements, undefined);
-  assert.equal(manifest.predicates.sourceAt, undefined);
+  assert.equal(
+    manifest.predicates.implements,
+    PROPOSED_ONTOLOGY_MANIFEST.predicates.implements,
+  );
+  assert.equal(
+    manifest.predicates.sourceAt,
+    PROPOSED_ONTOLOGY_MANIFEST.predicates.sourceAt,
+  );
 });
 
 test("runtime ontology values remain overridable without a central approval gate", () => {
@@ -409,6 +415,94 @@ test("backend detail hydrates bounded claim pages without silent truncation", as
   assert.equal(result.hasMore, false);
   assert.deepEqual(offsets, [0, 2]);
   assert.equal(result.summary.claims.length, 3);
+});
+
+test("backend detail follows implementation claims to hydrate type semantics", async () => {
+  const deploymentId = termId("1");
+  const implementationId = termId("2");
+  const ontology = createOntologyManifest({
+    version: "1.0.0",
+    deploymentClassId: termId("3"),
+    predicates: {
+      membership: termId("4"),
+      implements: termId("5"),
+      restricts: termId("6"),
+      affectsOperation: termId("7"),
+    },
+  });
+  const requestedSubjects: string[] = [];
+  const backend = new RegistryBackend({
+    endpoint: "https://graph.example",
+    ontology,
+    registry: {
+      fetcher: async (_input, init) => {
+        const variables = JSON.parse(init.body).variables as {
+          deploymentId: string;
+        };
+        requestedSubjects.push(variables.deploymentId);
+        const triples =
+          variables.deploymentId === deploymentId
+            ? [
+                {
+                  term_id: termId("8"),
+                  subject: {
+                    term_id: deploymentId,
+                    label: "Example deployment",
+                  },
+                  predicate: {
+                    term_id: ontology.predicates.implements,
+                    label: "implements",
+                  },
+                  object: {
+                    term_id: implementationId,
+                    label: "ExampleEnforcer",
+                  },
+                },
+              ]
+            : [
+                {
+                  term_id: termId("9"),
+                  subject: {
+                    term_id: implementationId,
+                    label: "ExampleEnforcer",
+                  },
+                  predicate: {
+                    term_id: ontology.predicates.restricts,
+                    label: "restricts",
+                  },
+                  object: { term_id: termId("a"), label: "time window" },
+                },
+                {
+                  term_id: termId("b"),
+                  subject: {
+                    term_id: implementationId,
+                    label: "ExampleEnforcer",
+                  },
+                  predicate: {
+                    term_id: ontology.predicates.affectsOperation,
+                    label: "affects operation",
+                  },
+                  object: { term_id: termId("c"), label: "contract call" },
+                },
+              ];
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ data: { triples } }),
+        };
+      },
+    },
+  });
+
+  const result = await backend.detail(deploymentId);
+  assert.equal(result.kind, "ready");
+  if (result.kind !== "ready") return;
+  assert.deepEqual(requestedSubjects, [deploymentId, implementationId]);
+  assert.equal(result.claims.length, 3);
+  assert.equal(result.summary.implementation, "ExampleEnforcer");
+  assert.equal(result.summary.domain, "time window");
+  assert.equal(result.summary.operation, "contract call");
+  assert.equal(result.claims[1]?.subjectId, implementationId);
 });
 
 test("deployment summaries map fields only through reviewed predicate IDs", () => {
@@ -1026,9 +1120,19 @@ test("the permissionless proposal bootstraps missing standard predicate atoms", 
   assert.equal(validated.valid, true);
   if (!validated.valid) return;
 
+  const bootstrapManifest = createOntologyManifest({
+    version: PROPOSED_ONTOLOGY_MANIFEST.version,
+    chainId: PROPOSED_ONTOLOGY_MANIFEST.chainId,
+    deploymentClassId: PROPOSED_ONTOLOGY_MANIFEST.deploymentClassId,
+    predicates: {
+      membership: PROPOSED_ONTOLOGY_MANIFEST.predicates.membership,
+      deployedOn: PROPOSED_ONTOLOGY_MANIFEST.predicates.deployedOn,
+      conflictsWith: PROPOSED_ONTOLOGY_MANIFEST.predicates.conflictsWith,
+    },
+  });
   const plan = buildSubmissionPlan(
     validated.value,
-    PROPOSED_ONTOLOGY_MANIFEST,
+    bootstrapManifest,
     { status: "verified", address, codeLength: 5 },
     { status: "verified", chainId: "1155" },
   );

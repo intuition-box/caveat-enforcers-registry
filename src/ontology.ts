@@ -37,8 +37,20 @@ export const PROPOSED_ONTOLOGY_MANIFEST: OntologyManifest = {
   predicates: {
     membership:
       "0xb0681668ca193e8608b43adea19fecbbe0828ef5afc941cef257d30a20564ef1",
+    implements:
+      "0xb8adf8a79c30ae6a224ac8a76a738258114da42a3799387648f0fde2caeb2bba",
     deployedOn:
       "0x957beb2e34369c31c05a83dd43b7361bae62ce27aa799d731e7b24bd4ede7d7b",
+    sourceAt:
+      "0xe5705ab105b08eb11c2fb1d624d71ba0243e8e4324864b56acafdc5fdc6c6a3e",
+    hasTermsSchema:
+      "0x8bf919230c76a14fdc10038cad9a85d85035cd2078eeff8af81741bbd1950d94",
+    coveredByAudit:
+      "0x81d99cc1df880cc0e12d0e8a2a193322663c05b4f893d63d24a3c730cb495e87",
+    restricts:
+      "0xba357fd06b94c6a10c58158e140ea2260008f3ee717c306cb9e3b62ad82683b6",
+    affectsOperation:
+      "0x9a3c3920f0a1cff7d22efc91ef92a9a5ff88f443b92475fece97abde5af20526",
     conflictsWith:
       "0x01d4e9039fd585178fcb08acd7daec2416d6226e9a6ecd51cf844f996ee7d5d3",
   },
@@ -177,19 +189,37 @@ export function readOntologyManifestFromEnv(
         "REGISTRY_MEMBERSHIP_PREDICATE_ID",
         proposed.predicates.membership,
       ),
-      implements: envValue("REGISTRY_PREDICATE_IMPLEMENTS"),
+      implements: envValue(
+        "REGISTRY_PREDICATE_IMPLEMENTS",
+        proposed.predicates.implements,
+      ),
       deployedOn: envValue(
         "REGISTRY_PREDICATE_DEPLOYED_ON",
         proposed.predicates.deployedOn,
       ),
       partOfRelease: env.REGISTRY_PREDICATE_PART_OF_RELEASE,
-      sourceAt: envValue("REGISTRY_PREDICATE_SOURCE_AT"),
+      sourceAt: envValue(
+        "REGISTRY_PREDICATE_SOURCE_AT",
+        proposed.predicates.sourceAt,
+      ),
       describedBy: envValue("REGISTRY_PREDICATE_DESCRIBED_BY"),
-      hasTermsSchema: envValue("REGISTRY_PREDICATE_HAS_TERMS_SCHEMA"),
-      coveredByAudit: envValue("REGISTRY_PREDICATE_COVERED_BY_AUDIT"),
+      hasTermsSchema: envValue(
+        "REGISTRY_PREDICATE_HAS_TERMS_SCHEMA",
+        proposed.predicates.hasTermsSchema,
+      ),
+      coveredByAudit: envValue(
+        "REGISTRY_PREDICATE_COVERED_BY_AUDIT",
+        proposed.predicates.coveredByAudit,
+      ),
       usedBy: envValue("REGISTRY_PREDICATE_USED_BY"),
-      restricts: envValue("REGISTRY_PREDICATE_RESTRICTS"),
-      affectsOperation: envValue("REGISTRY_PREDICATE_AFFECTS_OPERATION"),
+      restricts: envValue(
+        "REGISTRY_PREDICATE_RESTRICTS",
+        proposed.predicates.restricts,
+      ),
+      affectsOperation: envValue(
+        "REGISTRY_PREDICATE_AFFECTS_OPERATION",
+        proposed.predicates.affectsOperation,
+      ),
       complements: envValue("REGISTRY_PREDICATE_COMPLEMENTS"),
       conflictsWith: envValue(
         "REGISTRY_PREDICATE_CONFLICTS_WITH",

@@ -13,5 +13,13 @@ services:
         value: 0xb8adf8a79c30ae6a224ac8a76a738258114da42a3799387648f0fde2caeb2bba
       - key: REGISTRY_PREDICATE_SOURCE_AT
         value: 0xe5705ab105b08eb11c2fb1d624d71ba0243e8e4324864b56acafdc5fdc6c6a3e
+      - key: REGISTRY_PREDICATE_HAS_TERMS_SCHEMA
+        value: 0x8bf919230c76a14fdc10038cad9a85d85035cd2078eeff8af81741bbd1950d94
+      - key: REGISTRY_PREDICATE_COVERED_BY_AUDIT
+        value: 0x81d99cc1df880cc0e12d0e8a2a193322663c05b4f893d63d24a3c730cb495e87
+      - key: REGISTRY_PREDICATE_RESTRICTS
+        value: 0xba357fd06b94c6a10c58158e140ea2260008f3ee717c306cb9e3b62ad82683b6
+      - key: REGISTRY_PREDICATE_AFFECTS_OPERATION
+        value: 0x9a3c3920f0a1cff7d22efc91ef92a9a5ff88f443b92475fece97abde5af20526
       - key: CORS_ORIGIN
         sync: false

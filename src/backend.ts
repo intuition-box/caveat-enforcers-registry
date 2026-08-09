@@ -293,6 +293,26 @@ export class RegistryBackend {
       if (!result.hasMore) break;
     }
 
+    const implementationId = claims.find(
+      (claim) =>
+        claim.predicateId === this.ontology.predicates.implements &&
+        Boolean(claim.objectId),
+    )?.objectId;
+
+    if (implementationId && !hasMore) {
+      for (let page = 0; page < maxPages; page += 1) {
+        const result = await loadDeploymentClaims(
+          this.registryConfig(),
+          implementationId,
+          { limit: pageSize, offset: page * pageSize },
+        );
+        if (result.kind !== "ready") return result;
+        claims.push(...result.claims);
+        hasMore = result.hasMore;
+        if (!result.hasMore) break;
+      }
+    }
+
     return {
       kind: "ready" as const,
       deploymentId,

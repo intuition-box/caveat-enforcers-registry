@@ -264,6 +264,8 @@ function claimFromTriple(triple: RawTriple): Claim {
 
   return {
     id: triple.term_id ?? "",
+    subjectId: triple.subject?.term_id ?? triple.subject_id ?? undefined,
+    subjectLabel: triple.subject?.label ?? undefined,
     predicate,
     object,
     stake: support.value,
@@ -439,9 +441,9 @@ export async function loadDeploymentClaims(
 
 function claimValue(claim: Claim): string | null {
   return (
-    claim.objectLabel ??
     claim.objectData ??
     claim.objectValue ??
+    claim.objectLabel ??
     claim.objectId ??
     null
   );
