@@ -22,7 +22,11 @@ import {
   INTUITION_MAINNET_RPC,
 } from "../src/ontology";
 import type { IntuitionPublicClient } from "../src/intuition";
-import type { CurationExecution, CurationInput } from "../src/curation";
+import type {
+  CurationExecution,
+  CurationInput,
+  CurationPlan,
+} from "../src/curation";
 import type { RpcFetcher, SubmissionInput } from "../src/validation";
 import type {
   SubmissionWriteAdapter,
@@ -495,6 +499,13 @@ export async function curateWithBrowserWallet(
     input,
     createBrowserSubmissionWriteAdapter(wallet),
   );
+}
+
+export async function previewCurationWithBrowserWallet(
+  input: CurationInput,
+  wallet: BrowserWallet,
+): Promise<CurationPlan> {
+  return backendForWallet(wallet).prepareCuration(input);
 }
 
 export type BrowserWalletStatus = {

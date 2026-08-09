@@ -7132,9 +7132,15 @@ main > .band:first-child {
 
 .claim-ledger li {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: 0.7rem;
   padding: 1rem 0;
   border-bottom: 1px solid var(--line-light);
+}
+
+.claim-ledger__record {
+  min-width: 0;
 }
 
 .claim-ledger__statement {
@@ -7156,9 +7162,101 @@ main > .band:first-child {
 }
 
 .claim-ledger__signal {
+  display: block;
+  margin-top: 0.55rem;
   color: var(--muted);
   font-family: var(--mono);
   font-size: 0.68rem;
+}
+
+.claim-ledger__actions,
+.claim-curation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.claim-ledger__actions button,
+.claim-curation__actions button {
+  min-height: 2.5rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--line-light);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: inherit;
+  font: 650 0.78rem/1 var(--body);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.claim-ledger__actions button:hover,
+.claim-ledger__actions button:focus-visible,
+.claim-curation__actions button:hover,
+.claim-curation__actions button:focus-visible {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.claim-ledger__actions button:disabled,
+.claim-curation__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.claim-curation {
+  margin-top: 1.5rem;
+  padding: clamp(1.15rem, 3vw, 1.5rem);
+  border: 1px solid var(--ink);
+  background: color-mix(in srgb, var(--paper-bright) 88%, var(--signal));
+}
+
+.claim-curation__object {
+  margin: 0.75rem 0 1.25rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.claim-curation label {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.claim-curation input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line-light);
+  border-radius: 0.2rem;
+  background: var(--paper-bright);
+  color: var(--ink);
+  font: 500 1rem/1 var(--mono);
+}
+
+.claim-curation__actions {
+  margin-top: 1.25rem;
+}
+
+.claim-curation__actions button:nth-child(2) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.claim-curation__status {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.claim-curation__receipt {
+  display: inline-block;
+  margin-top: 0.8rem;
+  font-weight: 650;
 }
 
 .registry-drawer__classification {
@@ -7511,6 +7609,20 @@ main > .band:first-child {
 
   .registry-drawer__body {
     padding: 1.25rem;
+  }
+
+  .claim-ledger li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .claim-ledger__statement {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.35rem;
+  }
+
+  .claim-ledger__actions button,
+  .claim-curation__actions button {
+    flex: 1 1 7rem;
   }
 
   .table__row-button .table__chain {

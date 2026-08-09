@@ -10,7 +10,7 @@
  * reference rows as registry listings.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatEther } from "viem";
+import { formatEther, parseEther } from "viem";
 import { createPortal } from "react-dom";
 import { Link, useParams } from "react-router-dom";
 import { registryDeploymentsQuery } from "../src/registry";
@@ -35,6 +35,7 @@ import {
   connectBrowserWallet,
   curateWithBrowserWallet,
   inspectBrowserWallet,
+  previewCurationWithBrowserWallet,
   previewWithBrowserWallet,
   subscribeBrowserWallet,
   submitWithBrowserWallet,
@@ -45,7 +46,12 @@ import {
   validateSubmission as validateSubmissionLocally,
   type SubmissionInput,
 } from "../src/validation";
-import type { CurationInput } from "../src/curation";
+import type {
+  CurationAction,
+  CurationExecution,
+  CurationInput,
+  CurationPlan,
+} from "../src/curation";
 import type { Claim, RegistrySignal } from "../src/types";
 import type { ResolvedSubmission } from "../src/backend";
 import type { SubmissionWriteOptions } from "../src/write-workflow";
@@ -348,7 +354,15 @@ function signalLabel(signal: RegistrySignal | undefined): string {
   const positions = signal.positionCount
     ? ` · ${signal.positionCount} position${signal.positionCount === "1" ? "" : "s"}`
     : "";
-  return `${signal.label} shares${positions}`;
+  return `${formatTrustSignal(signal.value)}${positions}`;
+}
+
+function formatTrustSignal(value: string | undefined): string {
+  if (!value || !/^\d+$/.test(value)) return "No indexed signal";
+  const trust = formatEther(BigInt(value));
+  const [integer, fraction = ""] = trust.split(".");
+  const readableFraction = fraction.slice(0, 4).replace(/0+$/, "");
+  return `${integer}${readableFraction ? `.${readableFraction}` : ""} TRUST`;
 }
 
 function RegistryDetailDrawer({
@@ -360,6 +374,20 @@ function RegistryDetailDrawer({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  const [wallet, setWallet] = useState<BrowserWallet | null>(null);
+  const [selection, setSelection] = useState<{
+    claim: Claim;
+    action: CurationAction;
+  } | null>(null);
+  const [amountTrust, setAmountTrust] = useState("0.1");
+  const [signalPlan, setSignalPlan] = useState<
+    Extract<CurationPlan, { status: "ready" }> | undefined
+  >();
+  const [signalResult, setSignalResult] = useState<CurationExecution | null>(
+    null,
+  );
+  const [signalStatus, setSignalStatus] = useState<string | null>(null);
+  const [signalBusy, setSignalBusy] = useState(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -374,6 +402,86 @@ function RegistryDetailDrawer({
 
   const sourceUrl = externalUrl(row.source);
   const claims = row.claims ?? [];
+
+  function signalInput(activeWallet: BrowserWallet): CurationInput {
+    if (!selection?.claim.id)
+      throw new Error("This claim has no Intuition ID.");
+    let amount: bigint;
+    try {
+      amount = parseEther(amountTrust.trim());
+    } catch {
+      throw new Error("Enter a valid positive TRUST amount.");
+    }
+    if (amount <= 0n)
+      throw new Error("Deposit amount must be greater than zero.");
+    return {
+      claimId: selection.claim.id,
+      action: selection.action,
+      receiver: activeWallet.address,
+      amount: amount.toString(),
+      curveId: "1",
+    };
+  }
+
+  function selectSignal(claim: Claim, action: CurationAction) {
+    setSelection({ claim, action });
+    setSignalPlan(undefined);
+    setSignalResult(null);
+    setSignalStatus(null);
+  }
+
+  async function previewSignal() {
+    if (!selection || signalBusy) return;
+    setSignalBusy(true);
+    setSignalStatus("Verifying the claim and resolving its target vault…");
+    try {
+      const activeWallet = wallet ?? (await connectBrowserWallet());
+      if (!wallet) setWallet(activeWallet);
+      const result = await previewCurationWithBrowserWallet(
+        signalInput(activeWallet),
+        activeWallet,
+      );
+      if (result.status !== "ready") {
+        setSignalPlan(undefined);
+        setSignalStatus(result.message);
+        return;
+      }
+      setSignalPlan(result);
+      setSignalStatus(
+        "Plan verified. Review the claim, target vault, and amount before opening your wallet.",
+      );
+    } catch (error) {
+      setSignalStatus(
+        error instanceof Error
+          ? error.message
+          : "The signal plan could not be prepared.",
+      );
+    } finally {
+      setSignalBusy(false);
+    }
+  }
+
+  async function approveSignal() {
+    if (!selection || !wallet || !signalPlan || signalBusy) return;
+    setSignalBusy(true);
+    setSignalStatus("Simulating the exact deposit before the wallet prompt…");
+    try {
+      const result = await curateWithBrowserWallet(signalInput(wallet), wallet);
+      setSignalResult(result);
+      setSignalStatus(
+        "message" in result
+          ? result.message
+          : "The signal deposit did not complete.",
+      );
+      if (result.status === "confirmed") setSignalPlan(undefined);
+    } catch (error) {
+      setSignalStatus(
+        error instanceof Error ? error.message : "The signal deposit failed.",
+      );
+    } finally {
+      setSignalBusy(false);
+    }
+  }
 
   return createPortal(
     <dialog
@@ -462,16 +570,34 @@ function RegistryDetailDrawer({
               <ol className="claim-ledger">
                 {claims.map((claim, index) => (
                   <li key={claim.id ?? `${claim.predicate}-${index}`}>
-                    <span className="claim-ledger__statement">
-                      <strong>{claim.predicate}</strong>
-                      <span>{claim.object}</span>
-                    </span>
-                    <span className="claim-ledger__signal">
-                      {claim.stake} support
-                      {claim.oppositionStake
-                        ? ` · ${claim.oppositionStake} opposition`
-                        : ""}
-                    </span>
+                    <div className="claim-ledger__record">
+                      <span className="claim-ledger__statement">
+                        <strong>{claim.predicate}</strong>
+                        <span>{claim.object}</span>
+                      </span>
+                      <span className="claim-ledger__signal">
+                        {formatTrustSignal(claim.stake)} support
+                        {claim.oppositionStake
+                          ? ` · ${formatTrustSignal(claim.oppositionStake)} opposition`
+                          : " · 0 TRUST opposition"}
+                      </span>
+                    </div>
+                    <div className="claim-ledger__actions">
+                      <button
+                        type="button"
+                        disabled={!claim.id}
+                        onClick={() => selectSignal(claim, "support")}
+                      >
+                        Support
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!claim.id}
+                        onClick={() => selectSignal(claim, "oppose")}
+                      >
+                        Dispute
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ol>
@@ -479,6 +605,102 @@ function RegistryDetailDrawer({
               <p className="band__note">No hydrated claims are available.</p>
             )}
           </section>
+
+          {selection && (
+            <section className="claim-curation" aria-live="polite">
+              <div className="registry-drawer__section-heading">
+                <span className="mono-sub">
+                  {selection.action === "support" ? "Support" : "Dispute"} claim
+                </span>
+                <h3>{selection.claim.predicate}</h3>
+              </div>
+              <p className="claim-curation__object">{selection.claim.object}</p>
+              <label>
+                <span className="mono-label">Deposit amount (TRUST)</span>
+                <input
+                  inputMode="decimal"
+                  value={amountTrust}
+                  onChange={(event) => {
+                    setAmountTrust(event.target.value);
+                    setSignalPlan(undefined);
+                    setSignalResult(null);
+                  }}
+                  placeholder="0.1"
+                />
+              </label>
+              <Spec
+                rows={[
+                  ["Claim ID", <code>{selection.claim.id}</code>],
+                  ["Curve", "1"],
+                  [
+                    "Wallet",
+                    wallet ? shortAddress(wallet.address) : "Connect to review",
+                  ],
+                  ...(signalPlan
+                    ? ([
+                        [
+                          "Target vault",
+                          <code>{signalPlan.targetTermId}</code>,
+                        ],
+                        [
+                          "Deposit",
+                          `${formatEther(BigInt(signalPlan.amount))} TRUST`,
+                        ],
+                      ] as Array<[string, React.ReactNode]>)
+                    : []),
+                ]}
+              />
+              <div className="claim-curation__actions">
+                <button
+                  type="button"
+                  onClick={previewSignal}
+                  disabled={signalBusy}
+                >
+                  {signalBusy
+                    ? "Checking…"
+                    : wallet
+                      ? "Review deposit"
+                      : "Connect and review"}
+                </button>
+                {signalPlan && (
+                  <button
+                    type="button"
+                    onClick={approveSignal}
+                    disabled={signalBusy}
+                  >
+                    Approve{" "}
+                    {selection.action === "support" ? "support" : "dispute"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelection(null);
+                    setSignalPlan(undefined);
+                    setSignalResult(null);
+                    setSignalStatus(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+              {signalStatus && (
+                <p className="claim-curation__status">{signalStatus}</p>
+              )}
+              {signalResult &&
+                "transactionHash" in signalResult &&
+                signalResult.transactionHash && (
+                  <a
+                    className="claim-curation__receipt"
+                    href={`https://explorer.intuition.systems/tx/${signalResult.transactionHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View confirmed transaction ↗
+                  </a>
+                )}
+            </section>
+          )}
 
           {row.classificationSource === "derived" && (
             <div className="registry-drawer__classification">
@@ -1035,7 +1257,7 @@ export function SubmitPage() {
   const [contractAddress, setContractAddress] = useState("");
   const [termsJson, setTermsJson] = useState(DEFAULT_TERMS_SCHEMA);
   const [claimId, setClaimId] = useState("");
-  const [amount, setAmount] = useState("1");
+  const [amount, setAmount] = useState("0.1");
   const [curveId, setCurveId] = useState("1");
   const [wallet, setWallet] = useState<BrowserWallet | null>(null);
   const [walletConnection, setWalletConnection] =
@@ -1262,7 +1484,7 @@ export function SubmitPage() {
         claimId,
         action: mode === "attest" ? "support" : "oppose",
         receiver: activeWallet.address,
-        amount,
+        amount: parseEther(amount.trim()).toString(),
         curveId,
       };
       const result = await curateWithBrowserWallet(curation, activeWallet);
@@ -1547,10 +1769,9 @@ export function SubmitPage() {
                 </label>
                 <div className="form__pair">
                   <label>
-                    <span className="mono-label">Deposit amount (wei)</span>
+                    <span className="mono-label">Deposit amount (TRUST)</span>
                     <input
-                      inputMode="numeric"
-                      pattern="[0-9]+"
+                      inputMode="decimal"
                       value={amount}
                       onChange={(event) => setAmount(event.target.value)}
                       required
