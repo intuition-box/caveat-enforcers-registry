@@ -18,6 +18,15 @@ import {
   type TermsSchema,
 } from "./validation.js";
 
+export type ReferenceAuditEvidence = {
+  auditor: string;
+  reportUrl: string;
+  repository: string;
+  sourceCommit: string;
+  scope: string;
+  qualification: string;
+};
+
 export type ReferenceMetadataEntry = {
   name: string;
   address: string;
@@ -25,6 +34,7 @@ export type ReferenceMetadataEntry = {
   operation: string;
   purpose: string;
   termsSchema: TermsSchema;
+  audits: ReferenceAuditEvidence[];
   usage: SubmissionUsageEvidence[];
 };
 
@@ -50,6 +60,8 @@ const PREDICATE_LABELS = {
   restricts: "restricts",
   affectsOperation: "affects operation",
   describedBy: "described by",
+  coveredByAudit: "covered by audit",
+  auditedBy: "audited by",
   partOfRelease: "part of release",
   usedBy: "used by",
 } as const;
@@ -267,6 +279,77 @@ export function buildReferenceEnrichmentPlan(
       predicates.partOfRelease.id,
       releaseAtom.id,
     );
+
+    if (!Array.isArray(entry.audits)) {
+      throw new Error(`${name}.audits must be an array.`);
+    }
+    for (const [index, audit] of entry.audits.entries()) {
+      const normalizedAudit: ReferenceAuditEvidence = {
+        auditor: requiredText(audit.auditor, `${name}.audits.${index}.auditor`),
+        reportUrl: requiredText(
+          audit.reportUrl,
+          `${name}.audits.${index}.reportUrl`,
+        ),
+        repository: requiredText(
+          audit.repository,
+          `${name}.audits.${index}.repository`,
+        ),
+        sourceCommit: requiredText(
+          audit.sourceCommit,
+          `${name}.audits.${index}.sourceCommit`,
+        ),
+        scope: requiredText(audit.scope, `${name}.audits.${index}.scope`),
+        qualification: requiredText(
+          audit.qualification,
+          `${name}.audits.${index}.qualification`,
+        ),
+      };
+      if (
+        !/^https:\/\/github\.com\/MetaMask\/delegation-framework\//i.test(
+          normalizedAudit.reportUrl,
+        )
+      ) {
+        throw new Error(
+          `${name}.audits.${index}.reportUrl is not an official MetaMask artifact.`,
+        );
+      }
+      if (!/^[0-9a-f]{40}$/i.test(normalizedAudit.sourceCommit)) {
+        throw new Error(
+          `${name}.audits.${index}.sourceCommit must be a full commit SHA.`,
+        );
+      }
+      if (normalizedAudit.scope !== `src/enforcers/${name}.sol`) {
+        throw new Error(
+          `${name}.audits.${index}.scope does not match the enforcer.`,
+        );
+      }
+      const auditAtom = addAtom(
+        atoms,
+        `audit:${name}:${index}`,
+        canonicalJson(normalizedAudit),
+      );
+      const auditorAtom = addAtom(
+        atoms,
+        `auditor:${normalizedAudit.auditor}`,
+        normalizedAudit.auditor,
+      );
+      addTriple(
+        triples,
+        `covered-by-audit:${index}`,
+        name,
+        type.id,
+        predicates.coveredByAudit.id,
+        auditAtom.id,
+      );
+      addTriple(
+        triples,
+        `audited-by:${index}`,
+        name,
+        auditAtom.id,
+        predicates.auditedBy.id,
+        auditorAtom.id,
+      );
+    }
 
     for (const [index, usage] of entry.usage.entries()) {
       const usageContent = canonicalJson(usage);

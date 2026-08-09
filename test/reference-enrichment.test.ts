@@ -33,8 +33,8 @@ test("reference enrichment covers all 32 deployments with reviewed evidence", as
   const { metadata, reference } = await documents();
   const plan = buildReferenceEnrichmentPlan(metadata, reference);
   assert.equal(metadata.enforcers.length, 32);
-  assert.equal(plan.atoms.length, 168);
-  assert.equal(plan.triples.length, 203);
+  assert.equal(plan.atoms.length, 202);
+  assert.equal(plan.triples.length, 265);
   for (const entry of metadata.enforcers) {
     const triples = plan.triples.filter(
       (triple) => triple.enforcerName === entry.name,
@@ -56,10 +56,27 @@ test("reference enrichment covers all 32 deployments with reviewed evidence", as
         `${entry.name} is missing ${key}`,
       );
     }
+    assert.equal(
+      triples.filter((triple) => triple.key.startsWith("covered-by-audit:"))
+        .length,
+      entry.audits.length,
+    );
+    assert.equal(
+      triples.filter((triple) => triple.key.startsWith("audited-by:")).length,
+      entry.audits.length,
+    );
   }
+  const withoutExactAudit = metadata.enforcers.filter(
+    (entry) => entry.audits.length === 0,
+  );
+  assert.deepEqual(
+    withoutExactAudit.map((entry) => entry.name),
+    ["NativeTokenPeriodTransferEnforcer"],
+  );
   assert.equal(
-    plan.triples.some((triple) => triple.key === "covered-by-audit"),
-    false,
+    plan.triples.filter((triple) => triple.key.startsWith("covered-by-audit:"))
+      .length,
+    31,
   );
 });
 
@@ -69,6 +86,8 @@ test("every enrichment predicate ID is derived from its canonical label", () => 
     restricts: "restricts",
     affectsOperation: "affects operation",
     describedBy: "described by",
+    coveredByAudit: "covered by audit",
+    auditedBy: "audited by",
     partOfRelease: "part of release",
     usedBy: "used by",
     complements: "complements",

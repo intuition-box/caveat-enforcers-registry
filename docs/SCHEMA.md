@@ -48,12 +48,15 @@ The ontology manifest supplies canonical predicate and object term IDs. The regi
 | deployment         | source at         | source artifact                     |
 | enforcer type      | described by      | human-readable description          |
 | deployment         | has terms schema  | terms schema                        |
-| deployment         | covered by audit  | audit evidence                      |
+| enforcer type      | covered by audit  | audit evidence                      |
+| audit evidence     | audited by        | auditor identity                    |
 | deployment or type | used by           | wallet or protocol                  |
 | type               | restricts         | domain                              |
 | type               | affects operation | operation                           |
 
-Do not create an audit claim without an exact evidence artifact.
+Do not create an audit claim without an exact evidence artifact. A source-scope
+claim does not assert that a deployment's runtime bytecode is identical to the
+reviewed commit, and neither membership nor audit evidence is a safety verdict.
 
 The object in the first row is a dedicated class atom, not the generic `deployment`
 atom. The proposed manifest uses `ERC-7710 caveat enforcer deployment` and creates

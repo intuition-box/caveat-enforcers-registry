@@ -386,6 +386,35 @@ function hasAuditClaim(row: RegistryRow): boolean {
   );
 }
 
+type AuditEvidenceRecord = {
+  auditor: string;
+  reportUrl: string;
+  sourceCommit: string;
+  scope: string;
+  qualification?: string;
+};
+
+function auditEvidenceRecord(
+  value: string | undefined,
+): AuditEvidenceRecord | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as Partial<AuditEvidenceRecord>;
+    if (
+      typeof parsed.auditor !== "string" ||
+      typeof parsed.reportUrl !== "string" ||
+      typeof parsed.sourceCommit !== "string" ||
+      typeof parsed.scope !== "string" ||
+      !externalUrl(parsed.reportUrl)
+    ) {
+      return null;
+    }
+    return parsed as AuditEvidenceRecord;
+  } catch {
+    return null;
+  }
+}
+
 function signalValue(row: RegistryRow): bigint {
   const value = row.supportSignal?.value;
   return value && /^\d+$/.test(value) ? BigInt(value) : 0n;
@@ -436,6 +465,7 @@ function RegistryDetailDrawer({
   }, []);
 
   const sourceUrl = externalUrl(row.source);
+  const auditEvidence = auditEvidenceRecord(row.audit);
   const claims = row.claims ?? [];
 
   function signalInput(activeWallet: BrowserWallet): CurationInput {
@@ -591,7 +621,26 @@ function RegistryDetailDrawer({
                 ["Opposition signal", signalLabel(row.oppositionSignal)],
                 [
                   "Audit evidence",
-                  hasAuditClaim(row) ? row.audit : "No audit claim",
+                  auditEvidence ? (
+                    <span>
+                      <a
+                        href={auditEvidence.reportUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {auditEvidence.auditor} · scoped report ↗
+                      </a>
+                      <br />
+                      <small>
+                        {auditEvidence.scope} ·{" "}
+                        {auditEvidence.sourceCommit.slice(0, 12)}
+                      </small>
+                    </span>
+                  ) : hasAuditClaim(row) ? (
+                    row.audit
+                  ) : (
+                    "No exact audit claim"
+                  ),
                 ],
                 [
                   "Known usage",

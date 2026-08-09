@@ -16,6 +16,7 @@ const OUTPUT_URL = new URL(
 );
 
 const SOURCE_REPOSITORY = "https://github.com/MetaMask/smart-accounts-kit";
+const AUDIT_REPOSITORY = "https://github.com/MetaMask/delegation-framework";
 const DELEGATION_CORE_VERSION = "2.2.1";
 const DELEGATION_CORE_COMMIT = "d3f1dd8b1682ec5b2c961e450d9847d54eb72268";
 const SMART_ACCOUNTS_KIT_VERSION = "1.7.0";
@@ -47,6 +48,107 @@ type Definition = {
   constraints?: string[];
   decodedFixture?: (terms: Hex) => Record<string, unknown>;
 };
+
+type AuditReport = {
+  auditor: "Cyfrin";
+  file: string;
+  sourceCommit: string;
+};
+
+const AUDIT_QUALIFICATION =
+  "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee.";
+
+const auditReports = {
+  core: {
+    auditor: "Cyfrin",
+    file: "cyfrin-3-25.pdf",
+    sourceCommit: "d522a38b0b0f1c27d896790262302a52c3720e06",
+  },
+  extensions: {
+    auditor: "Cyfrin",
+    file: "cyfrin-4-25.pdf",
+    sourceCommit: "cdd39c62d65436da0d97bff53a7a5714a3505453",
+  },
+  multiTokenPeriod: {
+    auditor: "Cyfrin",
+    file: "cyfrin-5-25-part1.pdf",
+    sourceCommit: "0f8e128adebc45f81c7c3d5e35124450767a454d",
+  },
+  balanceChange: {
+    auditor: "Cyfrin",
+    file: "cyfrin-5-25-part2.pdf",
+    sourceCommit: "42a2cb4c1d07465d70c050c337656a9a0c1eed33",
+  },
+  approvalRevocation: {
+    auditor: "Cyfrin",
+    file: "cyfrin-5-26.pdf",
+    sourceCommit: "be5c72fb3eea8f04026d5e43dddda8243120c0c2",
+  },
+} as const satisfies Record<string, AuditReport>;
+
+const coreAuditEnforcers = new Set([
+  "AllowedCalldataEnforcer",
+  "AllowedMethodsEnforcer",
+  "AllowedTargetsEnforcer",
+  "ArgsEqualityCheckEnforcer",
+  "BlockNumberEnforcer",
+  "DeployedEnforcer",
+  "ERC20TransferAmountEnforcer",
+  "ERC721TransferEnforcer",
+  "IdEnforcer",
+  "LimitedCallsEnforcer",
+  "NativeTokenPaymentEnforcer",
+  "NativeTokenTransferAmountEnforcer",
+  "NonceEnforcer",
+  "OwnershipTransferEnforcer",
+  "RedeemerEnforcer",
+  "TimestampEnforcer",
+  "ValueLteEnforcer",
+]);
+
+const extensionAuditEnforcers = new Set([
+  "ERC20PeriodTransferEnforcer",
+  "ERC20StreamingEnforcer",
+  "NativeTokenStreamingEnforcer",
+  "SpecificActionERC20TransferBatchEnforcer",
+  "ExactCalldataEnforcer",
+  "ExactCalldataBatchEnforcer",
+  "ExactExecutionEnforcer",
+  "ExactExecutionBatchEnforcer",
+]);
+
+const balanceChangeAuditEnforcers = new Set([
+  "ERC20BalanceChangeEnforcer",
+  "ERC721BalanceChangeEnforcer",
+  "ERC1155BalanceChangeEnforcer",
+  "NativeBalanceChangeEnforcer",
+]);
+
+function auditEvidenceFor(enforcer: string) {
+  let report: AuditReport | undefined;
+  if (coreAuditEnforcers.has(enforcer)) report = auditReports.core;
+  if (extensionAuditEnforcers.has(enforcer)) report = auditReports.extensions;
+  if (balanceChangeAuditEnforcers.has(enforcer)) {
+    report = auditReports.balanceChange;
+  }
+  if (enforcer === "MultiTokenPeriodEnforcer") {
+    report = auditReports.multiTokenPeriod;
+  }
+  if (enforcer === "ApprovalRevocationEnforcer") {
+    report = auditReports.approvalRevocation;
+  }
+  if (!report) return [];
+  return [
+    {
+      auditor: report.auditor,
+      reportUrl: `${AUDIT_REPOSITORY}/blob/main/audits/cyfrin/${report.file}`,
+      repository: AUDIT_REPOSITORY,
+      sourceCommit: report.sourceCommit,
+      scope: `src/enforcers/${enforcer}.sol`,
+      qualification: AUDIT_QUALIFICATION,
+    },
+  ];
+}
 
 const field = (
   name: string,
@@ -658,6 +760,7 @@ async function buildOutput(): Promise<string> {
         caveat.terms,
         decoded,
       ),
+      audits: auditEvidenceFor(entry.name),
       usage: [
         {
           name: `MetaMask Smart Accounts Kit ${SMART_ACCOUNTS_KIT_VERSION}`,
@@ -678,7 +781,7 @@ async function buildOutput(): Promise<string> {
       repository: SOURCE_REPOSITORY,
       referenceDataset: "data/metamask-v1.3.0.json",
       generationMethod:
-        "Fixtures are produced through the package builders and decoded through the package decoder; semantic domains are the conservative implementation review in docs/ENFORCER-TAXONOMY-REVIEW.md.",
+        "Fixtures are produced through the package builders and decoded through the package decoder; semantic domains are the conservative implementation review in docs/ENFORCER-TAXONOMY-REVIEW.md; audit evidence is mapped only from exact named scopes in official MetaMask audit artifacts.",
       status: "reviewed-enrichment-proposal",
     },
     enforcers: entries,

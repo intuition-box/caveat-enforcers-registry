@@ -51,6 +51,8 @@ export const PROPOSED_ONTOLOGY_MANIFEST: OntologyManifest = {
       "0x8bf919230c76a14fdc10038cad9a85d85035cd2078eeff8af81741bbd1950d94",
     coveredByAudit:
       "0x81d99cc1df880cc0e12d0e8a2a193322663c05b4f893d63d24a3c730cb495e87",
+    auditedBy:
+      "0x54c893bab75931352eb462bd00012ca1ec13379bf197c54a01947420a3799c6d",
     usedBy:
       "0x9df1961750a1787da8ed4a143f23014393a2c63d6a0032766b643b8256e4a8e9",
     restricts:
@@ -81,6 +83,7 @@ export type PredicateKey =
   | "describedBy"
   | "hasTermsSchema"
   | "coveredByAudit"
+  | "auditedBy"
   | "usedBy"
   | "restricts"
   | "affectsOperation"
@@ -232,6 +235,10 @@ export function readOntologyManifestFromEnv(
       coveredByAudit: envValue(
         "REGISTRY_PREDICATE_COVERED_BY_AUDIT",
         proposed.predicates.coveredByAudit,
+      ),
+      auditedBy: envValue(
+        "REGISTRY_PREDICATE_AUDITED_BY",
+        proposed.predicates.auditedBy,
       ),
       usedBy: envValue(
         "REGISTRY_PREDICATE_USED_BY",

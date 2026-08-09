@@ -6,7 +6,7 @@
     "delegationCoreCommit": "d3f1dd8b1682ec5b2c961e450d9847d54eb72268",
     "repository": "https://github.com/MetaMask/smart-accounts-kit",
     "referenceDataset": "data/metamask-v1.3.0.json",
-    "generationMethod": "Fixtures are produced through the package builders and decoded through the package decoder; semantic domains are the conservative implementation review in docs/ENFORCER-TAXONOMY-REVIEW.md.",
+    "generationMethod": "Fixtures are produced through the package builders and decoded through the package decoder; semantic domains are the conservative implementation review in docs/ENFORCER-TAXONOMY-REVIEW.md; audit evidence is mapped only from exact named scopes in official MetaMask audit artifacts.",
     "status": "reviewed-enrichment-proposal"
   },
   "enforcers": [
@@ -47,6 +47,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/AllowedCalldataEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -85,6 +95,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/AllowedMethodsEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -128,6 +148,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/AllowedTargetsEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -170,6 +200,16 @@
           { "terms": "0x3f", "decoded": { "revocationFlags": "63" } }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-5-26.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "be5c72fb3eea8f04026d5e43dddda8243120c0c2",
+          "scope": "src/enforcers/ApprovalRevocationEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -205,6 +245,16 @@
           { "terms": "0x11223344", "decoded": { "args": "0x11223344" } }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/ArgsEqualityCheckEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -255,6 +305,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/BlockNumberEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -304,6 +364,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/DeployedEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -363,6 +433,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-5-25-part2.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "42a2cb4c1d07465d70c050c337656a9a0c1eed33",
+          "scope": "src/enforcers/ERC1155BalanceChangeEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -420,6 +500,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-5-25-part2.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "42a2cb4c1d07465d70c050c337656a9a0c1eed33",
+          "scope": "src/enforcers/ERC20BalanceChangeEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -487,6 +577,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-4-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "cdd39c62d65436da0d97bff53a7a5714a3505453",
+          "scope": "src/enforcers/ERC20PeriodTransferEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -561,6 +661,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-4-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "cdd39c62d65436da0d97bff53a7a5714a3505453",
+          "scope": "src/enforcers/ERC20StreamingEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -614,6 +724,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/ERC20TransferAmountEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -671,6 +791,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-5-25-part2.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "42a2cb4c1d07465d70c050c337656a9a0c1eed33",
+          "scope": "src/enforcers/ERC721BalanceChangeEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -719,6 +849,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/ERC721TransferEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -771,6 +911,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-4-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "cdd39c62d65436da0d97bff53a7a5714a3505453",
+          "scope": "src/enforcers/ExactCalldataBatchEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -806,6 +956,16 @@
           { "terms": "0x11223344", "decoded": { "calldata": "0x11223344" } }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-4-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "cdd39c62d65436da0d97bff53a7a5714a3505453",
+          "scope": "src/enforcers/ExactCalldataEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -858,6 +1018,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-4-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "cdd39c62d65436da0d97bff53a7a5714a3505453",
+          "scope": "src/enforcers/ExactExecutionBatchEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -907,6 +1077,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-4-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "cdd39c62d65436da0d97bff53a7a5714a3505453",
+          "scope": "src/enforcers/ExactExecutionEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -946,6 +1126,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/IdEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -985,6 +1175,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/LimitedCallsEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1037,6 +1237,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-5-25-part1.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "0f8e128adebc45f81c7c3d5e35124450767a454d",
+          "scope": "src/enforcers/MultiTokenPeriodEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1087,6 +1297,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-5-25-part2.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "42a2cb4c1d07465d70c050c337656a9a0c1eed33",
+          "scope": "src/enforcers/NativeBalanceChangeEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1135,6 +1355,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/NativeTokenPaymentEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1195,6 +1425,7 @@
           }
         ]
       },
+      "audits": [],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1262,6 +1493,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-4-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "cdd39c62d65436da0d97bff53a7a5714a3505453",
+          "scope": "src/enforcers/NativeTokenStreamingEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1301,6 +1542,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/NativeTokenTransferAmountEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1342,6 +1593,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/NonceEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1388,6 +1649,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/OwnershipTransferEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1436,6 +1707,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/RedeemerEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1494,6 +1775,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-4-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "cdd39c62d65436da0d97bff53a7a5714a3505453",
+          "scope": "src/enforcers/SpecificActionERC20TransferBatchEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1547,6 +1838,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/TimestampEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",
@@ -1586,6 +1887,16 @@
           }
         ]
       },
+      "audits": [
+        {
+          "auditor": "Cyfrin",
+          "reportUrl": "https://github.com/MetaMask/delegation-framework/blob/main/audits/cyfrin/cyfrin-3-25.pdf",
+          "repository": "https://github.com/MetaMask/delegation-framework",
+          "sourceCommit": "d522a38b0b0f1c27d896790262302a52c3720e06",
+          "scope": "src/enforcers/ValueLteEnforcer.sol",
+          "qualification": "Exact named source contract was in the report scope at the recorded commit. This is audit evidence, not deployed-bytecode equivalence or a safety guarantee."
+        }
+      ],
       "usage": [
         {
           "name": "MetaMask Smart Accounts Kit 1.7.0",

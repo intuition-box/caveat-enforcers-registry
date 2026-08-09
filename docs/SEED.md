@@ -27,9 +27,17 @@ implementation taxonomy in `docs/ENFORCER-TAXONOMY-REVIEW.md`, and adds:
 - affected-operation claims;
 - versioned terms-schema documents with executable fixtures;
 - immutable package-release provenance; and
-- official Smart Accounts Kit usage evidence.
+- official Smart Accounts Kit usage evidence;
+- exact official MetaMask audit artifacts for 31 named source contracts; and
+- auditor identity linked through the `audited by` predicate.
 
-It still does not write `covered by audit` for any deployment without an exact external audit.
+Audit scope is attached to the enforcer type, not automatically to a deployment.
+Each structured audit atom records the report, auditor, full reviewed commit,
+exact contract path, and an explicit qualification that the claim is neither
+deployed-bytecode equivalence nor a safety guarantee. No exact scoped artifact
+was found for `NativeTokenPeriodTransferEnforcer`, so it intentionally receives
+no audit claim. The reviewed mapping is documented in
+[`AUDIT-EVIDENCE.md`](./AUDIT-EVIDENCE.md).
 
 ## Dry run
 
@@ -51,6 +59,10 @@ pnpm seed:reference-enrichment -- --dry-run
 `@metamask/smart-accounts-kit@1.7.0` and `@metamask/delegation-core@2.2.1` at commit
 `d3f1dd8b1682ec5b2c961e450d9847d54eb72268`. CI fails when the committed document differs from
 the package-generated result.
+
+The current enrichment dry run plans 202 atoms and 265 triples. At the
+2026-08-09 mainnet state, 121 atoms and all 265 triples are missing, requiring
+`38.600000000651 TRUST` in protocol deposits plus gas. Dry run never broadcasts.
 
 ## Controlled execution
 
