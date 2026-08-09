@@ -37,8 +37,17 @@ This proves the local workflow and ordering without claiming that a test double 
 ## Live launch seed verified
 
 The 32-entry MetaMask Smart Accounts Kit reference collection is seeded and indexed on
-Intuition mainnet. The public registry API returns 32 unique membership records using the
-canonical membership predicate and deployment-class atom. Each seeded record has independent
+Intuition mainnet. The six controlled membership batches were:
+
+- [`0x221233482f0da954e6117d64fe987216fb53677c557b5be5128c2461a5769391`](https://explorer.intuition.systems/tx/0x221233482f0da954e6117d64fe987216fb53677c557b5be5128c2461a5769391)
+- [`0x81828c41a6117593e0dace8781fde792246bd9713abfa00ba164d83804c6078e`](https://explorer.intuition.systems/tx/0x81828c41a6117593e0dace8781fde792246bd9713abfa00ba164d83804c6078e)
+- [`0x55e80fa1a6fa5445b0214a9407dadc67301e145b50cb4c54689bbe3caa4d9d08`](https://explorer.intuition.systems/tx/0x55e80fa1a6fa5445b0214a9407dadc67301e145b50cb4c54689bbe3caa4d9d08)
+- [`0x9b6bde3c95f922231afb8d40c99ad9f318661ff6d4262c08d0321bcc02df1006`](https://explorer.intuition.systems/tx/0x9b6bde3c95f922231afb8d40c99ad9f318661ff6d4262c08d0321bcc02df1006)
+- [`0xf53b592557c6ed0acb668727c1bf36d27a87bee282e38dd8d5d7c795aa2b1303`](https://explorer.intuition.systems/tx/0xf53b592557c6ed0acb668727c1bf36d27a87bee282e38dd8d5d7c795aa2b1303)
+- [`0x77b7727800126c6a81105d1abb31449f1a1d7aebb2c940634f18412e16340c66`](https://explorer.intuition.systems/tx/0x77b7727800126c6a81105d1abb31449f1a1d7aebb2c940634f18412e16340c66)
+
+The canonical GraphQL query currently returns 33 unique membership records: the
+32-reference launch set plus the open contribution. Each seeded record has independent
 membership, implementation, Intuition-chain, and MetaMask-source claims, with a non-zero support
 signal.
 
@@ -61,3 +70,11 @@ The canonical registry API subsequently returned deployment term
 chain, source, terms-schema, operation, restriction-domain, and evidence claims. This proves that
 an entry outside the controlled 32-record launch seed can be contributed, confirmed, indexed, and
 read through the same public registry path without an application code change or redeployment.
+
+## Proofs still requiring an approved mainnet action
+
+The direct claim-level support/opposition UI and the three composability presets are
+implemented and tested. Their permanent proof transactions are intentionally not claimed
+here until a funded wallet explicitly approves them. The reviewed enrichment and audit
+mapping are also dry-run only until that approval. See
+[`REVIEWER-EVIDENCE.md`](./REVIEWER-EVIDENCE.md) for the exact remaining gates.

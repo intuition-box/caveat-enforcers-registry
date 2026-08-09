@@ -2,7 +2,7 @@
 
 The backend is a typed, backend-neutral registry client. It reads the canonical Intuition graph directly and prepares a submission plan without hidden signing state. The web client can pass an injected browser wallet through the same adapter boundary for explicit user-approved writes.
 
-## Implemented locally
+## Implemented
 
 - Versioned ontology manifest shape with fail-closed validation.
 - Canonical membership query using predicate and deployment-class IDs.
@@ -23,7 +23,7 @@ The backend is a typed, backend-neutral registry client. It reads the canonical 
 - Browser wallet integration using `window.ethereum`, chain-1155 switching, explicit account connection, and the same simulation, write, receipt, MultiVault, and indexer verification pipeline.
 - Deterministic atom and triple ID resolution, duplicate detection, and ordered write batches.
 - Submission initial signal is carried into the membership vault asset; source-release atoms are only created when a configured release predicate can link them.
-- Optional audit and known-usage evidence is validated, canonicalized, and added to the same write plan; the plan fails closed if its predicates are not configured.
+- Optional audit and known-usage evidence is validated, canonicalized, and added to the same write plan; exact reference audit scope is attached to the enforcer type and auditor identity receives its own relationship.
 - Optional composability evidence creates a direct relationship triple and attaches context, ordering, and supporting-source triples to that relationship ID.
 - Unsigned curation preparation verifies an existing claim, derives the official counter-claim ID for opposition, and encodes the MultiVault `deposit` call without choosing a curve or wallet.
 - Adapter-backed curation execution simulates and submits that deposit, confirms its receipt, and verifies the target vault directly before reporting a confirmed signal.
@@ -68,18 +68,18 @@ pnpm discover:ontology -- caveat enforcer registry subset
 The command only searches the mainnet atom index and prints candidate IDs. It never writes or
 silently promotes a candidate.
 
-## Deliberately not implemented
+## Deliberate trust boundaries
 
 - No private signer, funding wallet, or hidden write authority is committed. The default runtime
   uses the explicitly labeled proposal in `config/ontology.manifest.proposed.json`; operators can
   override it with environment values, and community support or opposition remains independent.
-- No funded wallet or transaction owner is configured. The repository does not submit anything automatically; a user must connect a browser wallet and approve each prompt.
+- No funded wallet or transaction owner is configured in the application. Browser writes require an explicit connected account and approval for each prompt; controlled seed scripts require an explicit private-key injection plus `--execute --confirm-mainnet`.
 - The service does not persist submissions or expose an unauthenticated production write endpoint. Wallet signing remains an explicit client or injected adapter responsibility.
 - No production pinning key, funded wallet, or transaction owner is configured.
-- The controlled 32-entry MetaMask launch seed is live and indexed on Intuition mainnet. It uses
-  the same canonical membership boundary as the public read API.
-- The live open-registry proof is complete: `AllowedTimeOfDayEnforcer` was written through the
-  browser-wallet flow and discovered through the same canonical query as the launch seed.
+
+The controlled 32-entry launch seed and the independently submitted
+`AllowedTimeOfDayEnforcer` are live. They are production evidence, not trust
+boundaries or server-owned write authority.
 
 ## Safe sequence for a proposed ontology
 

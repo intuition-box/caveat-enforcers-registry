@@ -11,10 +11,10 @@
 The proposed registry boundary uses the dedicated object class atom
 `ERC-7710 caveat enforcer deployment` (`0x6b417110d95173e05bb927254249126617efb6410824afe0e8d029245252f21c`).
 It deliberately does not reuse the generic `deployment` atom: a broad object would
-allow unrelated deployment claims to collide with the registry. The atom is currently
-absent on mainnet and is therefore the first `ensure-atom` operation in a proposed
-browser-wallet submission. The membership triple is not eligible to be sent until
-that atom has been created or verified in the same ordered workflow.
+allow unrelated deployment claims to collide with the registry. The dedicated atom is
+live on mainnet and is the object shared by all 33 currently indexed membership claims.
+A client must still verify or create it before a write instead of assuming that a label
+is canonical.
 
 Mainnet is the canonical data environment for registry reads and release validation. Do not write disposable records to it.
 
@@ -57,6 +57,8 @@ query RegistryDeployments(
     term_id
     subject_id
     created_at
+    transaction_hash
+    block_number
     subject {
       term_id
       label
@@ -103,7 +105,8 @@ Variables (these are the live mainnet values used by the launched registry, not 
 `data.triples` is the membership page. `subject.term_id` is the deployment term to use for
 detail lookup. `subject.label` is the CAIP-10 identity (`caip10:eip155:1155:{address}`).
 `term.vaults` and `counter_term.vaults` are separate support and opposition signals; a missing
-vault is not a zero-confidence guarantee.
+vault is not a zero-confidence guarantee. `transaction_hash` and `block_number` identify the
+indexed claim write when the indexer supplies them.
 
 ### Runnable example
 
@@ -193,6 +196,8 @@ query DeploymentClaims($deploymentId: String!, $limit: Int!, $offset: Int!) {
   ) {
     term_id
     created_at
+    transaction_hash
+    block_number
     subject {
       term_id
       label
@@ -254,7 +259,19 @@ pnpm query:registry -- --detail 0x...deployment-term-id...
 
 The runner prints the raw GraphQL response so clients can preserve fields they do not yet map.
 
-For a deployment detail view, query all claims where the deployment is the subject, then resolve source, terms-schema, audit, chain, and type claims from their canonical predicate IDs.
+For a complete detail view:
+
+1. query all claims where the deployment is the subject;
+2. resolve its `implements` object ID;
+3. run the same subject query for that enforcer-type ID to load `restricts`,
+   `affects operation`, `described by`, and `covered by audit` claims;
+4. treat a structured audit object as source-scope evidence, then optionally query
+   that audit atom for its `audited by` claim; and
+5. preserve support and opposition vaults for every returned triple.
+
+This second hop is required because chain-independent semantics belong to the enforcer
+type, not to every deployment. Resolve all meaning from the manifest's predicate IDs;
+labels are display metadata only.
 
 ## Submission and indexing
 

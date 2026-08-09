@@ -8,6 +8,9 @@ const requiredFiles = [
   "docs/SCHEMA.md",
   "docs/COMPOSABILITY.md",
   "docs/INTEGRATION.md",
+  "docs/AUDIT-EVIDENCE.md",
+  "docs/PROOF.md",
+  "docs/REVIEWER-EVIDENCE.md",
 ];
 
 const forbiddenCharacters = /[\u2013\u2014]/u;

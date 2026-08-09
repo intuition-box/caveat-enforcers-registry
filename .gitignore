@@ -6,4 +6,5 @@ coverage/
 .env.*
 !.env.example
 .vercel
+tmp/
 .DS_Store
