@@ -3,6 +3,14 @@
 Status: publication draft. Publishing it is an external action and requires an
 explicit owner confirmation.
 
+Proposed publication target: the Intuition forum's
+[Ecosystem Development](https://atlas.discourse.group/c/ecosystem-development/31)
+category. This is the primary target because it is a public ERC-7710 community
+proposal and directly satisfies the mission's forum-or-PR publication
+requirement. A separate issue in `0xIntuition/agent-skills` can be opened later
+if maintainers want to link the integration from the canonical Intuition skill;
+that repository requires issue-first discussion for third-party integrations.
+
 ## Summary
 
 We built a permissionless registry for ERC-7710 caveat enforcers on Intuition
@@ -33,10 +41,29 @@ application release.
 ## Integration
 
 The canonical GraphQL query, runnable curl example, detail traversal, and a
-wallet-picker example are documented in
-[`docs/INTEGRATION.md`](./INTEGRATION.md). A client needs only the public
-Intuition GraphQL endpoint plus the membership predicate and deployment-class
-IDs. It does not need to run this dapp or use an Intuition-specific SDK.
+wallet-picker example are documented in the
+[integration guide](https://github.com/intuition-box/caveat-enforcers-registry/blob/main/docs/INTEGRATION.md).
+A client needs only the public Intuition GraphQL endpoint plus the membership
+predicate and deployment-class IDs. It does not need to run this dapp, call the
+registry API, connect a wallet, or use an Intuition-specific SDK.
+
+The standalone example is runnable from a clone:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm example:wallet-picker
+```
+
+It queries `https://mainnet.intuition.sh/v1/graphql` directly, resolves each
+deployment's canonical type, preserves support and opposition as separate
+values, and emits portable JSON for a wallet picker. The latest independent run
+on 2026-08-09 returned 33 deployments: the 32 MetaMask launch records plus the
+open community contribution.
+
+The two registry-boundary IDs are:
+
+- membership predicate: `0xb0681668ca193e8608b43adea19fecbbe0828ef5afc941cef257d30a20564ef1`
+- deployment class: `0x6b417110d95173e05bb927254249126617efb6410824afe0e8d029245252f21c`
 
 ## Request for feedback
 
@@ -50,3 +77,6 @@ We would like review from ERC-7710 wallet, SDK, and enforcer authors on:
 Registry: <https://caveat-enforcers-registry.vercel.app>
 
 Repository: <https://github.com/intuition-box/caveat-enforcers-registry>
+
+Acceptance evidence:
+<https://github.com/intuition-box/caveat-enforcers-registry/blob/main/docs/REVIEWER-EVIDENCE.md>
