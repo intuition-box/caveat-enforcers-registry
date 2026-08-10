@@ -1,7 +1,6 @@
 # Proposal: an open ERC-7710 caveat enforcer registry on Intuition
 
-Status: publication draft. Publishing it is an external action and requires an
-explicit owner confirmation.
+Status: owner-approved for publication on 2026-08-10.
 
 Proposed publication target: the Intuition forum's
 [Ecosystem Development](https://atlas.discourse.group/c/ecosystem-development/31)
@@ -57,8 +56,11 @@ pnpm example:wallet-picker
 It queries `https://mainnet.intuition.sh/v1/graphql` directly, resolves each
 deployment's canonical type, preserves support and opposition as separate
 values, and emits portable JSON for a wallet picker. The latest independent run
-on 2026-08-09 returned 33 deployments: the 32 MetaMask launch records plus the
-open community contribution.
+on 2026-08-10 returned 33 deployments: the 32 MetaMask launch records plus the
+open community contribution. The reference collection now also carries
+source-derived restriction, operation, terms-schema, release, usage, and exact
+audit-scope claims. Seven composability relationships and 17 contextual claims
+are live on the same graph, while support and opposition remain separate.
 
 The two registry-boundary IDs are:
 
