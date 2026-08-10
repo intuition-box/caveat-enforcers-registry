@@ -50,7 +50,7 @@ The standalone example is runnable from a clone:
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm example:wallet-picker
+node examples/wallet-picker.mjs
 ```
 
 It queries `https://mainnet.intuition.sh/v1/graphql` directly, resolves each

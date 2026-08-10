@@ -185,11 +185,14 @@ The repository also includes a dependency-free, runnable version that resolves
 canonical implementation names and keeps support and opposition separate:
 
 ```bash
-pnpm example:wallet-picker
+node examples/wallet-picker.mjs
 ```
 
 It talks directly to Intuition GraphQL and prints portable JSON. It does not call
 the registry dapp API, require an Intuition SDK, connect a wallet, or write state.
+`pnpm example:wallet-picker` remains available as an interactive convenience command; use the
+direct Node command when redirecting or parsing stdout so package-manager status output cannot
+prefix the JSON document.
 
 ### Deployment detail query
 
