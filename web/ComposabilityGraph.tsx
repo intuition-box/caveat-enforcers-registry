@@ -89,6 +89,7 @@ export default function ComposabilityGraph({
   relationships: GraphRelationship[];
 }) {
   const [selection, setSelection] = useState<Selection>(null);
+  const [hoveredTerm, setHoveredTerm] = useState<string | null>(null);
 
   const { namedTerms, positions, orphans, maxDegree } = useMemo(() => {
     const degree = new Map<string, number>();
@@ -173,35 +174,43 @@ export default function ComposabilityGraph({
     };
   }, [relationships]);
 
+  // Details panel + persistent selection come from a click.
   const selectedRelationship =
     selection?.type === "relationship"
       ? relationships.find((r) => r.key === selection.value)
       : undefined;
   const selectedTerm = selection?.type === "term" ? selection.value : undefined;
-  const connectedRelationships = selectedTerm
+  const inspectorConnected = selectedTerm
     ? relationships.filter(
         (r) => r.subjectType === selectedTerm || r.relatedType === selectedTerm,
       )
     : [];
+
+  // Highlight follows the hover (Obsidian-style), falling back to the click
+  // selection so a chosen node stays lit while its details are open.
+  const focusTerm = hoveredTerm ?? selectedTerm;
+  const focusRelationship = hoveredTerm ? undefined : selectedRelationship;
+  const focusConnected = focusTerm
+    ? relationships.filter(
+        (r) => r.subjectType === focusTerm || r.relatedType === focusTerm,
+      )
+    : [];
   const activeRelationshipKeys = new Set(
-    selectedRelationship
-      ? [selectedRelationship.key]
-      : connectedRelationships.map((r) => r.key),
+    focusRelationship
+      ? [focusRelationship.key]
+      : focusConnected.map((r) => r.key),
   );
   const activeTerms = new Set(
-    selectedRelationship
-      ? [selectedRelationship.subjectType, selectedRelationship.relatedType]
-      : selectedTerm
+    focusRelationship
+      ? [focusRelationship.subjectType, focusRelationship.relatedType]
+      : focusTerm
         ? [
-            selectedTerm,
-            ...connectedRelationships.flatMap((r) => [
-              r.subjectType,
-              r.relatedType,
-            ]),
+            focusTerm,
+            ...focusConnected.flatMap((r) => [r.subjectType, r.relatedType]),
           ]
-        : namedTerms.map((n) => n.id),
+        : [],
   );
-  const dimGraph = selection !== null;
+  const dimGraph = hoveredTerm !== null || selection !== null;
 
   const selectRelationship = (relationship: GraphRelationship) =>
     setSelection((current) =>
@@ -348,10 +357,14 @@ export default function ComposabilityGraph({
               return (
                 <g
                   key={node.id}
-                  className={`cgraph__node ${isHub ? "is-hub" : ""} ${dimGraph && !active ? "is-dim" : ""} ${selectedTerm === node.id ? "is-selected" : ""}`}
+                  className={`cgraph__node ${isHub ? "is-hub" : ""} ${dimGraph && active ? "is-active" : ""} ${dimGraph && !active ? "is-dim" : ""} ${selectedTerm === node.id ? "is-selected" : ""}`}
                   role="button"
                   tabIndex={0}
                   aria-label={`Show relationships for ${shortLabel(node.id)}`}
+                  onMouseEnter={() => setHoveredTerm(node.id)}
+                  onMouseLeave={() => setHoveredTerm(null)}
+                  onFocus={() => setHoveredTerm(node.id)}
+                  onBlur={() => setHoveredTerm(null)}
                   onClick={() => selectTerm(node.id)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
@@ -433,8 +446,8 @@ export default function ComposabilityGraph({
               <p className="cgraph__status">Selected term</p>
               <h3>{shortLabel(selectedTerm)}</h3>
               <p>
-                {connectedRelationships.length} documented{" "}
-                {connectedRelationships.length === 1
+                {inspectorConnected.length} documented{" "}
+                {inspectorConnected.length === 1
                   ? "relationship"
                   : "relationships"}{" "}
                 connect to this term. Pick a highlighted line or ledger entry to

@@ -7575,17 +7575,27 @@ main > .band:first-child {
 .cgraph__node:focus-visible {
   outline: none;
 }
+/* Labels are hidden until a node is hovered/focused (Obsidian behaviour). */
 .cgraph__node-label {
-  fill: rgba(255, 255, 255, 0.62);
+  fill: rgba(255, 255, 255, 0.9);
   font-family: var(--mono, "Space Mono", monospace);
   font-size: 15px;
-  transition: fill 0.18s ease;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
 }
-.cgraph__node.is-hub .cgraph__node-label {
-  fill: rgba(255, 255, 255, 0.9);
+.cgraph__node.is-active .cgraph__node-label,
+.cgraph__node:hover .cgraph__node-label,
+.cgraph__node:focus-visible .cgraph__node-label {
+  opacity: 1;
 }
-.cgraph__node.is-dim .cgraph__node-label {
-  fill: rgba(255, 255, 255, 0.22);
+
+/* When something is focused, fade the rest of the graph back. */
+.cgraph__canvas.is-focused .cgraph__orphans circle {
+  opacity: 0.12;
+}
+.cgraph__canvas.is-focused .cgraph__spokes line {
+  stroke: rgba(255, 255, 255, 0.03);
 }
 
 .cgraph__inspector {
