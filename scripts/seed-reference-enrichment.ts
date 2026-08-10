@@ -27,9 +27,12 @@ async function main(): Promise<void> {
   });
 }
 
-main().catch((error: unknown) => {
-  console.error(
-    error instanceof Error ? error.message : "Reference enrichment failed.",
-  );
-  process.exitCode = 1;
-});
+const keepAlive = setInterval(() => undefined, 1_000);
+main()
+  .catch((error: unknown) => {
+    console.error(
+      error instanceof Error ? error.message : "Reference enrichment failed.",
+    );
+    process.exitCode = 1;
+  })
+  .finally(() => clearInterval(keepAlive));

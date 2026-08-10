@@ -1,29 +1,29 @@
 # Reviewer evidence matrix
 
-Last verified: 2026-08-09. Chain: Intuition mainnet `1155`.
+Last verified: 2026-08-10. Chain: Intuition mainnet `1155`.
 
 Public application: <https://caveat-enforcers-registry.vercel.app>
 
 Public read API: <https://caveat-enforcers-registry.onrender.com>
 
-The table separates implemented code, live evidence, and actions that still need
-an explicit funded-wallet or external-publication approval.
+The table separates implemented code, live evidence, and the remaining external-publication
+and production-deployment steps.
 
 | Board requirement                                        | Implementation and evidence                                                                                                                             | Status                                                                           |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | Intuition ontology                                       | [`SCHEMA.md`](./SCHEMA.md), versioned IDs in `src/ontology.ts`, deterministic atom/triple derivation tests                                              | Implemented                                                                      |
 | 32 official MetaMask enforcers                           | Six verified mainnet membership batches in [`PROOF.md`](./PROOF.md); canonical query returns all 32 plus one open contribution                          | Live                                                                             |
-| Restriction, operation, terms, release, usage enrichment | Reproducible 32-record metadata generator and idempotent enrichment runner                                                                              | Dry-run reviewed; mainnet write pending approval                                 |
-| Audit status and auditor                                 | 31 exact official report scopes plus one deliberate absence in [`AUDIT-EVIDENCE.md`](./AUDIT-EVIDENCE.md); `covered by audit` and `audited by` ontology | Dry-run reviewed; mainnet write pending approval                                 |
+| Restriction, operation, terms, release, usage enrichment | Reproducible 32-record metadata generator; zero-missing direct MultiVault verification; transaction range in [`PROOF.md`](./PROOF.md)                   | Live on Intuition mainnet                                                        |
+| Audit status and auditor                                 | 31 exact official report scopes plus one deliberate absence in [`AUDIT-EVIDENCE.md`](./AUDIT-EVIDENCE.md); graph claims verified by the enrichment run  | Live on Intuition mainnet                                                        |
 | Browse controls                                          | Search; domain, chain, audit, and minimum-TRUST filters; TRUST/name/newest sorting; CAIP-10, chain, domain, audit state, and signal display             | Implemented in production frontend                                               |
-| Detail evidence                                          | Deployment and type claims, support/opposition per claim, terms JSON, usage, source, registry transaction, and block                                    | Implemented; enriched fields appear after enrichment write and API redeploy      |
+| Detail evidence                                          | Deployment and type claims, support/opposition per claim, terms JSON, usage, source, registry transaction, and block                                    | Live graph; production API redeploy pending                                      |
 | Permissionless submit                                    | Browser-wallet atom/triple flow with preview, simulation, receipts, direct MultiVault verification, and indexing states                                 | Live proof: `AllowedTimeOfDayEnforcer`, transactions in [`PROOF.md`](./PROOF.md) |
-| Support/dispute any claim                                | Direct support and opposition controls, exact counter-vault resolution, explicit TRUST amount, simulation, receipt, and explorer result                 | Implemented; one independent claim-level mainnet proof pending approval          |
-| Three composability presets                              | Three enforcer-to-enforcer presets plus two scope conflicts, backed by a deterministic 7-relationship/17-context-triple plan                            | Implemented; live relationship write pending approval                            |
-| Composability is graph-backed                            | UI asks the API for exact relationship IDs and labels a relationship Live only after Intuition returns it                                               | Implemented; mainnet seed pending approval                                       |
+| Support/dispute any claim                                | Direct controls plus verified opposition transaction `0x5cfe…b6e23`; counter-vault assets increased to `0.098750000001 TRUST`                           | Live                                                                             |
+| Three composability presets                              | Three enforcer-to-enforcer presets plus two scope conflicts, backed by seven relationships and 17 contextual triples                                    | Live                                                                             |
+| Composability is graph-backed                            | UI asks the API for exact relationship IDs; strict production query returns all 24 planned relationship/context/ordering/evidence triples               | Live                                                                             |
 | Canonical GraphQL query                                  | Runnable membership/detail queries and direct-GraphQL wallet-picker example in [`INTEGRATION.md`](./INTEGRATION.md); latest run returned all 33 records | Live and independently runnable                                                  |
 | Contributor-readable schema                              | Ontology, CAIP-10 identity, submission JSON Schema, example, transaction order, and verification sequence                                               | Implemented                                                                      |
-| Community publication                                    | Forum-ready text, portable example, and selected Ecosystem Development target in [`COMMUNITY-PROPOSAL.md`](./COMMUNITY-PROPOSAL.md)                     | External publication pending approval                                            |
+| Community publication                                    | Forum-ready text, portable example, and selected Ecosystem Development target in [`COMMUNITY-PROPOSAL.md`](./COMMUNITY-PROPOSAL.md)                     | Publication authorized; public URL pending                                       |
 | Public hosting                                           | Vercel frontend and Render API over HTTPS with restrictive framing/content headers                                                                      | Live; Render free tier may cold-start                                            |
 
 ## Independent read verification
@@ -57,19 +57,9 @@ approved writes and API redeploy, `pnpm check:production:final` additionally pro
 ontology fields, every planned composability triple, and the claim-opposition counter-vault
 signal.
 
-## Remaining irreversible gates
+## Remaining release gates
 
-1. Broadcast the reviewed 32-record enrichment plan. Current read-only estimate:
-   `38.600000000651 TRUST` plus gas.
-2. Broadcast the composability plan. Last read-only estimate:
-   `4.300000000067 TRUST` plus gas; re-run after enrichment because shared atoms
-   can reduce the amount.
-3. Deposit a small opposition signal against the incorrect audit claim on the
-   open contribution, then verify both vault balances and capture the receipt.
-4. Publish the integration proposal to the agreed ERC-7710 community surface.
-5. Redeploy the Render service after the final backend commit and verify enriched
-   production responses.
-
-No script executes any of the first three actions without both an injected key
-and explicit mainnet confirmation flags. The browser flow requires a connected
-wallet and user approval for every transaction.
+1. Commit and push the final runner/evidence changes, then redeploy the Render service so its
+   detail hydration follows implementation-level enrichment claims.
+2. Pass `pnpm check:production:final` with all eight checks green.
+3. Publish the authorized integration proposal and record its public forum URL here.

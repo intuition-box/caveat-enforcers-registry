@@ -35,6 +35,12 @@ test("reference enrichment covers all 32 deployments with reviewed evidence", as
   assert.equal(metadata.enforcers.length, 32);
   assert.equal(plan.atoms.length, 202);
   assert.equal(plan.triples.length, 265);
+  assert.ok(
+    plan.atoms.every(
+      (atom) => new TextEncoder().encode(atom.content).length <= 1_000,
+    ),
+    "every atom must fit MultiVault's 1,000-byte payload limit",
+  );
   for (const entry of metadata.enforcers) {
     const triples = plan.triples.filter(
       (triple) => triple.enforcerName === entry.name,
@@ -77,6 +83,37 @@ test("reference enrichment covers all 32 deployments with reviewed evidence", as
     plan.triples.filter((triple) => triple.key.startsWith("covered-by-audit:"))
       .length,
     31,
+  );
+});
+
+test("oversized terms schemas use verifiable compact documents", async () => {
+  const { metadata, reference } = await documents();
+  const plan = buildReferenceEnrichmentPlan(metadata, reference);
+  const compact = plan.atoms.find(
+    (atom) => atom.key === "terms-schema:DeployedEnforcer",
+  );
+  assert.ok(compact);
+  const parsed = JSON.parse(compact.content) as {
+    enforcer?: string;
+    encoding?: unknown;
+    canonicalDocument?: {
+      algorithm?: string;
+      digest?: string;
+      uri?: string;
+      jsonPointer?: string;
+    };
+  };
+  assert.equal(parsed.enforcer, "DeployedEnforcer");
+  assert.ok(parsed.encoding);
+  assert.equal(parsed.canonicalDocument?.algorithm, "keccak256");
+  assert.match(parsed.canonicalDocument?.digest ?? "", /^0x[0-9a-f]{64}$/);
+  assert.match(
+    parsed.canonicalDocument?.uri ?? "",
+    /\/ab248bd\/data\/metamask-v1\.7\.0\.metadata\.json$/,
+  );
+  assert.equal(
+    parsed.canonicalDocument?.jsonPointer,
+    "/enforcers/6/termsSchema",
   );
 });
 

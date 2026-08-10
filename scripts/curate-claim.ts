@@ -28,6 +28,7 @@ const INTUITION_CHAIN = {
   nativeCurrency: { name: "TRUST", symbol: "TRUST", decimals: 18 },
   rpcUrls: { default: { http: [INTUITION_MAINNET_RPC] } },
 } as const;
+const EXECUTION_GAS_LIMIT = 12_000_000n;
 
 type Options = {
   claimId: string;
@@ -99,9 +100,10 @@ Options:
 
 async function main(): Promise<void> {
   const parsed = options(process.argv.slice(2));
+  const rpcUrl = process.env.INTUITION_RPC_URL?.trim() || INTUITION_MAINNET_RPC;
   const publicClient = createPublicClient({
     chain: INTUITION_CHAIN,
-    transport: http(INTUITION_MAINNET_RPC),
+    transport: http(rpcUrl, { retryCount: 0, timeout: 45_000 }),
   });
   if (
     (await publicClient.getChainId()) !== Number(INTUITION_MAINNET_CHAIN_ID)
@@ -166,7 +168,7 @@ async function main(): Promise<void> {
   const walletClient = createWalletClient({
     account: account!,
     chain: INTUITION_CHAIN,
-    transport: http(INTUITION_MAINNET_RPC),
+    transport: http(rpcUrl, { retryCount: 0, timeout: 45_000 }),
   });
   const hash = await walletClient.sendTransaction({
     account: account!,
@@ -174,6 +176,7 @@ async function main(): Promise<void> {
     to: plan.request.to as Address,
     data: plan.request.data as Hex,
     value: BigInt(plan.request.value ?? "0"),
+    gas: EXECUTION_GAS_LIMIT,
     gasPrice: await publicClient.getGasPrice(),
     type: "legacy",
   });
@@ -197,9 +200,12 @@ async function main(): Promise<void> {
   console.log("Curation proof: receipt and target-vault increase verified.");
 }
 
-main().catch((error: unknown) => {
-  console.error(
-    error instanceof Error ? error.message : "Curation command failed.",
-  );
-  process.exitCode = 1;
-});
+const keepAlive = setInterval(() => undefined, 1_000);
+main()
+  .catch((error: unknown) => {
+    console.error(
+      error instanceof Error ? error.message : "Curation command failed.",
+    );
+    process.exitCode = 1;
+  })
+  .finally(() => clearInterval(keepAlive));

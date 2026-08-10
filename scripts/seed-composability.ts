@@ -31,6 +31,7 @@ import {
 } from "../src/composability-seed.js";
 
 const DEFAULT_BATCH_SIZE = 24;
+const EXECUTION_GAS_LIMIT = 12_000_000n;
 const SEED_DATA_URL = new URL(
   "../data/composability-seed.json",
   import.meta.url,
@@ -173,18 +174,18 @@ async function sendAndConfirm(
   account: ReturnType<typeof privateKeyToAccount>,
   request: { to: string; data: string; value?: string },
   label: string,
+  gasPrice: bigint,
 ): Promise<void> {
   const to = seedAddress(request.to);
   const data = seedHex(request.data);
   const value = request.value === undefined ? 0n : BigInt(request.value);
-  const gasPrice = await publicClient.getGasPrice();
-  await publicClient.call({ account: account.address, to, data, value });
   const hash = await walletClient.sendTransaction({
     account,
     chain: INTUITION_CHAIN,
     to,
     data,
     value,
+    gas: EXECUTION_GAS_LIMIT,
     gasPrice,
     type: "legacy",
   });
@@ -202,23 +203,37 @@ async function createAtomBatches(
   atoms: SeedAtom[],
   atomCost: bigint,
   batchSize: number,
+  gasPrice: bigint,
 ): Promise<void> {
   const batches = chunks(atoms, batchSize);
-  for (const [index, batch] of batches.entries()) {
-    const request = encodeCreateAtoms(
+  const requests = batches.map((batch, index) => ({
+    request: encodeCreateAtoms(
       batch.map((atom) => stringToHex(atom.text)),
       batch.map(() => atomCost),
       {
         address: INTUITION_MAINNET_MULTIVAULT,
         value: (atomCost * BigInt(batch.length)).toString(),
       },
-    );
+    ),
+    label: `Atom batch ${index + 1}/${batches.length}`,
+  }));
+  for (const item of requests) {
+    await publicClient.call({
+      account: account.address,
+      to: seedAddress(item.request.to),
+      data: seedHex(item.request.data),
+      value: item.request.value ? BigInt(item.request.value) : 0n,
+    });
+  }
+  console.log(`Preflight: ${requests.length} atom batches simulated.`);
+  for (const item of requests) {
     await sendAndConfirm(
       publicClient,
       walletClient,
       account,
-      request,
-      `Atom batch ${index + 1}/${batches.length}`,
+      item.request,
+      item.label,
+      gasPrice,
     );
   }
 }
@@ -231,10 +246,11 @@ async function createTripleBatches(
   tripleCost: bigint,
   batchSize: number,
   labelPrefix: string,
+  gasPrice: bigint,
 ): Promise<void> {
   const batches = chunks(triples, batchSize);
-  for (const [index, batch] of batches.entries()) {
-    const request = encodeCreateTriples(
+  const requests = batches.map((batch, index) => ({
+    request: encodeCreateTriples(
       batch.map((triple) => triple.subjectId),
       batch.map((triple) => triple.predicateId),
       batch.map((triple) => triple.objectId),
@@ -243,13 +259,28 @@ async function createTripleBatches(
         address: INTUITION_MAINNET_MULTIVAULT,
         value: (tripleCost * BigInt(batch.length)).toString(),
       },
-    );
+    ),
+    label: `${labelPrefix} batch ${index + 1}/${batches.length}`,
+  }));
+  for (const item of requests) {
+    await publicClient.call({
+      account: account.address,
+      to: seedAddress(item.request.to),
+      data: seedHex(item.request.data),
+      value: item.request.value ? BigInt(item.request.value) : 0n,
+    });
+  }
+  console.log(
+    `Preflight: ${requests.length} ${labelPrefix.toLowerCase()} batches simulated.`,
+  );
+  for (const item of requests) {
     await sendAndConfirm(
       publicClient,
       walletClient,
       account,
-      request,
-      `${labelPrefix} batch ${index + 1}/${batches.length}`,
+      item.request,
+      item.label,
+      gasPrice,
     );
   }
 }
@@ -258,9 +289,10 @@ async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const document = await loadDocument();
   const plan: ComposabilitySeedPlan = buildComposabilitySeedPlan(document);
+  const rpcUrl = process.env.INTUITION_RPC_URL?.trim() || INTUITION_MAINNET_RPC;
   const publicClient = createPublicClient({
     chain: INTUITION_CHAIN,
-    transport: http(INTUITION_MAINNET_RPC),
+    transport: http(rpcUrl, { retryCount: 0, timeout: 45_000 }),
   });
 
   const chainId = await publicClient.getChainId();
@@ -324,7 +356,7 @@ async function main(): Promise<void> {
   const walletClient = createWalletClient({
     account,
     chain: INTUITION_CHAIN,
-    transport: http(INTUITION_MAINNET_RPC),
+    transport: http(rpcUrl, { retryCount: 0, timeout: 45_000 }),
   });
   console.log(`Execution wallet: ${account.address}`);
 
@@ -337,6 +369,7 @@ async function main(): Promise<void> {
       `Wallet ${account.address} holds ${formatEther(balance)} TRUST but the seed needs more than ${formatEther(required)} TRUST plus gas.`,
     );
   }
+  const executionGasPrice = await publicClient.getGasPrice();
 
   // Phase 1: atoms must exist before any triple references them.
   await createAtomBatches(
@@ -346,6 +379,7 @@ async function main(): Promise<void> {
     atomsToCreate,
     atomCost,
     options.batchSize,
+    executionGasPrice,
   );
   if ((await missingAtoms(publicClient, plan.atoms)).length) {
     throw new Error("Atoms are still missing after confirmation.");
@@ -361,6 +395,7 @@ async function main(): Promise<void> {
     tripleCost,
     options.batchSize,
     "Relationship",
+    executionGasPrice,
   );
   if ((await missingTriples(publicClient, plan.relationshipTriples)).length) {
     throw new Error(
@@ -377,6 +412,7 @@ async function main(): Promise<void> {
     tripleCost,
     options.batchSize,
     "Context/evidence",
+    executionGasPrice,
   );
 
   const remainingAtoms = await missingAtoms(publicClient, plan.atoms);
@@ -394,9 +430,12 @@ async function main(): Promise<void> {
   );
 }
 
-main().catch((error: unknown) => {
-  console.error(
-    error instanceof Error ? error.message : "Composability seed failed.",
-  );
-  process.exitCode = 1;
-});
+const keepAlive = setInterval(() => undefined, 1_000);
+main()
+  .catch((error: unknown) => {
+    console.error(
+      error instanceof Error ? error.message : "Composability seed failed.",
+    );
+    process.exitCode = 1;
+  })
+  .finally(() => clearInterval(keepAlive));

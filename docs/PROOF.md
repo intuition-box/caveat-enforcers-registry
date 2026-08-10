@@ -71,15 +71,41 @@ chain, source, terms-schema, operation, restriction-domain, and evidence claims.
 an entry outside the controlled 32-record launch seed can be contributed, confirmed, indexed, and
 read through the same public registry path without an application code change or redeployment.
 
-## Proofs still requiring an approved mainnet action
+## Live enrichment, composability, and curation proof
 
-The direct claim-level support/opposition UI and the three composability presets are
-implemented and tested. Their permanent proof transactions are intentionally not claimed
-here until a funded wallet explicitly approves them. The reviewed enrichment and audit
-mapping are also dry-run only until that approval. See
-[`REVIEWER-EVIDENCE.md`](./REVIEWER-EVIDENCE.md) for the exact remaining gates.
+On 2026-08-10, the funded owner approved a capped final mainnet run. The execution created the
+remaining reference-enrichment graph, the reviewed composability graph, and one material
+opposition signal. The explorer independently reports 106 successful transactions from block
+`7877369` through `7877475`, with exactly `43.000000000718 TRUST` in protocol call value:
 
-The curation proof target can be checked without broadcasting:
+- 31 `createAtoms` transactions: `14.00000000014 TRUST`;
+- 74 `createTriples` transactions: `28.900000000578 TRUST`;
+- one opposition `deposit`: `0.1 TRUST`.
+
+The complete range is visible in the
+[execution wallet history](https://explorer.intuition.systems/address/0x31314AE55653E10dc9a656fbE4CF843AB58fc9a4?tab=txs).
+Representative phase boundaries are:
+
+- first enrichment atom batch:
+  [`0xd2160b7023ab85b56e59ac2e97e357a15bcdc0016edad0cb3640eb5261aefb1a`](https://explorer.intuition.systems/tx/0xd2160b7023ab85b56e59ac2e97e357a15bcdc0016edad0cb3640eb5261aefb1a);
+- final enrichment triple batch:
+  [`0x9e6614dc38de7cc19d10b721ba9c81b9a59fa94681cbb1b910408af68f2551ed`](https://explorer.intuition.systems/tx/0x9e6614dc38de7cc19d10b721ba9c81b9a59fa94681cbb1b910408af68f2551ed);
+- composability relationship batches:
+  [`0xf6fb883994639e24f2a0cd35362fb59f0a1ba869259bf7b79c39a10e953867e2`](https://explorer.intuition.systems/tx/0xf6fb883994639e24f2a0cd35362fb59f0a1ba869259bf7b79c39a10e953867e2) and
+  [`0xaffec20baece392a7c5afeb023ade32f41429316cd834f76c46e11e4431afaf7`](https://explorer.intuition.systems/tx/0xaffec20baece392a7c5afeb023ade32f41429316cd834f76c46e11e4431afaf7);
+- final composability evidence batch:
+  [`0xf6eaec6caa940853ef13f9d3cc22864eb4e659fc1697028ce54c94e9f7ec25dc`](https://explorer.intuition.systems/tx/0xf6eaec6caa940853ef13f9d3cc22864eb4e659fc1697028ce54c94e9f7ec25dc);
+- opposition deposit:
+  [`0x5cfe41fba48ba4f6782cd01c49ad6314d0d9e1ad6e3d5111d83cbd8c734b6e23`](https://explorer.intuition.systems/tx/0x5cfe41fba48ba4f6782cd01c49ad6314d0d9e1ad6e3d5111d83cbd8c734b6e23).
+
+Direct MultiVault verification reports zero missing atoms or triples for both plans. The public
+indexer returns all 24 composability relationship/context/ordering/evidence triples. The
+opposition command resolved counter-vault
+`0x4340821aed6cc0e4191187cb4e5645a371bf4609238dbe7596931ba0629d3563`
+and verified its assets increased from `0.000000000001 TRUST` to
+`0.098750000001 TRUST` after protocol fees.
+
+The curation proof can be rechecked without broadcasting:
 
 ```bash
 pnpm curate:claim -- \
@@ -87,6 +113,5 @@ pnpm curate:claim -- \
   --action oppose --amount 0.1 --receiver 0x... --dry-run
 ```
 
-It resolves the canonical counter vault and prints its current balance. Execution
-requires the separate `--execute --confirm-mainnet` gate and verifies that the
-receipt succeeds and the target vault increases.
+It resolves the canonical counter vault and prints its current balance. A new execution still
+requires the separate `--execute --confirm-mainnet` gate.

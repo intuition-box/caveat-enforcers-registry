@@ -3,6 +3,7 @@ import {
   createWalletClient,
   formatEther,
   http,
+  webSocket,
   type Address,
   type Hex,
 } from "viem";
@@ -25,15 +26,26 @@ import type {
   ReferenceSeedTriple,
 } from "../src/reference-seed.js";
 
-// Structured terms and audit atoms can be several kilobytes each. Eight keeps
-// the worst reviewed enrichment batches below Intuition's practical gas limit.
+// Enrichment atoms are capped at MultiVault's 1,000-byte payload limit. Eight
+// remains conservative for mixed-size plans; callers can lower it further.
 const DEFAULT_BATCH_SIZE = 8;
+// The explorer-backed fallback RPC can simulate and relay transactions but
+// does not reliably serve eth_estimateGas. Every batch is call-simulated first;
+// this ceiling is comfortably above observed four-term batch usage and below
+// the chain block limit. Only gas actually consumed is charged.
+const EXECUTION_GAS_LIMIT = 12_000_000n;
 
 const INTUITION_CHAIN = {
   id: Number(INTUITION_MAINNET_CHAIN_ID),
   name: "Intuition Mainnet",
   nativeCurrency: { name: "TRUST", symbol: "TRUST", decimals: 18 },
   rpcUrls: { default: { http: [INTUITION_MAINNET_RPC] } },
+  contracts: {
+    multicall3: {
+      address: "0xcA11bde05977b3631167028862bE2a173976CA11" as Address,
+      blockCreated: 1,
+    },
+  },
 } as const;
 
 export type MainnetSeedPlan = {
@@ -200,18 +212,18 @@ async function sendAndConfirm(
   account: ReturnType<typeof privateKeyToAccount>,
   request: { to: string; data: string; value?: string },
   label: string,
+  gasPrice: bigint,
 ): Promise<void> {
   const to = address(request.to.toLowerCase());
   const data = hex(request.data);
   const value = request.value === undefined ? 0n : BigInt(request.value);
-  const gasPrice = await publicClient.getGasPrice();
-  await publicClient.call({ account: account.address, to, data, value });
   const transactionHash = await walletClient.sendTransaction({
     account,
     chain: INTUITION_CHAIN,
     to,
     data,
     value,
+    gas: EXECUTION_GAS_LIMIT,
     gasPrice,
     type: "legacy",
   });
@@ -253,9 +265,14 @@ export async function runMainnetSeed(
   options: { command: string; title: string },
 ): Promise<MainnetSeedState> {
   const parsed = parseOptions(argv, options.command);
+  const rpcUrl = process.env.INTUITION_RPC_URL?.trim() || INTUITION_MAINNET_RPC;
+  const rpcTransport = rpcUrl.startsWith("ws")
+    ? webSocket(rpcUrl)
+    : http(rpcUrl, { retryCount: 0, timeout: 45_000 });
   const publicClient = createPublicClient({
     chain: INTUITION_CHAIN,
-    transport: http(INTUITION_MAINNET_RPC),
+    transport: rpcTransport,
+    batch: { multicall: { batchSize: 4_096, wait: 20 } },
   });
   const chainId = await publicClient.getChainId();
   if (chainId !== Number(INTUITION_MAINNET_CHAIN_ID)) {
@@ -308,7 +325,7 @@ export async function runMainnetSeed(
   const walletClient = createWalletClient({
     account,
     chain: INTUITION_CHAIN,
-    transport: http(INTUITION_MAINNET_RPC),
+    transport: rpcTransport,
   });
   console.log(`Execution wallet: ${account.address}`);
   const balance = await publicClient.getBalance({ address: account.address });
@@ -318,6 +335,7 @@ export async function runMainnetSeed(
       `Wallet ${account.address} needs more than ${formatEther(requiredDeposits)} TRUST plus gas.`,
     );
   }
+  const executionGasPrice = await publicClient.getGasPrice();
 
   const atomBatches = chunks(state.missingAtoms, parsed.batchSize);
   const atomRequests = atomBatches.map((batch, index) => ({
@@ -339,6 +357,7 @@ export async function runMainnetSeed(
       account,
       item.request,
       item.label,
+      executionGasPrice,
     );
   }
   const afterAtoms = await readMainnetSeedState(publicClient, plan);
@@ -367,6 +386,7 @@ export async function runMainnetSeed(
       account,
       item.request,
       item.label,
+      executionGasPrice,
     );
   }
   const finalState = await readMainnetSeedState(publicClient, plan);

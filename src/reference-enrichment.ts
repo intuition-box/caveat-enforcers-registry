@@ -1,4 +1,4 @@
-import { stringToHex } from "viem";
+import { keccak256, stringToHex } from "viem";
 import {
   intuitionAtomIdFromText,
   intuitionTripleIdFromComponents,
@@ -55,6 +55,9 @@ export type ReferenceEnrichmentPlan = {
 };
 
 const CHAIN_ID = "1155";
+const MAX_ATOM_CONTENT_BYTES = 1_000;
+const REFERENCE_METADATA_URI =
+  "https://raw.githubusercontent.com/intuition-box/caveat-enforcers-registry/ab248bd/data/metamask-v1.7.0.metadata.json";
 const PREDICATE_LABELS = {
   hasTermsSchema: "has terms schema",
   restricts: "restricts",
@@ -95,6 +98,38 @@ function addAtom(
   };
   atoms.set(id.toLowerCase(), atom);
   return atom;
+}
+
+/**
+ * MultiVault rejects atom payloads above 1,000 bytes. Preserve smaller terms
+ * documents verbatim; for larger documents, publish the complete encoding
+ * shape plus a content digest and immutable source pointer to the canonical
+ * fixture-rich document. This keeps every graph claim independently
+ * verifiable without reducing the human-readable schema shown by clients.
+ */
+function termsSchemaAtomContent(schema: TermsSchema, index: number): string {
+  const complete = canonicalJson(schema);
+  if (new TextEncoder().encode(complete).length <= MAX_ATOM_CONTENT_BYTES) {
+    return complete;
+  }
+
+  const compact = canonicalJson({
+    schemaVersion: schema.schemaVersion,
+    enforcer: schema.enforcer,
+    encoding: schema.encoding,
+    canonicalDocument: {
+      algorithm: "keccak256",
+      digest: keccak256(stringToHex(complete)),
+      uri: REFERENCE_METADATA_URI,
+      jsonPointer: `/enforcers/${index}/termsSchema`,
+    },
+  });
+  if (new TextEncoder().encode(compact).length > MAX_ATOM_CONTENT_BYTES) {
+    throw new Error(
+      `Compact terms schema for ${schema.enforcer} exceeds the MultiVault atom limit.`,
+    );
+  }
+  return compact;
 }
 
 function addTriple(
@@ -179,7 +214,7 @@ export function buildReferenceEnrichmentPlan(
   const sourceRelease = `${repository} @ ${sourceCommit}`;
   const releaseAtom = addAtom(atoms, "source-release", sourceRelease);
 
-  for (const entry of metadata.enforcers) {
+  for (const [entryIndex, entry] of metadata.enforcers.entries()) {
     const name = requiredText(entry.name, "enforcer.name");
     const address = normalizeEvmAddress(entry.address);
     const referenceEntry = referenceByName.get(name);
@@ -229,7 +264,7 @@ export function buildReferenceEnrichmentPlan(
     const terms = addAtom(
       atoms,
       `terms-schema:${name}`,
-      canonicalJson(entry.termsSchema),
+      termsSchemaAtomContent(entry.termsSchema, entryIndex),
     );
 
     for (const domainValue of entry.restrictionDomains) {

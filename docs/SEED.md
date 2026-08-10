@@ -31,6 +31,12 @@ implementation taxonomy in `docs/ENFORCER-TAXONOMY-REVIEW.md`, and adds:
 - exact official MetaMask audit artifacts for 31 named source contracts; and
 - auditor identity linked through the `audited by` predicate.
 
+MultiVault atom payloads are limited to 1,000 bytes. Terms-schema documents at
+or below that limit are stored verbatim. Larger schemas retain their complete
+encoding shape on the graph and include a Keccak-256 digest plus an immutable
+GitHub source pointer to the canonical fixture-rich document. Clients can show
+the compact schema immediately and independently verify the complete document.
+
 Audit scope is attached to the enforcer type, not automatically to a deployment.
 Each structured audit atom records the report, auditor, full reviewed commit,
 exact contract path, and an explicit qualification that the claim is neither
@@ -60,9 +66,9 @@ pnpm seed:reference-enrichment -- --dry-run
 `d3f1dd8b1682ec5b2c961e450d9847d54eb72268`. CI fails when the committed document differs from
 the package-generated result.
 
-The current enrichment dry run plans 202 atoms and 265 triples. At the
-2026-08-09 mainnet state, 121 atoms and all 265 triples are missing, requiring
-`38.600000000651 TRUST` in protocol deposits plus gas. Dry run never broadcasts.
+The enrichment plan contains 202 atoms and 265 triples. The 2026-08-10 execution is complete:
+the idempotent dry run now reports zero missing atoms and zero missing triples. Transaction and
+deposit evidence is recorded in [`PROOF.md`](./PROOF.md). Dry run never broadcasts.
 
 ## Controlled execution
 

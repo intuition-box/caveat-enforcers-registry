@@ -1,5 +1,9 @@
 # Final Mission 13 runbook
 
+> Executed 2026-08-10. Direct MultiVault verification now reports zero missing enrichment and
+> composability terms. The opposition receipt and exact `43.000000000718 TRUST` protocol-value
+> total are recorded in [`PROOF.md`](./PROOF.md). This document remains the reproducible procedure.
+
 This runbook closes the remaining permanent acceptance gates. It must be run only after the
 funded-wallet owner explicitly confirms the mainnet scope and deposit cap. Never paste a private
 key into chat, a command argument, a committed file, or a frontend environment variable.
@@ -76,9 +80,9 @@ pnpm seed:reference-enrichment -- --execute --confirm-mainnet
 
 The runner uses legacy fee transactions, preflights every atom batch before the first atom write,
 preflights every triple batch before the first triple write, waits for every receipt, and re-reads
-every planned atom and triple from MultiVault. Save every printed transaction hash. The default
-batch size is eight because large structured evidence atoms can exceed the practical gas limit in
-larger groups.
+every planned atom and triple from MultiVault. Save every printed transaction hash. Oversized
+terms documents use compact content-addressed records so every atom stays within MultiVault's
+1,000-byte limit. The production run used four terms per transaction.
 
 Re-run the dry-run. It must report zero missing atoms and triples:
 
