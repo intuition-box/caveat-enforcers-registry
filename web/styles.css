@@ -6321,352 +6321,6 @@ main > .band:first-child {
 
 /* -------------------------------------------------------- correlation graph */
 
-.correlation-graph {
-  --correlation-conflict: color-mix(in srgb, var(--signal) 72%, var(--paper));
-  margin-top: 2rem;
-  border: 1px solid var(--line-dark);
-  background: #0b0b0b;
-  color: var(--paper);
-}
-
-.correlation-graph__header {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 2rem;
-  padding: clamp(1.25rem, 3vw, 2.25rem);
-  border-bottom: 1px solid var(--line-dark);
-}
-
-.correlation-graph__header h2,
-.correlation-graph__header p,
-.correlation-graph__inspector h3,
-.correlation-graph__inspector p {
-  margin: 0;
-}
-
-.correlation-graph__header h2,
-.correlation-graph__inspector h3 {
-  font-family: var(--display);
-  font-weight: 580;
-  letter-spacing: -0.035em;
-}
-
-.correlation-graph__header h2 {
-  max-width: 17ch;
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  line-height: 0.95;
-}
-
-.correlation-graph__header p {
-  max-width: 46ch;
-  margin-top: 0.85rem;
-  color: color-mix(in srgb, var(--paper) 68%, transparent);
-  line-height: 1.5;
-}
-
-.correlation-graph__legend {
-  display: flex;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  gap: 1rem;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.correlation-graph__key {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.correlation-graph__key::before {
-  width: 1.5rem;
-  border-top: 2px solid currentColor;
-  content: "";
-}
-
-.correlation-graph__key--complement {
-  color: var(--signal);
-}
-
-.correlation-graph__key--conflict {
-  color: var(--correlation-conflict);
-}
-
-.correlation-graph__canvas {
-  min-height: clamp(31rem, 50vw, 43rem);
-  overflow: hidden;
-  border-bottom: 1px solid var(--line-dark);
-}
-
-.correlation-graph__svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: inherit;
-}
-
-.correlation-graph__browse-links line {
-  stroke: rgba(243, 240, 232, 0.1);
-  stroke-dasharray: 3 10;
-  stroke-width: 1;
-}
-
-.correlation-graph__link,
-.correlation-graph__term {
-  cursor: pointer;
-  outline: none;
-}
-
-.correlation-graph__link-visible {
-  fill: none;
-  stroke: var(--signal);
-  stroke-width: 3;
-  transition:
-    opacity 180ms ease,
-    stroke-width 180ms ease;
-}
-
-.correlation-graph__link--conflicts .correlation-graph__link-visible {
-  stroke: var(--correlation-conflict);
-}
-
-.correlation-graph__link-hit {
-  fill: none;
-  stroke: transparent;
-  stroke-width: 28;
-}
-
-.correlation-graph__link.is-dim,
-.correlation-graph__term.is-dim {
-  opacity: 0.14;
-}
-
-.correlation-graph__link.is-active .correlation-graph__link-visible {
-  opacity: 0.9;
-}
-
-.correlation-graph__link:focus .correlation-graph__link-visible {
-  stroke-width: 7;
-}
-
-.correlation-graph__index circle {
-  fill: var(--signal);
-}
-
-.correlation-graph__index text {
-  fill: var(--ink);
-  font-family: var(--mono);
-  font-size: 0.67rem;
-  letter-spacing: 0.01em;
-  text-anchor: middle;
-}
-
-.correlation-graph__term {
-  transition: opacity 180ms ease;
-}
-
-.correlation-graph__term-hit {
-  fill: transparent;
-}
-
-.correlation-graph__term-dot {
-  fill: var(--paper);
-  stroke: #0b0b0b;
-  stroke-width: 5;
-  transition:
-    fill 180ms ease,
-    r 180ms ease;
-}
-
-.correlation-graph__term text {
-  fill: rgba(243, 240, 232, 0.8);
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.01em;
-  text-anchor: middle;
-}
-
-.correlation-graph__term.is-selected .correlation-graph__term-dot,
-.correlation-graph__term:focus .correlation-graph__term-dot {
-  fill: var(--signal);
-  r: 13px;
-}
-
-.correlation-graph__term:focus-visible .correlation-graph__term-dot {
-  stroke: var(--paper);
-  stroke-width: 7;
-}
-
-.correlation-graph__inspector {
-  display: flex;
-  justify-content: space-between;
-  gap: 2rem;
-  min-height: 13rem;
-  padding: clamp(1.25rem, 3vw, 2.25rem);
-  border-bottom: 1px solid var(--line-dark);
-}
-
-.correlation-graph__inspector-copy {
-  max-width: 72ch;
-}
-
-.correlation-graph__status {
-  margin-bottom: 0.75rem !important;
-  color: var(--signal);
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.correlation-graph__inspector h3 {
-  font-size: clamp(1.65rem, 3vw, 2.75rem);
-  line-height: 0.98;
-}
-
-.correlation-graph__inspector p:not(.correlation-graph__status) {
-  max-width: 64ch;
-  margin-top: 0.7rem;
-  color: color-mix(in srgb, var(--paper) 78%, transparent);
-  line-height: 1.5;
-}
-
-.correlation-graph__inspector a {
-  display: inline-flex;
-  min-height: 2.75rem;
-  align-items: center;
-  margin-top: 1rem;
-  color: var(--paper);
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.correlation-graph__clear {
-  min-height: 2.75rem;
-  flex: 0 0 auto;
-  padding: 0 0.9rem;
-  border: 1px solid var(--line-dark);
-  background: transparent;
-  color: var(--paper);
-  font: 600 0.78rem var(--body);
-  cursor: pointer;
-}
-
-.correlation-graph__ledger {
-  display: grid;
-}
-
-.correlation-graph__ledger-row {
-  display: grid;
-  grid-template-columns:
-    minmax(10rem, 1fr) minmax(8rem, 0.8fr) minmax(10rem, 1fr)
-    auto;
-  gap: 1rem;
-  min-height: 4.25rem;
-  align-items: center;
-  padding: 0.8rem clamp(1.25rem, 3vw, 2.25rem);
-  border: 0;
-  border-bottom: 1px solid var(--line-dark);
-  background: transparent;
-  color: var(--paper);
-  font: 600 0.92rem var(--body);
-  text-align: left;
-  cursor: pointer;
-}
-
-.correlation-graph__ledger-row:last-child {
-  border-bottom: 0;
-}
-
-.correlation-graph__ledger-relation {
-  color: var(--signal);
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.correlation-graph__ledger-state {
-  color: color-mix(in srgb, var(--paper) 58%, transparent);
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.06em;
-  text-align: right;
-  text-transform: uppercase;
-}
-
-.correlation-graph__claim-id {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  overflow-wrap: anywhere;
-}
-
-.correlation-graph__ledger-row--conflicts .correlation-graph__ledger-relation {
-  color: var(--correlation-conflict);
-}
-
-.correlation-graph__ledger-row:hover,
-.correlation-graph__ledger-row.is-selected {
-  background: rgba(243, 240, 232, 0.06);
-}
-
-.correlation-graph__ledger-row:focus-visible,
-.correlation-graph__clear:focus-visible,
-.correlation-graph__inspector a:focus-visible {
-  outline: 2px solid var(--signal);
-  outline-offset: -2px;
-}
-
-@media (max-width: 48rem) {
-  .correlation-graph__header,
-  .correlation-graph__inspector {
-    flex-direction: column;
-    align-items: start;
-  }
-
-  .correlation-graph__canvas {
-    min-height: 0;
-  }
-
-  .correlation-graph__svg {
-    height: auto;
-    min-height: 0;
-  }
-
-  .correlation-graph__term text {
-    font-size: 1rem;
-  }
-
-  .correlation-graph__inspector {
-    min-height: 0;
-  }
-
-  .correlation-graph__ledger-row {
-    grid-template-columns: 1fr auto;
-    gap: 0.35rem 1rem;
-    padding-block: 1rem;
-  }
-
-  .correlation-graph__ledger-row > :nth-child(2) {
-    grid-column: 1;
-  }
-
-  .correlation-graph__ledger-row > :nth-child(3) {
-    grid-column: 1;
-  }
-
-  .correlation-graph__ledger-row > :last-child {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-  }
-}
-
 .composability-live-status {
   display: flex;
   align-items: center;
@@ -7772,5 +7426,271 @@ main > .band:first-child {
 
   .table__row-button .table__chain {
     display: none;
+  }
+}
+
+/* ------------------------------------------------ composability graph (obsidian) */
+.cgraph {
+  display: grid;
+  gap: 1.5rem;
+}
+.cgraph__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.cgraph__header h2 {
+  margin: 0 0 0.4rem;
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  letter-spacing: -0.02em;
+}
+.cgraph__header p {
+  margin: 0;
+  max-width: 46ch;
+  opacity: 0.72;
+  font-size: 0.95rem;
+}
+.cgraph__legend {
+  display: flex;
+  gap: 1.1rem;
+  font-family: var(--mono, "Space Mono", monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.cgraph__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.cgraph__key::before {
+  content: "";
+  width: 1.2rem;
+  height: 0;
+  border-top: 3px solid currentColor;
+  border-radius: 2px;
+}
+.cgraph__key--complement {
+  color: #46c88a;
+}
+.cgraph__key--conflict {
+  color: #e5657a;
+}
+
+.cgraph__canvas {
+  --cg-complement: #46c88a;
+  --cg-conflict: #e5657a;
+  --cg-node: #c6c0dc;
+  --cg-hub: #8b6dff;
+  border-radius: 12px;
+  background: radial-gradient(120% 120% at 50% 42%, #17151d 0%, #0c0b10 72%);
+  overflow: hidden;
+}
+.cgraph__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cgraph__orphans circle {
+  fill: #b6b0ca;
+  opacity: 0.34;
+}
+.cgraph__spokes line {
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-width: 1;
+}
+.cgraph__hub {
+  fill: rgba(255, 255, 255, 0.32);
+}
+
+.cgraph__link {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.42;
+  cursor: pointer;
+  transition:
+    opacity 0.18s ease,
+    stroke-width 0.18s ease;
+}
+.cgraph__link--complements {
+  stroke: var(--cg-complement);
+}
+.cgraph__link--conflicts {
+  stroke: var(--cg-conflict);
+}
+.cgraph__link.is-active {
+  opacity: 1;
+  stroke-width: 3.2;
+}
+.cgraph__link.is-dim {
+  opacity: 0.1;
+}
+.cgraph__link:focus-visible {
+  outline: none;
+  opacity: 1;
+  stroke-width: 3.2;
+}
+
+.cgraph__halo {
+  fill: var(--cg-node);
+  opacity: 0.16;
+  transition: opacity 0.18s ease;
+}
+.cgraph__halo.is-hub {
+  fill: var(--cg-hub);
+  opacity: 0.32;
+}
+.cgraph__halo.is-dim {
+  opacity: 0.05;
+}
+
+.cgraph__node {
+  cursor: pointer;
+}
+.cgraph__node-hit {
+  fill: transparent;
+}
+.cgraph__node-dot {
+  fill: var(--cg-node);
+  transition:
+    opacity 0.18s ease,
+    r 0.18s ease;
+}
+.cgraph__node.is-hub .cgraph__node-dot {
+  fill: var(--cg-hub);
+}
+.cgraph__node.is-dim .cgraph__node-dot {
+  opacity: 0.3;
+}
+.cgraph__node.is-selected .cgraph__node-dot,
+.cgraph__node:focus-visible .cgraph__node-dot {
+  stroke: #fff;
+  stroke-width: 2.5;
+}
+.cgraph__node:focus-visible {
+  outline: none;
+}
+.cgraph__node-label {
+  fill: rgba(255, 255, 255, 0.62);
+  font-family: var(--mono, "Space Mono", monospace);
+  font-size: 15px;
+  transition: fill 0.18s ease;
+}
+.cgraph__node.is-hub .cgraph__node-label {
+  fill: rgba(255, 255, 255, 0.9);
+}
+.cgraph__node.is-dim .cgraph__node-label {
+  fill: rgba(255, 255, 255, 0.22);
+}
+
+.cgraph__inspector {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 5.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.cgraph__status {
+  margin: 0 0 0.35rem;
+  font-family: var(--mono, "Space Mono", monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+.cgraph__inspector h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+}
+.cgraph__inspector p {
+  margin: 0 0 0.4rem;
+  max-width: 60ch;
+  font-size: 0.92rem;
+  opacity: 0.82;
+}
+.cgraph__inspector a {
+  font-family: var(--mono, "Space Mono", monospace);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.cgraph__clear {
+  flex: 0 0 auto;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  background: none;
+  color: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.cgraph__ledger {
+  display: grid;
+  gap: 0.4rem;
+}
+.cgraph__ledger-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  color: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.cgraph__ledger-row:hover,
+.cgraph__ledger-row.is-selected {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+.cgraph__ledger-relation {
+  font-family: var(--mono, "Space Mono", monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.cgraph__ledger-row--complements .cgraph__ledger-relation {
+  color: #46c88a;
+}
+.cgraph__ledger-row--conflicts .cgraph__ledger-relation {
+  color: #e5657a;
+}
+.cgraph__ledger-state {
+  font-family: var(--mono, "Space Mono", monospace);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+@media (max-width: 48rem) {
+  .cgraph__ledger-row {
+    grid-template-columns: 1fr auto;
+  }
+  .cgraph__ledger-row > :nth-child(2),
+  .cgraph__ledger-row > :nth-child(3) {
+    grid-column: 1;
+  }
+  .cgraph__ledger-row > :last-child {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+  }
+  .cgraph__node-label {
+    font-size: 21px;
   }
 }

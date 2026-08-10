@@ -1,11 +1,28 @@
 /**
- * Composability correlation graph.
+ * Composability graph — an Obsidian-style graph view.
  *
- * This intentionally renders only terms and relationship records in the
- * composability dataset. The central index is browsing structure, not an
- * additional protocol claim; solid links are the documented relationships.
+ * A central browse hub ties the documented terms together (like an Obsidian
+ * index note); solid coloured links are the real complements/conflicts
+ * relationships. The faint outer halo is the honest part: those are the real
+ * registry enforcers that have no composability relationship yet — the graph's
+ * "orphans". Layout is a d3-force simulation settled once and frozen
+ * (deterministic, seek-safe); hover/selection only highlights.
+ *
+ * Nothing here infers compatibility or turns a relationship into a score.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  forceCenter,
+  forceCollide,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+  forceX,
+  forceY,
+  type SimulationLinkDatum,
+  type SimulationNodeDatum,
+} from "d3-force";
+import referenceDocument from "../data/metamask-v1.3.0.json";
 
 export type GraphRelationship = {
   key: string;
@@ -22,35 +39,19 @@ export type GraphRelationship = {
   opposition?: string;
 };
 
-type Position = { x: number; y: number };
 type Selection =
   | { type: "term"; value: string }
   | { type: "relationship"; value: string }
   | null;
 
-const VIEWBOX = { width: 1000, height: 620 };
+type Position = { x: number; y: number };
+type SimNode = SimulationNodeDatum & { id: string; degree: number };
+type SimLink = SimulationLinkDatum<SimNode> & { key: string };
 
-const TERM_POSITIONS: Record<string, Position> = {
-  "ScopeType.FunctionCall": { x: 185, y: 150 },
-  "payable call": { x: 394, y: 110 },
-  "ScopeType.NativeTokenTransferAmount": { x: 170, y: 432 },
-  "call with calldata": { x: 402, y: 514 },
-  AllowedTargetsEnforcer: { x: 622, y: 205 },
-  AllowedMethodsEnforcer: { x: 842, y: 135 },
-  LimitedCallsEnforcer: { x: 858, y: 350 },
-  TimestampEnforcer: { x: 650, y: 510 },
-};
-
-const COMPACT_TERM_POSITIONS: Record<string, Position> = {
-  "ScopeType.FunctionCall": { x: 58, y: 106 },
-  "payable call": { x: 182, y: 72 },
-  "ScopeType.NativeTokenTransferAmount": { x: 64, y: 462 },
-  "call with calldata": { x: 190, y: 522 },
-  AllowedTargetsEnforcer: { x: 252, y: 240 },
-  AllowedMethodsEnforcer: { x: 342, y: 122 },
-  LimitedCallsEnforcer: { x: 334, y: 354 },
-  TimestampEnforcer: { x: 252, y: 496 },
-};
+const VIEWBOX = { width: 1000, height: 660 };
+const CENTER = { x: VIEWBOX.width / 2, y: VIEWBOX.height / 2 };
+const HUB = "__hub__";
+const GOLDEN = Math.PI * (3 - Math.sqrt(5));
 
 function shortLabel(value: string): string {
   const labels: Record<string, string> = {
@@ -62,25 +63,24 @@ function shortLabel(value: string): string {
     AllowedMethodsEnforcer: "Allowed methods",
     LimitedCallsEnforcer: "Limited calls",
     TimestampEnforcer: "Time window",
+    ERC20TransferAmountEnforcer: "ERC-20 cap",
+    ExactExecutionBatchEnforcer: "Exact batch",
   };
-
   return (
     labels[value] ?? value.replace(/^ScopeType\./, "").replace(/Enforcer$/, "")
   );
 }
 
-function edgePath(start: Position, end: Position): string {
-  const midpointX = (start.x + end.x) / 2;
-  const midpointY = (start.y + end.y) / 2;
-  const bend = start.y < end.y ? 36 : -36;
-  return `M ${start.x} ${start.y} Q ${midpointX} ${midpointY + bend} ${end.x} ${end.y}`;
-}
-
-function labelPosition(position: Position, compact: boolean) {
-  if (!compact) return { x: position.x, anchor: "middle" as const };
-  if (position.x < 100) return { x: position.x + 12, anchor: "start" as const };
-  if (position.x > 290) return { x: position.x - 12, anchor: "end" as const };
-  return { x: position.x, anchor: "middle" as const };
+function curvePath(a: Position, b: Position): string {
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const off = Math.min(58, len * 0.13);
+  const cx = mx - (dy / len) * off;
+  const cy = my + (dx / len) * off;
+  return `M ${a.x.toFixed(1)} ${a.y.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
 }
 
 export default function ComposabilityGraph({
@@ -89,62 +89,104 @@ export default function ComposabilityGraph({
   relationships: GraphRelationship[];
 }) {
   const [selection, setSelection] = useState<Selection>(null);
-  const [isCompact, setIsCompact] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 48rem)").matches,
-  );
 
-  useEffect(() => {
-    const query = window.matchMedia("(max-width: 48rem)");
-    const update = () => setIsCompact(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-
-  const viewbox = isCompact
-    ? { width: 390, height: 620, centre: { x: 195, y: 310 } }
-    : {
-        width: VIEWBOX.width,
-        height: VIEWBOX.height,
-        centre: { x: 500, y: 310 },
-      };
-  const termPositions = isCompact ? COMPACT_TERM_POSITIONS : TERM_POSITIONS;
-
-  const terms = useMemo(() => {
+  const { namedTerms, positions, orphans, maxDegree } = useMemo(() => {
+    const degree = new Map<string, number>();
     const present = new Set<string>();
-    relationships.forEach((relationship) => {
-      present.add(relationship.subjectType);
-      present.add(relationship.relatedType);
+    for (const r of relationships) {
+      present.add(r.subjectType);
+      present.add(r.relatedType);
+      degree.set(r.subjectType, (degree.get(r.subjectType) ?? 0) + 1);
+      degree.set(r.relatedType, (degree.get(r.relatedType) ?? 0) + 1);
+    }
+    const named = [...present];
+
+    // Force core: a central hub linked weakly to every named term (keeps the
+    // otherwise-disconnected relationship pairs in one cohesive cluster), plus
+    // the real relationship links.
+    const coreNodes: SimNode[] = [
+      { id: HUB, degree: 0 },
+      ...named.map((id) => ({ id, degree: degree.get(id) ?? 0 })),
+    ];
+    const coreLinks: SimLink[] = [
+      ...named.map((id) => ({ source: HUB, target: id, key: `hub:${id}` })),
+      ...relationships.map((r) => ({
+        source: r.subjectType,
+        target: r.relatedType,
+        key: r.key,
+      })),
+    ];
+    const sim = forceSimulation<SimNode>(coreNodes)
+      .force(
+        "link",
+        forceLink<SimNode, SimLink>(coreLinks)
+          .id((d) => d.id)
+          .distance((l) => (l.key.startsWith("hub:") ? 150 : 96))
+          .strength((l) => (l.key.startsWith("hub:") ? 0.14 : 0.55)),
+      )
+      .force("charge", forceManyBody().strength(-540))
+      .force("collide", forceCollide<SimNode>().radius(52))
+      .force("center", forceCenter(0, 0))
+      .force("x", forceX(0).strength(0.06))
+      .force("y", forceY(0).strength(0.06))
+      .stop();
+    for (let i = 0; i < 460; i += 1) sim.tick();
+
+    const xs = coreNodes.map((n) => n.x ?? 0);
+    const ys = coreNodes.map((n) => n.y ?? 0);
+    const spanX = Math.max(1, Math.max(...xs) - Math.min(...xs));
+    const spanY = Math.max(1, Math.max(...ys) - Math.min(...ys));
+    // Keep the core in the middle third so the orphan halo has room.
+    const scale = Math.min(360 / spanX, 250 / spanY);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const positionMap: Record<string, Position> = {};
+    for (const n of coreNodes) {
+      positionMap[n.id] = {
+        x: CENTER.x + ((n.x ?? 0) - cx) * scale,
+        y: CENTER.y + ((n.y ?? 0) - cy) * scale,
+      };
+    }
+
+    // Orphan halo: real registry enforcers with no composability relationship
+    // yet. Deterministic golden-angle scatter in an elliptical outer ring.
+    const orphanNames = (referenceDocument.enforcers as Array<{ name: string }>)
+      .map((e) => e.name)
+      .filter((name) => !present.has(name));
+    const orphanNodes = orphanNames.map((name, i) => {
+      const t = orphanNames.length > 1 ? i / (orphanNames.length - 1) : 0;
+      const angle = i * GOLDEN;
+      const rx = 330 + t * 150;
+      const ry = 235 + t * 70;
+      return {
+        name,
+        x: CENTER.x + rx * Math.cos(angle),
+        y: CENTER.y + ry * Math.sin(angle),
+      };
     });
-    return [...present].map((term, index) => ({
-      term,
-      position: termPositions[term] ?? {
-        x: 180 + ((index * 157) % 640),
-        y: 110 + ((index * 103) % 400),
-      },
-    }));
-  }, [relationships, termPositions]);
+
+    return {
+      namedTerms: named.map((id) => ({ id, degree: degree.get(id) ?? 0 })),
+      positions: positionMap,
+      orphans: orphanNodes,
+      maxDegree: Math.max(1, ...named.map((id) => degree.get(id) ?? 0)),
+    };
+  }, [relationships]);
 
   const selectedRelationship =
     selection?.type === "relationship"
-      ? relationships.find(
-          (relationship) => relationship.key === selection.value,
-        )
+      ? relationships.find((r) => r.key === selection.value)
       : undefined;
   const selectedTerm = selection?.type === "term" ? selection.value : undefined;
   const connectedRelationships = selectedTerm
     ? relationships.filter(
-        (relationship) =>
-          relationship.subjectType === selectedTerm ||
-          relationship.relatedType === selectedTerm,
+        (r) => r.subjectType === selectedTerm || r.relatedType === selectedTerm,
       )
     : [];
   const activeRelationshipKeys = new Set(
     selectedRelationship
       ? [selectedRelationship.key]
-      : connectedRelationships.map((relationship) => relationship.key),
+      : connectedRelationships.map((r) => r.key),
   );
   const activeTerms = new Set(
     selectedRelationship
@@ -152,12 +194,12 @@ export default function ComposabilityGraph({
       : selectedTerm
         ? [
             selectedTerm,
-            ...connectedRelationships.flatMap((item) => [
-              item.subjectType,
-              item.relatedType,
+            ...connectedRelationships.flatMap((r) => [
+              r.subjectType,
+              r.relatedType,
             ]),
           ]
-        : terms.map(({ term }) => term),
+        : namedTerms.map((n) => n.id),
   );
   const dimGraph = selection !== null;
 
@@ -167,61 +209,83 @@ export default function ComposabilityGraph({
         ? null
         : { type: "relationship", value: relationship.key },
     );
+  const selectTerm = (term: string) =>
+    setSelection((current) =>
+      current?.type === "term" && current.value === term
+        ? null
+        : { type: "term", value: term },
+    );
 
   return (
-    <section
-      className="correlation-graph"
-      aria-label="Composability relationship graph"
-    >
-      <header className="correlation-graph__header">
+    <section className="cgraph" aria-label="Composability relationship graph">
+      <header className="cgraph__header">
         <div>
           <h2>Trace a boundary before you compose it.</h2>
           <p>
-            Select an enforcer, scope, or line to read the exact relationship.
-            Solid links are documented relationships; the centre only helps
-            browse them.
+            Hover or select a node or line to read the exact relationship. Solid
+            links are documented relationships; faint outer nodes are registry
+            enforcers with no composability claim yet.
           </p>
         </div>
-        <div className="correlation-graph__legend" aria-label="Graph key">
-          <span className="correlation-graph__key correlation-graph__key--complement">
+        <div className="cgraph__legend" aria-label="Graph key">
+          <span className="cgraph__key cgraph__key--complement">
             Complements
           </span>
-          <span className="correlation-graph__key correlation-graph__key--conflict">
-            Conflicts
-          </span>
+          <span className="cgraph__key cgraph__key--conflict">Conflicts</span>
         </div>
       </header>
 
-      <div className="correlation-graph__canvas">
+      <div className={`cgraph__canvas ${dimGraph ? "is-focused" : ""}`}>
         <svg
-          className="correlation-graph__svg"
-          viewBox={`0 0 ${viewbox.width} ${viewbox.height}`}
+          className="cgraph__svg"
+          viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
           role="img"
-          aria-label={`${relationships.length} documented composability relationships across ${terms.length} terms. Select the relationship ledger below to read each relationship.`}
+          aria-label={`${relationships.length} documented composability relationships across ${namedTerms.length} terms, with ${orphans.length} unrelated registry enforcers shown faintly. Use the ledger below to read each relationship.`}
         >
-          <g aria-hidden="true" className="correlation-graph__browse-links">
-            {terms.map(({ term, position }) => (
-              <line
-                key={term}
-                x1={viewbox.centre.x}
-                y1={viewbox.centre.y}
-                x2={position.x}
-                y2={position.y}
-              />
+          <defs>
+            <filter
+              id="cgraph-glow"
+              x="-80%"
+              y="-80%"
+              width="260%"
+              height="260%"
+            >
+              <feGaussianBlur stdDeviation="6" />
+            </filter>
+          </defs>
+
+          {/* Orphan halo — real enforcers with no composability relationship */}
+          <g className="cgraph__orphans" aria-hidden="true">
+            {orphans.map((o) => (
+              <circle key={o.name} cx={o.x} cy={o.y} r={3.4}>
+                <title>{o.name} — no composability claim yet</title>
+              </circle>
             ))}
           </g>
 
-          <g className="correlation-graph__links">
+          {/* Browse spokes: hub → each named term */}
+          <g className="cgraph__spokes" aria-hidden="true">
+            {namedTerms.map((n) => {
+              const p = positions[n.id];
+              const h = positions[HUB];
+              if (!p || !h) return null;
+              return <line key={n.id} x1={h.x} y1={h.y} x2={p.x} y2={p.y} />;
+            })}
+          </g>
+
+          {/* Relationship links */}
+          <g className="cgraph__links">
             {relationships.map((relationship) => {
-              const start = termPositions[relationship.subjectType];
-              const end = termPositions[relationship.relatedType];
-              if (!start || !end) return null;
-              const isActive = activeRelationshipKeys.has(relationship.key);
+              const a = positions[relationship.subjectType];
+              const b = positions[relationship.relatedType];
+              if (!a || !b) return null;
+              const active = activeRelationshipKeys.has(relationship.key);
               return (
-                <g
+                <path
                   key={relationship.key}
-                  className={`correlation-graph__link correlation-graph__link--${relationship.relation} ${
-                    dimGraph && !isActive ? "is-dim" : "is-active"
+                  d={curvePath(a, b)}
+                  className={`cgraph__link cgraph__link--${relationship.relation} ${
+                    dimGraph ? (active ? "is-active" : "is-dim") : ""
                   }`}
                   role="button"
                   tabIndex={0}
@@ -234,87 +298,101 @@ export default function ComposabilityGraph({
                     }
                   }}
                 >
-                  <path
-                    d={edgePath(start, end)}
-                    className="correlation-graph__link-visible"
-                  />
-                  <path
-                    d={edgePath(start, end)}
-                    className="correlation-graph__link-hit"
-                  />
-                  <title>{`${shortLabel(relationship.subjectType)} ${relationship.relation === "conflicts" ? "conflicts with" : "complements"} ${shortLabel(relationship.relatedType)}`}</title>
-                </g>
+                  <title>{`${shortLabel(relationship.subjectType)} ${relationship.relation === "conflicts" ? "conflicts with" : "complements"} ${shortLabel(relationship.relatedType)} — ${relationship.context}`}</title>
+                </path>
               );
             })}
           </g>
 
-          <g className="correlation-graph__index" aria-hidden="true">
-            <circle cx={viewbox.centre.x} cy={viewbox.centre.y} r="45" />
-            <text x={viewbox.centre.x} y={viewbox.centre.y - 8}>
-              Relationship
-            </text>
-            <text x={viewbox.centre.x} y={viewbox.centre.y + 11}>
-              index
-            </text>
+          {/* Hub */}
+          <circle
+            className="cgraph__hub"
+            cx={positions[HUB]?.x ?? CENTER.x}
+            cy={positions[HUB]?.y ?? CENTER.y}
+            r={7}
+            aria-hidden="true"
+          />
+
+          {/* Named term glow */}
+          <g
+            className="cgraph__halos"
+            filter="url(#cgraph-glow)"
+            aria-hidden="true"
+          >
+            {namedTerms.map((node) => {
+              const p = positions[node.id];
+              if (!p) return null;
+              const active = activeTerms.has(node.id);
+              const isHub = node.degree >= maxDegree;
+              const r = 7 + node.degree * 2.4;
+              return (
+                <circle
+                  key={node.id}
+                  cx={p.x}
+                  cy={p.y}
+                  r={r * 1.5}
+                  className={`cgraph__halo ${isHub ? "is-hub" : ""} ${dimGraph && !active ? "is-dim" : ""}`}
+                />
+              );
+            })}
           </g>
 
-          {terms.map(({ term, position }) => {
-            const isActive = activeTerms.has(term);
-            const label = labelPosition(position, isCompact);
-            return (
-              <g
-                key={term}
-                className={`correlation-graph__term ${
-                  dimGraph && !isActive ? "is-dim" : "is-active"
-                } ${selectedTerm === term ? "is-selected" : ""}`}
-                role="button"
-                tabIndex={0}
-                aria-label={`Show relationships for ${shortLabel(term)}`}
-                onClick={() =>
-                  setSelection((current) =>
-                    current?.type === "term" && current.value === term
-                      ? null
-                      : { type: "term", value: term },
-                  )
-                }
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    setSelection((current) =>
-                      current?.type === "term" && current.value === term
-                        ? null
-                        : { type: "term", value: term },
-                    );
-                  }
-                }}
-              >
-                <circle
-                  className="correlation-graph__term-hit"
-                  cx={position.x}
-                  cy={position.y}
-                  r="48"
-                />
-                <circle
-                  className="correlation-graph__term-dot"
-                  cx={position.x}
-                  cy={position.y}
-                  r="9"
-                />
-                <text x={label.x} y={position.y + 27} textAnchor={label.anchor}>
-                  {shortLabel(term)}
-                </text>
-                <title>{term}</title>
-              </g>
-            );
-          })}
+          {/* Named term nodes */}
+          <g className="cgraph__nodes">
+            {namedTerms.map((node) => {
+              const p = positions[node.id];
+              if (!p) return null;
+              const active = activeTerms.has(node.id);
+              const isHub = node.degree >= maxDegree;
+              const r = 7 + node.degree * 2.4;
+              return (
+                <g
+                  key={node.id}
+                  className={`cgraph__node ${isHub ? "is-hub" : ""} ${dimGraph && !active ? "is-dim" : ""} ${selectedTerm === node.id ? "is-selected" : ""}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Show relationships for ${shortLabel(node.id)}`}
+                  onClick={() => selectTerm(node.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      selectTerm(node.id);
+                    }
+                  }}
+                >
+                  <circle
+                    className="cgraph__node-hit"
+                    cx={p.x}
+                    cy={p.y}
+                    r={Math.max(28, r + 16)}
+                  />
+                  <circle
+                    className="cgraph__node-dot"
+                    cx={p.x}
+                    cy={p.y}
+                    r={r}
+                  />
+                  <text
+                    x={p.x}
+                    y={p.y + r + 18}
+                    textAnchor="middle"
+                    className="cgraph__node-label"
+                  >
+                    {shortLabel(node.id)}
+                  </text>
+                  <title>{node.id}</title>
+                </g>
+              );
+            })}
+          </g>
         </svg>
       </div>
 
-      <section className="correlation-graph__inspector" aria-live="polite">
-        <div className="correlation-graph__inspector-copy">
+      <section className="cgraph__inspector" aria-live="polite">
+        <div className="cgraph__inspector-copy">
           {selectedRelationship ? (
             <>
-              <p className="correlation-graph__status">
+              <p className="cgraph__status">
                 {selectedRelationship.live
                   ? "Live Intuition claim"
                   : "Canonical plan"}
@@ -335,16 +413,10 @@ export default function ComposabilityGraph({
                   <strong>Why:</strong> {selectedRelationship.evidenceNote}
                 </p>
               )}
-              {selectedRelationship.claimId && (
-                <p className="correlation-graph__claim-id">
-                  <strong>Claim:</strong> {selectedRelationship.claimId}
-                </p>
-              )}
               {selectedRelationship.live && (
                 <p>
                   <strong>Signal:</strong> {selectedRelationship.support ?? "0"}{" "}
-                  support
-                  {" · "}
+                  support {" · "}
                   {selectedRelationship.opposition ?? "0"} opposition
                 </p>
               )}
@@ -358,25 +430,25 @@ export default function ComposabilityGraph({
             </>
           ) : selectedTerm ? (
             <>
-              <p className="correlation-graph__status">Selected term</p>
+              <p className="cgraph__status">Selected term</p>
               <h3>{shortLabel(selectedTerm)}</h3>
               <p>
                 {connectedRelationships.length} documented{" "}
                 {connectedRelationships.length === 1
                   ? "relationship"
                   : "relationships"}{" "}
-                connect to this term. Pick a highlighted line or entry to
-                inspect the evidence.
+                connect to this term. Pick a highlighted line or ledger entry to
+                read the evidence.
               </p>
             </>
           ) : (
             <>
-              <p className="correlation-graph__status">Browse the graph</p>
+              <p className="cgraph__status">Browse the graph</p>
               <h3>Every line has a readable claim.</h3>
               <p>
-                This view maps {relationships.length} documented relationships
-                across {terms.length} enforcers and scopes. It does not infer
-                compatibility or turn a relationship into a safety score.
+                {relationships.length} documented relationships across{" "}
+                {namedTerms.length} terms. The faint outer nodes are registry
+                enforcers with no composability claim yet.
               </p>
             </>
           )}
@@ -384,7 +456,7 @@ export default function ComposabilityGraph({
         {selection && (
           <button
             type="button"
-            className="correlation-graph__clear"
+            className="cgraph__clear"
             onClick={() => setSelection(null)}
           >
             Clear selection
@@ -392,28 +464,25 @@ export default function ComposabilityGraph({
         )}
       </section>
 
-      <div
-        className="correlation-graph__ledger"
-        aria-label="Relationship ledger"
-      >
+      <div className="cgraph__ledger" aria-label="Relationship ledger">
         {relationships.map((relationship) => {
           const selected = selectedRelationship?.key === relationship.key;
           return (
             <button
               key={relationship.key}
               type="button"
-              className={`correlation-graph__ledger-row correlation-graph__ledger-row--${relationship.relation} ${selected ? "is-selected" : ""}`}
+              className={`cgraph__ledger-row cgraph__ledger-row--${relationship.relation} ${selected ? "is-selected" : ""}`}
               onClick={() => selectRelationship(relationship)}
               aria-pressed={selected}
             >
               <span>{shortLabel(relationship.subjectType)}</span>
-              <span className="correlation-graph__ledger-relation">
+              <span className="cgraph__ledger-relation">
                 {relationship.relation === "conflicts"
                   ? "conflicts with"
                   : "complements"}
               </span>
               <span>{shortLabel(relationship.relatedType)}</span>
-              <span className="correlation-graph__ledger-state">
+              <span className="cgraph__ledger-state">
                 {relationship.live ? "Live" : "Plan"}
               </span>
             </button>
