@@ -7,7 +7,7 @@ Public application: <https://caveat-enforcers-registry.vercel.app>
 Public read API: <https://caveat-enforcers-registry.onrender.com>
 
 The table separates implemented code, live evidence, and the remaining external-publication
-and production-deployment steps.
+step.
 
 | Board requirement                                        | Implementation and evidence                                                                                                                             | Status                                                                           |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
@@ -16,7 +16,7 @@ and production-deployment steps.
 | Restriction, operation, terms, release, usage enrichment | Reproducible 32-record metadata generator; zero-missing direct MultiVault verification; transaction range in [`PROOF.md`](./PROOF.md)                   | Live on Intuition mainnet                                                        |
 | Audit status and auditor                                 | 31 exact official report scopes plus one deliberate absence in [`AUDIT-EVIDENCE.md`](./AUDIT-EVIDENCE.md); graph claims verified by the enrichment run  | Live on Intuition mainnet                                                        |
 | Browse controls                                          | Search; domain, chain, audit, and minimum-TRUST filters; TRUST/name/newest sorting; CAIP-10, chain, domain, audit state, and signal display             | Implemented in production frontend                                               |
-| Detail evidence                                          | Deployment and type claims, support/opposition per claim, terms JSON, usage, source, registry transaction, and block                                    | Live graph; production API redeploy pending                                      |
+| Detail evidence                                          | Deployment and type claims, support/opposition per claim, terms JSON, usage, source, registry transaction, and block                                    | Live graph and production API                                                    |
 | Permissionless submit                                    | Browser-wallet atom/triple flow with preview, simulation, receipts, direct MultiVault verification, and indexing states                                 | Live proof: `AllowedTimeOfDayEnforcer`, transactions in [`PROOF.md`](./PROOF.md) |
 | Support/dispute any claim                                | Direct controls plus verified opposition transaction `0x5cfe…b6e23`; counter-vault assets increased to `0.098750000001 TRUST`                           | Live                                                                             |
 | Three composability presets                              | Three enforcer-to-enforcer presets plus two scope conflicts, backed by seven relationships and 17 contextual triples                                    | Live                                                                             |
@@ -52,14 +52,12 @@ pnpm format:check
 pnpm build
 ```
 
-The public release can be checked independently with `pnpm check:production`. After the final
-approved writes and API redeploy, `pnpm check:production:final` additionally proves enriched
-ontology fields, every planned composability triple, and the claim-opposition counter-vault
-signal.
+The public release can be checked independently with `pnpm check:production`. On 2026-08-10,
+`pnpm check:production:final` passed all eight checks against the public Vercel frontend, Render
+API, Intuition GraphQL indexer, and MultiVault. The strict gate proves enriched ontology fields,
+all 24 planned composability relationship/context/ordering/evidence triples, and the material
+claim-opposition counter-vault signal.
 
 ## Remaining release gates
 
-1. Commit and push the final runner/evidence changes, then redeploy the Render service so its
-   detail hydration follows implementation-level enrichment claims.
-2. Pass `pnpm check:production:final` with all eight checks green.
-3. Publish the authorized integration proposal and record its public forum URL here.
+1. Publish the authorized integration proposal and record its public forum URL here.

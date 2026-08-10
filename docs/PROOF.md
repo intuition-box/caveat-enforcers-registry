@@ -115,3 +115,11 @@ pnpm curate:claim -- \
 
 It resolves the canonical counter vault and prints its current balance. A new execution still
 requires the separate `--execute --confirm-mainnet` gate.
+
+## Public production verification
+
+After the 2026-08-10 Render redeploy, `pnpm check:production:final` passed all eight strict
+checks against the public services and Intuition mainnet. It verified the Vercel frontend and
+security headers, API health and browser-wallet CORS, 33 canonical records, 11 resolved claims on
+the reference detail sample, populated restriction/operation/audit enrichment, all 24 live
+composability triples, and `0.098750000004000001 TRUST` in the selected claim's counter vault.
