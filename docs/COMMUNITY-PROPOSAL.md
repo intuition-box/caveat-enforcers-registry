@@ -1,6 +1,6 @@
 # Proposal: an open ERC-7710 caveat enforcer registry on Intuition
 
-Status: owner-approved for publication on 2026-08-10.
+Status: owner-approved draft; awaiting Intuition admin review before publication.
 
 Proposed publication target: the Intuition forum's
 [Ecosystem Development](https://atlas.discourse.group/c/ecosystem-development/31)

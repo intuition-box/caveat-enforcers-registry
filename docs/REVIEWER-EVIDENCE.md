@@ -23,7 +23,7 @@ step.
 | Composability is graph-backed                            | UI asks the API for exact relationship IDs; strict production query returns all 24 planned relationship/context/ordering/evidence triples               | Live                                                                             |
 | Canonical GraphQL query                                  | Runnable membership/detail queries and direct-GraphQL wallet-picker example in [`INTEGRATION.md`](./INTEGRATION.md); latest run returned all 33 records | Live and independently runnable                                                  |
 | Contributor-readable schema                              | Ontology, CAIP-10 identity, submission JSON Schema, example, transaction order, and verification sequence                                               | Implemented                                                                      |
-| Community publication                                    | Forum-ready text, portable example, and selected Ecosystem Development target in [`COMMUNITY-PROPOSAL.md`](./COMMUNITY-PROPOSAL.md)                     | Publication authorized; public URL pending                                       |
+| Community publication                                    | Forum-ready text, portable example, and selected Ecosystem Development target in [`COMMUNITY-PROPOSAL.md`](./COMMUNITY-PROPOSAL.md)                     | Awaiting Intuition admin review; public URL pending                              |
 | Public hosting                                           | Vercel frontend and Render API over HTTPS with restrictive framing/content headers                                                                      | Live; Render free tier may cold-start                                            |
 
 ## Independent read verification
@@ -60,4 +60,5 @@ claim-opposition counter-vault signal.
 
 ## Remaining release gates
 
-1. Publish the authorized integration proposal and record its public forum URL here.
+1. Obtain Intuition admin review, then publish the approved integration proposal and record its
+   public forum URL here.
