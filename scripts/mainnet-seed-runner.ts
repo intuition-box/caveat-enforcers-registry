@@ -25,7 +25,9 @@ import type {
   ReferenceSeedTriple,
 } from "../src/reference-seed.js";
 
-const DEFAULT_BATCH_SIZE = 24;
+// Structured terms and audit atoms can be several kilobytes each. Eight keeps
+// the worst reviewed enrichment batches below Intuition's practical gas limit.
+const DEFAULT_BATCH_SIZE = 8;
 
 const INTUITION_CHAIN = {
   id: Number(INTUITION_MAINNET_CHAIN_ID),
@@ -222,6 +224,29 @@ async function sendAndConfirm(
   }
 }
 
+type PlannedRequest = {
+  request: { to: string; data: string; value?: string };
+  label: string;
+};
+
+async function preflightRequests(
+  publicClient: ReturnType<typeof createPublicClient>,
+  account: Address,
+  requests: PlannedRequest[],
+): Promise<void> {
+  for (const item of requests) {
+    await publicClient.call({
+      account,
+      to: address(item.request.to.toLowerCase()),
+      data: hex(item.request.data),
+      value: item.request.value === undefined ? 0n : BigInt(item.request.value),
+    });
+  }
+  console.log(
+    `Preflight: ${requests.length} ${requests.length === 1 ? "batch" : "batches"} simulated successfully.`,
+  );
+}
+
 export async function runMainnetSeed(
   plan: MainnetSeedPlan,
   argv: string[],
@@ -294,35 +319,35 @@ export async function runMainnetSeed(
     );
   }
 
-  for (const [index, batch] of chunks(
-    state.missingAtoms,
-    parsed.batchSize,
-  ).entries()) {
-    const request = encodeCreateAtoms(
+  const atomBatches = chunks(state.missingAtoms, parsed.batchSize);
+  const atomRequests = atomBatches.map((batch, index) => ({
+    request: encodeCreateAtoms(
       batch.map((atom) => atom.data),
       batch.map(() => atomCost),
       {
         address: INTUITION_MAINNET_MULTIVAULT,
         value: (atomCost * BigInt(batch.length)).toString(),
       },
-    );
+    ),
+    label: `Atom batch ${index + 1}/${atomBatches.length}`,
+  }));
+  await preflightRequests(publicClient, account.address, atomRequests);
+  for (const item of atomRequests) {
     await sendAndConfirm(
       publicClient,
       walletClient,
       account,
-      request,
-      `Atom batch ${index + 1}/${Math.ceil(state.missingAtoms.length / parsed.batchSize)}`,
+      item.request,
+      item.label,
     );
   }
   const afterAtoms = await readMainnetSeedState(publicClient, plan);
   if (afterAtoms.missingAtoms.length) {
     throw new Error(`${afterAtoms.missingAtoms.length} atoms remain missing.`);
   }
-  for (const [index, batch] of chunks(
-    afterAtoms.missingTriples,
-    parsed.batchSize,
-  ).entries()) {
-    const request = encodeCreateTriples(
+  const tripleBatches = chunks(afterAtoms.missingTriples, parsed.batchSize);
+  const tripleRequests = tripleBatches.map((batch, index) => ({
+    request: encodeCreateTriples(
       batch.map((triple) => triple.subjectId),
       batch.map((triple) => triple.predicateId),
       batch.map((triple) => triple.objectId),
@@ -331,13 +356,17 @@ export async function runMainnetSeed(
         address: INTUITION_MAINNET_MULTIVAULT,
         value: (tripleCost * BigInt(batch.length)).toString(),
       },
-    );
+    ),
+    label: `Triple batch ${index + 1}/${tripleBatches.length}`,
+  }));
+  await preflightRequests(publicClient, account.address, tripleRequests);
+  for (const item of tripleRequests) {
     await sendAndConfirm(
       publicClient,
       walletClient,
       account,
-      request,
-      `Triple batch ${index + 1}/${Math.ceil(afterAtoms.missingTriples.length / parsed.batchSize)}`,
+      item.request,
+      item.label,
     );
   }
   const finalState = await readMainnetSeedState(publicClient, plan);

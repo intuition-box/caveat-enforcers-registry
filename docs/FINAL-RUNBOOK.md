@@ -74,8 +74,11 @@ funded address before allowing the first transaction.
 pnpm seed:reference-enrichment -- --execute --confirm-mainnet
 ```
 
-The runner uses legacy fee transactions, simulates each batch, waits for every receipt, and
-re-reads every planned atom and triple from MultiVault. Save every printed transaction hash.
+The runner uses legacy fee transactions, preflights every atom batch before the first atom write,
+preflights every triple batch before the first triple write, waits for every receipt, and re-reads
+every planned atom and triple from MultiVault. Save every printed transaction hash. The default
+batch size is eight because large structured evidence atoms can exceed the practical gas limit in
+larger groups.
 
 Re-run the dry-run. It must report zero missing atoms and triples:
 
