@@ -33,6 +33,10 @@ import {
   type RegistryDetailResponse,
 } from "./api";
 import {
+  buildCurationEnforcerOptions,
+  curationClaimLabel,
+} from "./curation-options";
+import {
   browserWalletAvailable,
   connectBrowserWallet,
   curateWithBrowserWallet,
@@ -1433,8 +1437,17 @@ export function SubmitPage() {
   const [contractAddress, setContractAddress] = useState("");
   const [termsJson, setTermsJson] = useState(DEFAULT_TERMS_SCHEMA);
   const [claimId, setClaimId] = useState("");
+  const [selectedDeploymentId, setSelectedDeploymentId] = useState("");
   const [amount, setAmount] = useState("0.1");
   const [curveId, setCurveId] = useState("1");
+  const [curationRegistryState, setCurationRegistryState] =
+    useState<RegistryApiState | null>(null);
+  const [curationRegistryLoading, setCurationRegistryLoading] = useState(false);
+  const [curationRegistryReload, setCurationRegistryReload] = useState(0);
+  const [curationDetail, setCurationDetail] =
+    useState<RegistryDetailResponse | null>(null);
+  const [curationDetailLoading, setCurationDetailLoading] = useState(false);
+  const [curationDetailReload, setCurationDetailReload] = useState(0);
   const [wallet, setWallet] = useState<BrowserWallet | null>(null);
   const [walletConnection, setWalletConnection] =
     useState<BrowserWalletConnectionState>({
@@ -1476,6 +1489,57 @@ export function SubmitPage() {
       void refreshWalletConnection();
     });
   }, []);
+
+  useEffect(() => {
+    if (mode === "list") return;
+    const controller = new AbortController();
+    setCurationRegistryLoading(true);
+    void fetchRegistry({ signal: controller.signal })
+      .then((state) => {
+        if (!controller.signal.aborted) setCurationRegistryState(state);
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setCurationRegistryState({
+            kind: "error",
+            message:
+              error instanceof Error
+                ? error.message
+                : "The live enforcer list could not be loaded.",
+          });
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCurationRegistryLoading(false);
+      });
+    return () => controller.abort();
+  }, [mode, curationRegistryReload]);
+
+  useEffect(() => {
+    setCurationDetail(null);
+    if (mode === "list" || !selectedDeploymentId) return;
+    const controller = new AbortController();
+    setCurationDetailLoading(true);
+    void fetchRegistryDetail(selectedDeploymentId, controller.signal)
+      .then((detail) => {
+        if (!controller.signal.aborted) setCurationDetail(detail);
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setCurationDetail({
+            kind: "error",
+            message:
+              error instanceof Error
+                ? error.message
+                : "The claims for this enforcer could not be loaded.",
+          });
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCurationDetailLoading(false);
+      });
+    return () => controller.abort();
+  }, [mode, selectedDeploymentId, curationDetailReload]);
 
   function applyImportedJson() {
     const raw = importText.trim();
@@ -1656,11 +1720,25 @@ export function SubmitPage() {
         return;
       }
 
+      if (!/^0x[a-fA-F0-9]{64}$/.test(claimId)) {
+        throw new Error(
+          "Choose an enforcer and one of its indexed claims before reviewing the signal.",
+        );
+      }
+      let signalAmount: bigint;
+      try {
+        signalAmount = parseEther(amount.trim());
+      } catch {
+        throw new Error("Enter a valid positive TRUST amount.");
+      }
+      if (signalAmount <= 0n) {
+        throw new Error("Deposit amount must be greater than zero.");
+      }
       const curation: CurationInput = {
         claimId,
         action: mode === "attest" ? "support" : "oppose",
         receiver: activeWallet.address,
-        amount: parseEther(amount.trim()).toString(),
+        amount: signalAmount.toString(),
         curveId,
       };
       const result = await curateWithBrowserWallet(curation, activeWallet);
@@ -1736,6 +1814,23 @@ export function SubmitPage() {
       : walletConnection.onIntuition
         ? "Connect Intuition wallet"
         : "Connect & add Intuition";
+  const curationOptions = useMemo(
+    () =>
+      curationRegistryState?.kind === "ready"
+        ? buildCurationEnforcerOptions(curationRegistryState.entries)
+        : [],
+    [curationRegistryState],
+  );
+  const selectedEnforcer = curationOptions.find(
+    (option) => option.deploymentId === selectedDeploymentId,
+  );
+  const selectableClaims =
+    curationDetail?.kind === "ready"
+      ? curationDetail.claims.filter((claim) =>
+          /^0x[a-fA-F0-9]{64}$/.test(claim.id ?? ""),
+        )
+      : [];
+  const selectedClaim = selectableClaims.find((claim) => claim.id === claimId);
 
   return (
     <main>
@@ -1746,7 +1841,7 @@ export function SubmitPage() {
         <div className="route-hero__copy">
           <h1 className="display">Submit</h1>
           <p className="lede">
-            List an enforcer, attest to an existing claim, or submit a
+            List an enforcer, support an indexed claim, or dispute it with a
             counter-signal.
           </p>
         </div>
@@ -1771,13 +1866,14 @@ export function SubmitPage() {
               <span className="mono-label">Contribution type</span>
               <select
                 value={mode}
-                onChange={(event) =>
-                  setMode(event.target.value as ContributionMode)
-                }
+                onChange={(event) => {
+                  setMode(event.target.value as ContributionMode);
+                  setStatus(null);
+                }}
               >
                 <option value="list">List a new enforcer</option>
-                <option value="attest">Attest to an existing claim</option>
-                <option value="counter">Submit a counter-signal</option>
+                <option value="attest">Support an existing claim</option>
+                <option value="counter">Dispute an existing claim</option>
               </select>
             </label>
 
@@ -1931,27 +2027,207 @@ export function SubmitPage() {
                 </label>
               </>
             ) : (
-              <>
+              <section
+                className="curation-picker"
+                aria-labelledby="curation-picker-title"
+              >
+                <div className="curation-picker__intro">
+                  <h3 id="curation-picker-title">
+                    {mode === "attest" ? "Support a claim" : "Dispute a claim"}
+                  </h3>
+                  <p>
+                    Choose readable records below. Caveat Registry resolves the
+                    Intuition IDs for your wallet.
+                  </p>
+                </div>
+
                 <label>
-                  <span className="mono-label">Existing claim ID</span>
-                  <input
+                  <span className="mono-label">Enforcer</span>
+                  <select
+                    value={selectedDeploymentId}
+                    onChange={(event) => {
+                      setSelectedDeploymentId(event.target.value);
+                      setClaimId("");
+                      setStatus(null);
+                    }}
+                    disabled={curationRegistryLoading}
+                  >
+                    <option value="">
+                      {curationRegistryLoading
+                        ? "Loading live enforcers…"
+                        : "Choose an enforcer"}
+                    </option>
+                    {curationOptions.map((option) => (
+                      <option
+                        key={option.deploymentId}
+                        value={option.deploymentId}
+                      >
+                        {option.numberLabel} · {option.canonicalName}
+                      </option>
+                    ))}
+                  </select>
+                  {curationRegistryState?.kind === "ready" && (
+                    <span className="form__hint">
+                      {curationOptions.length} live enforcers, numbered by
+                      creation order. The number is a display shortcut; the
+                      onchain term ID remains canonical.
+                    </span>
+                  )}
+                </label>
+
+                {curationRegistryState?.kind === "error" && (
+                  <div className="curation-picker__notice" role="alert">
+                    <p>{curationRegistryState.message}</p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCurationRegistryReload((attempt) => attempt + 1)
+                      }
+                    >
+                      Retry enforcer list
+                    </button>
+                  </div>
+                )}
+                {curationRegistryState?.kind === "unconfigured" && (
+                  <div className="curation-picker__notice" role="alert">
+                    <p>
+                      The live registry boundary is not configured. Missing:{" "}
+                      {curationRegistryState.missing.join(", ")}.
+                    </p>
+                  </div>
+                )}
+
+                <label>
+                  <span className="mono-label">Claim</span>
+                  <select
                     value={claimId}
-                    onChange={(event) => setClaimId(event.target.value)}
-                    placeholder="0x… 32-byte Intuition triple ID"
-                    pattern="^0x[a-fA-F0-9]{64}$"
-                    title="Enter a 32-byte Intuition claim ID beginning with 0x."
+                    onChange={(event) => {
+                      setClaimId(event.target.value);
+                      setStatus(null);
+                    }}
+                    disabled={!selectedDeploymentId || curationDetailLoading}
+                  >
+                    <option value="">
+                      {!selectedDeploymentId
+                        ? "Choose an enforcer first"
+                        : curationDetailLoading
+                          ? "Loading indexed claims…"
+                          : "Choose a claim"}
+                    </option>
+                    {selectableClaims.map((claim) => (
+                      <option key={claim.id} value={claim.id}>
+                        {curationClaimLabel(claim)}
+                      </option>
+                    ))}
+                  </select>
+                  {curationDetail?.kind === "ready" && (
+                    <span className="form__hint">
+                      {selectableClaims.length} claim
+                      {selectableClaims.length === 1 ? "" : "s"} available for
+                      this enforcer.
+                    </span>
+                  )}
+                </label>
+
+                {curationDetail?.kind === "error" && (
+                  <div className="curation-picker__notice" role="alert">
+                    <p>{curationDetail.message}</p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCurationDetailReload((attempt) => attempt + 1)
+                      }
+                    >
+                      Retry claims
+                    </button>
+                  </div>
+                )}
+                {curationDetail?.kind === "unconfigured" && (
+                  <div className="curation-picker__notice" role="alert">
+                    <p>
+                      Claim lookup is not configured. Missing:{" "}
+                      {curationDetail.missing.join(", ")}.
+                    </p>
+                  </div>
+                )}
+                {curationDetail?.kind === "ready" &&
+                  selectableClaims.length === 0 && (
+                    <div className="curation-picker__notice" role="status">
+                      <p>
+                        No signalable claims were returned for this enforcer.
+                        Retry later or use Advanced transaction details with a
+                        verified claim ID.
+                      </p>
+                    </div>
+                  )}
+
+                {selectedClaim && (
+                  <div className="curation-selection" aria-live="polite">
+                    <span className="mono-sub">
+                      {selectedEnforcer?.numberLabel} · selected claim
+                    </span>
+                    <p className="curation-selection__statement">
+                      <strong>{selectedClaim.predicate}</strong>
+                      <span>{selectedClaim.object}</span>
+                    </p>
+                    <p className="curation-selection__signals">
+                      {formatTrustSignal(selectedClaim.stake)} support ·{" "}
+                      {selectedClaim.oppositionStake
+                        ? formatTrustSignal(selectedClaim.oppositionStake)
+                        : "0 TRUST"}{" "}
+                      opposition
+                    </p>
+                  </div>
+                )}
+
+                <label>
+                  <span className="mono-label">Deposit amount (TRUST)</span>
+                  <input
+                    inputMode="decimal"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    placeholder="0.1"
                     required
                   />
                 </label>
-                <div className="form__pair">
+                <div
+                  className="trust-presets"
+                  role="group"
+                  aria-label="TRUST amount presets"
+                >
+                  {["0.1", "1", "5"].map((preset) => (
+                    <button
+                      type="button"
+                      key={preset}
+                      aria-pressed={amount === preset}
+                      onClick={() => setAmount(preset)}
+                    >
+                      {preset} TRUST
+                    </button>
+                  ))}
+                </div>
+
+                <details className="form__advanced">
+                  <summary>Advanced transaction details</summary>
                   <label>
-                    <span className="mono-label">Deposit amount (TRUST)</span>
+                    <span className="mono-label">Canonical claim ID</span>
                     <input
-                      inputMode="decimal"
-                      value={amount}
-                      onChange={(event) => setAmount(event.target.value)}
+                      value={claimId}
+                      onChange={(event) => {
+                        setClaimId(event.target.value);
+                        setSelectedDeploymentId("");
+                        setCurationDetail(null);
+                      }}
+                      placeholder="0x… 32-byte Intuition triple ID"
+                      pattern="^0x[a-fA-F0-9]{64}$"
+                      title="Enter a 32-byte Intuition claim ID beginning with 0x."
                       required
                     />
+                    <span className="form__hint">
+                      Filled automatically from the selected claim. Edit only
+                      when signaling a claim that is not yet discoverable in the
+                      registry list.
+                    </span>
                   </label>
                   <label>
                     <span className="mono-label">Curve ID</span>
@@ -1963,8 +2239,8 @@ export function SubmitPage() {
                       required
                     />
                   </label>
-                </div>
-              </>
+                </details>
+              </section>
             )}
           </form>
 
@@ -1974,7 +2250,13 @@ export function SubmitPage() {
               rows={[
                 [
                   "Identity",
-                  mode === "list" ? name || "Required" : "Claim signal",
+                  mode === "list"
+                    ? name || "Required"
+                    : selectedEnforcer
+                      ? `${selectedEnforcer.numberLabel} · ${selectedEnforcer.canonicalName}`
+                      : claimId
+                        ? "Manual claim ID"
+                        : "Choose an enforcer",
                 ],
                 [
                   "Source",
@@ -1985,13 +2267,23 @@ export function SubmitPage() {
                     : "Intuition triple",
                 ],
                 [
-                  "Deployment",
+                  mode === "list" ? "Deployment" : "Claim",
                   mode === "list"
                     ? contractAddress
                       ? "Provided"
                       : "Required"
-                    : "Verified before deposit",
+                    : selectedClaim
+                      ? curationClaimLabel(selectedClaim)
+                      : claimId
+                        ? shortAddress(claimId)
+                        : "Choose a claim",
                 ],
+                ...(mode === "list"
+                  ? []
+                  : ([
+                      ["Signal", mode === "attest" ? "Support" : "Dispute"],
+                      ["Deposit", `${amount || "0"} TRUST`],
+                    ] as Array<[string, React.ReactNode]>)),
                 ["Wallet", walletLabel],
               ]}
             />
@@ -2116,13 +2408,18 @@ export function SubmitPage() {
                 className="cta cta--dark"
                 type="submit"
                 form="contribution-form"
-                disabled={busy}
+                disabled={
+                  busy ||
+                  (mode !== "list" && !/^0x[a-fA-F0-9]{64}$/.test(claimId))
+                }
               >
                 {busy
                   ? "Preparing plan…"
                   : mode === "list"
                     ? "Prepare transaction plan"
-                    : "Review signal"}{" "}
+                    : mode === "attest"
+                      ? "Review support"
+                      : "Review dispute"}{" "}
                 <span aria-hidden="true">→</span>
               </button>
             )}
