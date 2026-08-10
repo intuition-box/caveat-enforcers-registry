@@ -73,6 +73,115 @@ import IntuitionLogo from "./IntuitionLogo";
 
 type PillTone = "plain" | "observed" | "review";
 
+type Web3Notice = {
+  tone: "progress" | "success" | "error";
+  title: string;
+  message: string;
+  transactionHash?: string;
+};
+
+function curationNotice(
+  action: CurationAction,
+  result: CurationExecution,
+  amountTrust: string,
+): Web3Notice {
+  const actionLabel = action === "support" ? "Support" : "Dispute";
+  const transactionHash =
+    "transactionHash" in result && result.transactionHash
+      ? result.transactionHash
+      : undefined;
+
+  if (result.status === "confirmed") {
+    return {
+      tone: "success",
+      title: `${actionLabel} added`,
+      message: `${amountTrust} TRUST was confirmed on Intuition mainnet and added to the ${action === "support" ? "supporting" : "opposition"} vault.`,
+      transactionHash,
+    };
+  }
+  if (result.status === "submitted" || result.status === "pending") {
+    return {
+      tone: "progress",
+      title: `${actionLabel} submitted`,
+      message: `${result.message} Keep this page open while the network confirms it.`,
+      transactionHash,
+    };
+  }
+  return {
+    tone: "error",
+    title: `${actionLabel} was not added`,
+    message: result.message,
+    transactionHash,
+  };
+}
+
+function Web3NoticeToast({
+  notice,
+  onDismiss,
+}: {
+  notice: Web3Notice | null;
+  onDismiss: () => void;
+}) {
+  if (!notice) return null;
+
+  return (
+    <aside
+      className={`web3-toast web3-toast--${notice.tone}`}
+      role={notice.tone === "error" ? "alert" : "status"}
+      aria-live={notice.tone === "error" ? "assertive" : "polite"}
+      aria-atomic="true"
+    >
+      <div className="web3-toast__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          {notice.tone === "success" ? (
+            <path d="m5 12.5 4.2 4.2L19 7" />
+          ) : notice.tone === "progress" ? (
+            <>
+              <path d="M19 8a8 8 0 1 0 .4 7" />
+              <path d="M19 4v4h-4" />
+            </>
+          ) : (
+            <>
+              <path d="M12 6v7" />
+              <path d="M12 17.5v.5" />
+            </>
+          )}
+        </svg>
+      </div>
+      <div className="web3-toast__content">
+        <span className="mono-sub">
+          {notice.tone === "success"
+            ? "Intuition mainnet · confirmed"
+            : notice.tone === "progress"
+              ? "Intuition mainnet · pending"
+              : "Transaction update"}
+        </span>
+        <strong>{notice.title}</strong>
+        <p>{notice.message}</p>
+        {notice.transactionHash && (
+          <a
+            href={`https://explorer.intuition.systems/tx/${notice.transactionHash}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            View transaction ↗
+          </a>
+        )}
+      </div>
+      <button
+        className="web3-toast__dismiss"
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss transaction update"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="m7 7 10 10M17 7 7 17" />
+        </svg>
+      </button>
+    </aside>
+  );
+}
+
 function Pill({
   children,
   tone = "plain",
@@ -460,6 +569,7 @@ function RegistryDetailDrawer({
   );
   const [signalStatus, setSignalStatus] = useState<string | null>(null);
   const [signalBusy, setSignalBusy] = useState(false);
+  const [web3Notice, setWeb3Notice] = useState<Web3Notice | null>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -538,9 +648,18 @@ function RegistryDetailDrawer({
     if (!selection || !wallet || !signalPlan || signalBusy) return;
     setSignalBusy(true);
     setSignalStatus("Simulating the exact deposit before the wallet prompt…");
+    setWeb3Notice({
+      tone: "progress",
+      title: "Confirm in your wallet",
+      message:
+        "The exact TRUST deposit is being simulated before the approval prompt opens.",
+    });
     try {
       const result = await curateWithBrowserWallet(signalInput(wallet), wallet);
       setSignalResult(result);
+      setWeb3Notice(
+        curationNotice(selection.action, result, amountTrust.trim()),
+      );
       setSignalStatus(
         "message" in result
           ? result.message
@@ -548,9 +667,14 @@ function RegistryDetailDrawer({
       );
       if (result.status === "confirmed") setSignalPlan(undefined);
     } catch (error) {
-      setSignalStatus(
-        error instanceof Error ? error.message : "The signal deposit failed.",
-      );
+      const message =
+        error instanceof Error ? error.message : "The signal deposit failed.";
+      setSignalStatus(message);
+      setWeb3Notice({
+        tone: "error",
+        title: `${selection.action === "support" ? "Support" : "Dispute"} was not added`,
+        message,
+      });
     } finally {
       setSignalBusy(false);
     }
@@ -699,6 +823,7 @@ function RegistryDetailDrawer({
                     </div>
                     <div className="claim-ledger__actions">
                       <button
+                        className="web3-choice web3-choice--support"
                         type="button"
                         disabled={!claim.id}
                         onClick={() => selectSignal(claim, "support")}
@@ -706,6 +831,7 @@ function RegistryDetailDrawer({
                         Support
                       </button>
                       <button
+                        className="web3-choice web3-choice--oppose"
                         type="button"
                         disabled={!claim.id}
                         onClick={() => selectSignal(claim, "oppose")}
@@ -767,6 +893,7 @@ function RegistryDetailDrawer({
               />
               <div className="claim-curation__actions">
                 <button
+                  className="web3-action web3-action--primary"
                   type="button"
                   onClick={previewSignal}
                   disabled={signalBusy}
@@ -779,6 +906,7 @@ function RegistryDetailDrawer({
                 </button>
                 {signalPlan && (
                   <button
+                    className="web3-action web3-action--primary"
                     type="button"
                     onClick={approveSignal}
                     disabled={signalBusy}
@@ -788,6 +916,7 @@ function RegistryDetailDrawer({
                   </button>
                 )}
                 <button
+                  className="web3-action web3-action--quiet"
                   type="button"
                   onClick={() => {
                     setSelection(null);
@@ -827,6 +956,11 @@ function RegistryDetailDrawer({
               </p>
             </div>
           )}
+
+          <Web3NoticeToast
+            notice={web3Notice}
+            onDismiss={() => setWeb3Notice(null)}
+          />
 
           <div className="registry-drawer__note">
             <strong>What this record means</strong>
@@ -1462,6 +1596,7 @@ export function SubmitPage() {
     useState<SubmissionReview | null>(null);
   const [submissionOutcome, setSubmissionOutcome] =
     useState<SubmissionOutcome | null>(null);
+  const [web3Notice, setWeb3Notice] = useState<Web3Notice | null>(null);
 
   useEffect(() => {
     setSubmissionReview(null);
@@ -1608,24 +1743,45 @@ export function SubmitPage() {
 
   async function connectWallet() {
     if (!walletConnection.available) {
-      setStatus(
-        "No browser wallet was detected. Open MetaMask, Rabby, Coinbase Wallet, or another EVM wallet in this browser, then connect again.",
-      );
+      const message =
+        "No browser wallet was detected. Open MetaMask, Rabby, Coinbase Wallet, or another EVM wallet in this browser, then connect again.";
+      setStatus(message);
+      setWeb3Notice({
+        tone: "error",
+        title: "No wallet detected",
+        message,
+      });
       return;
     }
     setStatus("Requesting an Intuition mainnet account from your wallet…");
+    setWeb3Notice({
+      tone: "progress",
+      title: "Connect your wallet",
+      message:
+        "Approve the connection and Intuition mainnet setup in your wallet.",
+    });
     try {
       const connected = await connectBrowserWallet();
       setWallet(connected);
       setStatus(
         `Connected ${shortAddress(connected.address)} on Intuition mainnet.`,
       );
+      setWeb3Notice({
+        tone: "success",
+        title: "Wallet connected",
+        message: `${shortAddress(connected.address)} is ready to sign on Intuition mainnet.`,
+      });
     } catch (error) {
-      setStatus(
+      const message =
         error instanceof Error
           ? error.message
-          : "The browser wallet could not be connected.",
-      );
+          : "The browser wallet could not be connected.";
+      setStatus(message);
+      setWeb3Notice({
+        tone: "error",
+        title: "Wallet connection failed",
+        message,
+      });
     } finally {
       void refreshWalletConnection();
     }
@@ -1692,6 +1848,13 @@ export function SubmitPage() {
         ? "Resolving and verifying the transaction plan…"
         : "Preparing a wallet-owned signal…",
     );
+    if (mode !== "list") {
+      setWeb3Notice({
+        tone: "progress",
+        title: "Confirm in your wallet",
+        message: `Caveat Registry is verifying the claim before requesting your ${mode === "attest" ? "support" : "dispute"} deposit.`,
+      });
+    }
     try {
       const activeWallet = wallet ?? (await connectBrowserWallet());
       if (!wallet) setWallet(activeWallet);
@@ -1743,13 +1906,29 @@ export function SubmitPage() {
       };
       const result = await curateWithBrowserWallet(curation, activeWallet);
       setStatus(result.message);
-    } catch (error) {
-      setStatus(
-        contributionErrorMessage(
-          error,
-          "The contribution could not be prepared.",
+      setWeb3Notice(
+        curationNotice(
+          curation.action,
+          result,
+          formatEther(BigInt(curation.amount)),
         ),
       );
+      if (result.status === "confirmed") {
+        setCurationDetailReload((value) => value + 1);
+      }
+    } catch (error) {
+      const message = contributionErrorMessage(
+        error,
+        "The contribution could not be prepared.",
+      );
+      setStatus(message);
+      if (mode !== "list") {
+        setWeb3Notice({
+          tone: "error",
+          title: `${mode === "attest" ? "Support" : "Dispute"} was not added`,
+          message,
+        });
+      }
     } finally {
       setBusy(false);
     }
@@ -2360,7 +2539,7 @@ export function SubmitPage() {
               </section>
             )}
             <button
-              className={`cta cta--solid wallet-connect-cta ${
+              className={`cta cta--solid web3-action web3-action--primary wallet-connect-cta ${
                 wallet
                   ? "wallet-connect-cta--connected"
                   : "wallet-connect-cta--required"
@@ -2394,7 +2573,7 @@ export function SubmitPage() {
                   Back to edit
                 </button>
                 <button
-                  className="cta cta--dark"
+                  className="cta cta--dark web3-action web3-action--primary"
                   type="button"
                   onClick={approveSubmission}
                   disabled={busy}
@@ -2405,7 +2584,7 @@ export function SubmitPage() {
               </div>
             ) : (
               <button
-                className="cta cta--dark"
+                className="cta cta--dark web3-action web3-action--primary"
                 type="submit"
                 form="contribution-form"
                 disabled={
@@ -2418,8 +2597,8 @@ export function SubmitPage() {
                   : mode === "list"
                     ? "Prepare transaction plan"
                     : mode === "attest"
-                      ? "Review support"
-                      : "Review dispute"}{" "}
+                      ? "Add support"
+                      : "Add dispute"}{" "}
                 <span aria-hidden="true">→</span>
               </button>
             )}
@@ -2507,6 +2686,10 @@ export function SubmitPage() {
                 {status}
               </p>
             )}
+            <Web3NoticeToast
+              notice={web3Notice}
+              onDismiss={() => setWeb3Notice(null)}
+            />
             <p className="band__note">
               {mode === "list"
                 ? "Validation and an exact plan resolve before the approval button appears. After approval, each write is simulated before its wallet prompt. The server never receives your signing key."

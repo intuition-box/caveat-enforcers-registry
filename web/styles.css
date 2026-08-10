@@ -7199,6 +7199,200 @@ main > .band:first-child {
   font-weight: 650;
 }
 
+/* Wallet-owned actions use a distinct, high-confidence interaction language. */
+.web3-action,
+.claim-ledger__actions .web3-choice,
+.claim-curation__actions .web3-action {
+  min-height: 3.25rem;
+  border-radius: 0.8rem;
+  font-family: var(--body);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.web3-action--primary,
+.claim-curation__actions .web3-action--primary,
+.claim-ledger__actions .web3-choice--support {
+  border-color: var(--signal);
+  background: var(--signal);
+  color: var(--ink);
+}
+
+.claim-ledger__actions .web3-choice--oppose {
+  border-color: var(--ink);
+  background: var(--paper-bright);
+  color: var(--ink);
+}
+
+.web3-action--primary:hover:not(:disabled),
+.web3-action--primary:focus-visible:not(:disabled),
+.claim-curation__actions .web3-action--primary:hover:not(:disabled),
+.claim-curation__actions .web3-action--primary:focus-visible:not(:disabled) {
+  border-color: #ff825d;
+  background: #ff825d;
+  color: var(--ink);
+  transform: translateY(-2px);
+}
+
+.claim-ledger__actions .web3-choice:hover:not(:disabled),
+.claim-ledger__actions .web3-choice:focus-visible:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper-bright);
+  transform: translateY(-2px);
+}
+
+.web3-action--quiet,
+.claim-curation__actions .web3-action--quiet {
+  border-color: var(--line-light);
+  background: var(--paper-bright);
+  color: var(--ink);
+}
+
+.web3-action:disabled,
+.claim-curation__actions .web3-action:disabled,
+.claim-ledger__actions .web3-choice:disabled {
+  border-color: color-mix(in srgb, var(--ink) 32%, transparent);
+  background: color-mix(in srgb, var(--paper-bright) 92%, var(--signal));
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.preflight .wallet-connect-cta.web3-action {
+  border-radius: 0.8rem;
+}
+
+.preflight .wallet-connect-cta--connected {
+  border-color: color-mix(in srgb, var(--ink) 40%, transparent);
+  background: var(--paper-bright);
+  color: var(--ink);
+  opacity: 1;
+}
+
+.web3-toast {
+  position: fixed;
+  inset: auto clamp(1rem, 2.5vw, 2rem) clamp(1rem, 2.5vw, 2rem) auto;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  width: min(29rem, calc(100vw - 2rem));
+  padding: 1.1rem;
+  border: 1px solid var(--ink);
+  border-radius: 0.9rem;
+  background: var(--paper-bright);
+  color: var(--ink);
+  animation: web3-toast-enter 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.web3-toast--success {
+  border-color: #20784d;
+  border-top-width: 0.25rem;
+}
+
+.web3-toast--progress {
+  border-color: var(--signal);
+  border-top-width: 0.25rem;
+}
+
+.web3-toast--error {
+  border-color: #a73e36;
+  border-top-width: 0.25rem;
+}
+
+.web3-toast__icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.web3-toast__icon svg,
+.web3-toast__dismiss svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.web3-toast__content {
+  min-width: 0;
+}
+
+.web3-toast__content > strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-family: var(--display);
+  font-size: 1.4rem;
+  line-height: 1.05;
+}
+
+.web3-toast__content p {
+  margin: 0.55rem 0 0;
+  color: color-mix(in srgb, var(--ink) 76%, transparent);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.web3-toast__content a {
+  display: inline-block;
+  margin-top: 0.65rem;
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.web3-toast__dismiss {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--line-light);
+  border-radius: 0.65rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.web3-toast__dismiss:hover,
+.web3-toast__dismiss:focus-visible {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper-bright);
+}
+
+@keyframes web3-toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 36rem) {
+  .web3-toast {
+    inset: auto 0.75rem 0.75rem;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .web3-toast {
+    animation: none;
+  }
+}
+
 .registry-drawer__classification {
   padding: 1.25rem;
   border: 1px solid var(--line-light);
