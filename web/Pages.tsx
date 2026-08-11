@@ -1021,11 +1021,13 @@ export function RegistryPage() {
   }, []);
 
   const showingLive = apiState?.kind === "ready";
+  const referenceCount = REFERENCE.length;
   const allLiveRows = useMemo(
     () => (showingLive ? apiState.entries.map(liveRow) : []),
     [apiState, showingLive],
   );
   const showReferenceFallback = !showingLive;
+  const graphRows = showingLive ? allLiveRows : REFERENCE;
 
   const matchesFilters = (row: RegistryRow): boolean => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -1277,10 +1279,10 @@ export function RegistryPage() {
           {allLiveRows.length && !showReferenceFallback
             ? "Live rows come from the canonical Intuition membership query. Membership is a discoverability claim, not a safety guarantee."
             : apiState?.kind === "error"
-              ? `Live registry unavailable: ${apiState.message} Showing the 32-entry MetaMask reference collection without presenting it as indexed data.`
+              ? `Live registry unavailable: ${apiState.message} Showing the ${referenceCount}-entry MetaMask reference collection without presenting it as indexed data.`
               : showingLive
-                ? "No indexed membership claims exist for this proposed ontology yet. The 32-entry MetaMask collection below remains reference data only."
-                : "The 32-entry MetaMask collection is reference data only. Start the local registry service to inspect indexed Intuition records."}
+                ? `No indexed membership claims exist for this proposed ontology yet. The ${referenceCount}-entry MetaMask collection below remains reference data only.`
+                : `The ${referenceCount}-entry MetaMask collection is reference data only. Start the local registry service to inspect indexed Intuition records.`}
         </p>
       </section>
 
@@ -1290,9 +1292,9 @@ export function RegistryPage() {
             <h2 className="headline">The whole registry at a glance.</h2>
           </div>
           <p className="lede">
-            Every spoke is a live membership triple on Intuition: 32 ERC-7710
-            enforcers linked to one deployment class. Coloured by what they
-            restrict.
+            {showingLive
+              ? `Every spoke is a live membership triple on Intuition: ${allLiveRows.length} ERC-7710 enforcers linked to one deployment class. Coloured by what they restrict.`
+              : `The reference map contains ${referenceCount} ERC-7710 enforcers linked to one deployment class. Live membership appears here when the registry service is available.`}
           </p>
         </div>
         <BrowserFrame
@@ -1301,13 +1303,18 @@ export function RegistryPage() {
           tone="ink"
         >
           <EnforcerRadialGraph
-            nodes={REFERENCE.map((entry) => ({
+            nodes={graphRows.map((entry) => ({
               name: entry.name,
               domain: entry.domain,
               address: entry.address,
               slug: entry.slug,
             }))}
             onSelect={(slug) => {
+              const selected = graphRows.find((entry) => entry.slug === slug);
+              if (selected) {
+                setSelectedRow(selected);
+                return;
+              }
               const fallback = REFERENCE.find((entry) => entry.slug === slug);
               const indexed = fallback
                 ? allLiveRows.find(
