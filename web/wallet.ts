@@ -215,6 +215,51 @@ export async function connectBrowserWallet(): Promise<BrowserWallet> {
   };
 }
 
+/**
+ * Adapts a wallet already connected by Wagmi/RainbowKit to the registry's
+ * reviewed write path. Connection and network selection stay in RainbowKit;
+ * simulations and submissions continue to use the existing wallet adapter.
+ */
+export async function browserWalletFromProvider(
+  providerValue: unknown,
+  connectedAddress: string,
+): Promise<BrowserWallet> {
+  if (
+    !providerValue ||
+    typeof providerValue !== "object" ||
+    !("request" in providerValue) ||
+    typeof (providerValue as { request?: unknown }).request !== "function"
+  ) {
+    throw new Error("The connected wallet did not expose an EVM provider.");
+  }
+  const provider = providerValue as BrowserProvider;
+  const chainId = Number.parseInt(
+    String(await provider.request({ method: "eth_chainId" })),
+    16,
+  );
+  if (chainId !== 1155) {
+    throw new Error(
+      "Switch the connected wallet to Intuition mainnet before writing.",
+    );
+  }
+  const address = addressFromAccount(connectedAddress);
+  const walletTransport = custom(provider);
+  return {
+    address,
+    chainId,
+    provider,
+    publicClient: createPublicClient({
+      chain: intuitionMainnet,
+      transport: http(INTUITION_MAINNET_RPC),
+    }),
+    walletClient: createWalletClient({
+      account: address,
+      chain: intuitionMainnet,
+      transport: walletTransport,
+    }),
+  };
+}
+
 export function subscribeBrowserWallet(listener: () => void): () => void {
   if (!browserWalletAvailable()) return () => undefined;
   const provider = providerOrThrow();

@@ -4,7 +4,9 @@ The project has two deployable surfaces:
 
 1. The Vite frontend is a static SPA. `vercel.json` builds `dist` and rewrites route requests to
    `index.html`. Set `VITE_REGISTRY_API_BASE_URL` to the public API origin, including the scheme
-   and without a trailing slash.
+   and without a trailing slash. Set `VITE_WALLETCONNECT_PROJECT_ID` to a WalletConnect Cloud
+   project ID to enable RainbowKit QR/mobile connections. When it is omitted, RainbowKit still
+   connects installed EIP-6963 browser wallets through Wagmi.
 2. The registry API is the Node service in `Dockerfile`. `render.yaml` is a portable Render
    handoff; the same container can run on another platform that supports a Docker web service.
 
@@ -52,5 +54,7 @@ pnpm check:composability-seed
 pnpm build
 ```
 
-The frontend does not receive a private key. Submission and curation writes prompt the connected
-browser wallet on Intuition mainnet; the API remains a read and verification service.
+The frontend does not receive a private key. Wagmi and RainbowKit own wallet discovery,
+connection, account state, and Intuition network selection. Submission and curation writes then
+pass the connected EIP-1193 provider into the registry's existing simulation and signing adapter;
+the API remains a read and verification service.

@@ -37,17 +37,17 @@ import {
   curationClaimLabel,
 } from "./curation-options";
 import {
-  browserWalletAvailable,
-  connectBrowserWallet,
   curateWithBrowserWallet,
-  inspectBrowserWallet,
   previewCurationWithBrowserWallet,
   previewWithBrowserWallet,
-  subscribeBrowserWallet,
   submitWithBrowserWallet,
   type BrowserWallet,
-  type BrowserWalletConnectionState,
 } from "./wallet";
+import {
+  CaveatConnectButton,
+  CaveatWalletProvider,
+  useCaveatWallet,
+} from "./CaveatWallet";
 import {
   validateSubmission as validateSubmissionLocally,
   type SubmissionInput,
@@ -555,7 +555,7 @@ function RegistryDetailDrawer({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  const [wallet, setWallet] = useState<BrowserWallet | null>(null);
+  const { wallet, error: walletError } = useCaveatWallet();
   const [selection, setSelection] = useState<{
     claim: Claim;
     action: CurationAction;
@@ -570,6 +570,11 @@ function RegistryDetailDrawer({
   const [signalStatus, setSignalStatus] = useState<string | null>(null);
   const [signalBusy, setSignalBusy] = useState(false);
   const [web3Notice, setWeb3Notice] = useState<Web3Notice | null>(null);
+
+  useEffect(() => {
+    setSignalPlan(undefined);
+    setSignalResult(null);
+  }, [wallet?.address]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -615,14 +620,19 @@ function RegistryDetailDrawer({
 
   async function previewSignal() {
     if (!selection || signalBusy) return;
+    if (!wallet) {
+      setSignalStatus(
+        walletError ??
+          "Connect a wallet on Intuition mainnet to review this deposit.",
+      );
+      return;
+    }
     setSignalBusy(true);
     setSignalStatus("Verifying the claim and resolving its target vault…");
     try {
-      const activeWallet = wallet ?? (await connectBrowserWallet());
-      if (!wallet) setWallet(activeWallet);
       const result = await previewCurationWithBrowserWallet(
-        signalInput(activeWallet),
-        activeWallet,
+        signalInput(wallet),
+        wallet,
       );
       if (result.status !== "ready") {
         setSignalPlan(undefined);
@@ -892,18 +902,18 @@ function RegistryDetailDrawer({
                 ]}
               />
               <div className="claim-curation__actions">
-                <button
-                  className="web3-action web3-action--primary"
-                  type="button"
-                  onClick={previewSignal}
-                  disabled={signalBusy}
-                >
-                  {signalBusy
-                    ? "Checking…"
-                    : wallet
-                      ? "Review deposit"
-                      : "Connect and review"}
-                </button>
+                {wallet ? (
+                  <button
+                    className="web3-action web3-action--primary"
+                    type="button"
+                    onClick={previewSignal}
+                    disabled={signalBusy}
+                  >
+                    {signalBusy ? "Checking…" : "Review deposit"}
+                  </button>
+                ) : (
+                  <CaveatConnectButton compact disabled={signalBusy} />
+                )}
                 {signalPlan && (
                   <button
                     className="web3-action web3-action--primary"
@@ -978,7 +988,7 @@ function RegistryDetailDrawer({
 
 /* -------------------------------------------------------------------- registry */
 
-export function RegistryPage() {
+function RegistryPageContent() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [domain, setDomain] = useState("all");
@@ -1340,6 +1350,14 @@ export function RegistryPage() {
   );
 }
 
+export function RegistryPage() {
+  return (
+    <CaveatWalletProvider>
+      <RegistryPageContent />
+    </CaveatWalletProvider>
+  );
+}
+
 /* ---------------------------------------------------------------------- detail */
 
 export function DetailPage() {
@@ -1568,7 +1586,7 @@ function shortAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
-export function SubmitPage() {
+function SubmitPageContent() {
   const [mode, setMode] = useState<ContributionMode>("list");
   const [name, setName] = useState("");
   const [category, setCategory] = useState("frequency");
@@ -1589,12 +1607,12 @@ export function SubmitPage() {
     useState<RegistryDetailResponse | null>(null);
   const [curationDetailLoading, setCurationDetailLoading] = useState(false);
   const [curationDetailReload, setCurationDetailReload] = useState(0);
-  const [wallet, setWallet] = useState<BrowserWallet | null>(null);
-  const [walletConnection, setWalletConnection] =
-    useState<BrowserWalletConnectionState>({
-      available: browserWalletAvailable(),
-      onIntuition: false,
-    });
+  const {
+    wallet,
+    error: walletError,
+    connected: walletConnected,
+    onIntuition,
+  } = useCaveatWallet();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [importText, setImportText] = useState("");
@@ -1604,6 +1622,23 @@ export function SubmitPage() {
   const [submissionOutcome, setSubmissionOutcome] =
     useState<SubmissionOutcome | null>(null);
   const [web3Notice, setWeb3Notice] = useState<Web3Notice | null>(null);
+  const previousWalletAddress = useRef<string | null>(null);
+
+  useEffect(() => {
+    const nextAddress = wallet?.address ?? null;
+    if (
+      previousWalletAddress.current &&
+      previousWalletAddress.current !== nextAddress
+    ) {
+      setSubmissionReview(null);
+      setStatus(
+        nextAddress
+          ? "Wallet account changed. Prepare a fresh transaction plan."
+          : "Wallet disconnected or changed network. Reconnect to continue.",
+      );
+    }
+    previousWalletAddress.current = nextAddress;
+  }, [wallet?.address]);
 
   useEffect(() => {
     setSubmissionReview(null);
@@ -1617,20 +1652,6 @@ export function SubmitPage() {
     contractAddress,
     termsJson,
   ]);
-
-  async function refreshWalletConnection() {
-    setWalletConnection(await inspectBrowserWallet());
-  }
-
-  useEffect(() => {
-    void refreshWalletConnection();
-    return subscribeBrowserWallet(() => {
-      setWallet(null);
-      setSubmissionReview(null);
-      setStatus("Wallet account or network changed. Reconnect to continue.");
-      void refreshWalletConnection();
-    });
-  }, []);
 
   useEffect(() => {
     if (mode === "list") return;
@@ -1748,52 +1769,6 @@ export function SubmitPage() {
     );
   }
 
-  async function connectWallet() {
-    if (!walletConnection.available) {
-      const message =
-        "No browser wallet was detected. Open MetaMask, Rabby, Coinbase Wallet, or another EVM wallet in this browser, then connect again.";
-      setStatus(message);
-      setWeb3Notice({
-        tone: "error",
-        title: "No wallet detected",
-        message,
-      });
-      return;
-    }
-    setStatus("Requesting an Intuition mainnet account from your wallet…");
-    setWeb3Notice({
-      tone: "progress",
-      title: "Connect your wallet",
-      message:
-        "Approve the connection and Intuition mainnet setup in your wallet.",
-    });
-    try {
-      const connected = await connectBrowserWallet();
-      setWallet(connected);
-      setStatus(
-        `Connected ${shortAddress(connected.address)} on Intuition mainnet.`,
-      );
-      setWeb3Notice({
-        tone: "success",
-        title: "Wallet connected",
-        message: `${shortAddress(connected.address)} is ready to sign on Intuition mainnet.`,
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "The browser wallet could not be connected.";
-      setStatus(message);
-      setWeb3Notice({
-        tone: "error",
-        title: "Wallet connection failed",
-        message,
-      });
-    } finally {
-      void refreshWalletConnection();
-    }
-  }
-
   function buildSubmissionInput(activeWallet: BrowserWallet): SubmissionInput {
     let termsSchema: unknown;
     try {
@@ -1863,8 +1838,15 @@ export function SubmitPage() {
       });
     }
     try {
-      const activeWallet = wallet ?? (await connectBrowserWallet());
-      if (!wallet) setWallet(activeWallet);
+      if (!wallet) {
+        throw new Error(
+          walletError ??
+            (walletConnected && !onIntuition
+              ? "Switch your connected wallet to Intuition mainnet before continuing."
+              : "Connect a wallet before preparing this contribution."),
+        );
+      }
+      const activeWallet = wallet;
 
       if (mode === "list") {
         const input = buildSubmissionInput(activeWallet);
@@ -1988,18 +1970,9 @@ export function SubmitPage() {
 
   const walletLabel = wallet
     ? shortAddress(wallet.address)
-    : !walletConnection.available
-      ? "No EVM wallet detected"
-      : walletConnection.onIntuition
-        ? "Ready on Intuition"
-        : "Intuition setup required";
-  const connectLabel = wallet
-    ? "Wallet connected"
-    : !walletConnection.available
-      ? "Open wallet to connect"
-      : walletConnection.onIntuition
-        ? "Connect Intuition wallet"
-        : "Connect & add Intuition";
+    : walletConnected
+      ? "Switch to Intuition"
+      : "Wallet connection required";
   const curationOptions = useMemo(
     () =>
       curationRegistryState?.kind === "ready"
@@ -2545,25 +2518,12 @@ export function SubmitPage() {
                 </p>
               </section>
             )}
-            <button
-              className={`cta cta--solid web3-action web3-action--primary wallet-connect-cta ${
-                wallet
-                  ? "wallet-connect-cta--connected"
-                  : "wallet-connect-cta--required"
-              }`}
-              type="button"
-              onClick={connectWallet}
-              disabled={busy || Boolean(wallet)}
-            >
-              {connectLabel} <span aria-hidden="true">→</span>
-            </button>
+            <CaveatConnectButton disabled={busy} />
             {!wallet && (
               <p className="wallet-connect-guidance">
-                {!walletConnection.available
-                  ? "Use an EVM wallet in this browser. MetaMask and Rabby are supported injected-wallet options."
-                  : walletConnection.onIntuition
-                    ? "This wallet is already on Intuition mainnet. Connecting never exposes its recovery phrase or private key."
-                    : "Your wallet will be asked to add and switch to Intuition mainnet (chain 1155) before it can sign."}
+                {walletConnected && !onIntuition
+                  ? "Use the network control to switch this wallet to Intuition mainnet (chain 1155)."
+                  : "Choose an installed EVM wallet. WalletConnect and mobile QR wallets are available when a WalletConnect project ID is configured."}
               </p>
             )}
             {submissionReview && mode === "list" ? (
@@ -2706,6 +2666,14 @@ export function SubmitPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export function SubmitPage() {
+  return (
+    <CaveatWalletProvider>
+      <SubmitPageContent />
+    </CaveatWalletProvider>
   );
 }
 

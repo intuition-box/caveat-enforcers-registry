@@ -7,6 +7,7 @@ import {
   INTUITION_MAINNET_RPC,
 } from "../src/ontology.js";
 import {
+  browserWalletFromProvider,
   createBrowserSubmissionWriteAdapter,
   type BrowserWallet,
 } from "../web/wallet.js";
@@ -14,6 +15,21 @@ import {
 test("browser writes use Intuition's canonical RPC configuration", () => {
   assert.equal(INTUITION_MAINNET_RPC, intuitionMainnet.rpcUrls.default.http[0]);
   assert.equal(INTUITION_MAINNET_RPC, "https://rpc.intuition.systems/http");
+});
+
+test("connected Wagmi providers are adapted only on Intuition mainnet", async () => {
+  const address = "0x1111111111111111111111111111111111111111";
+  const wallet = await browserWalletFromProvider(
+    { request: async () => "0x483" },
+    address,
+  );
+  assert.equal(wallet.address, address);
+  assert.equal(wallet.chainId, 1155);
+
+  await assert.rejects(
+    () => browserWalletFromProvider({ request: async () => "0x1" }, address),
+    /switch.*Intuition mainnet/i,
+  );
 });
 
 test("browser writes sign the exact simulated call in legacy fee mode", async () => {

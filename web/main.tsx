@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import "@rainbow-me/rainbowkit/styles.css";
 import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource-variable/dm-sans";
 import "@fontsource/space-mono/400.css";

@@ -11,7 +11,7 @@
  * descriptions are factual; anything that would be live evidence is either
  * marked as an example or reduced to the model itself.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CardSwap, { Card } from "./CardSwap";
 import FoldText from "./FoldText";
@@ -21,6 +21,7 @@ import { CaveatMarkSvg } from "./CaveatMark";
 import IntuitionLogo from "./IntuitionLogo";
 import LineWaves from "./LineWaves";
 import MetaMaskLogo from "./MetaMaskLogo";
+import { fetchRegistry } from "./api";
 
 function Arrow() {
   return <span aria-hidden="true" className="arrow" />;
@@ -514,6 +515,20 @@ const FLOW = [
 ];
 
 function Openness() {
+  const [membershipCount, setMembershipCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchRegistry({ signal: controller.signal })
+      .then((state) => {
+        if (!controller.signal.aborted && state.kind === "ready") {
+          setMembershipCount(state.entries.length);
+        }
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
   return (
     <section
       className="sec sec--ink sec--seam scroll-reveal"
@@ -522,9 +537,10 @@ function Openness() {
       <div className="split split--open openness__intro">
         <div>
           <span className="pull-stat">
-            32
+            {membershipCount ?? "—"}
             <span className="pull-stat__label">
-              enforcers live on Intuition mainnet
+              {membershipCount === 1 ? "enforcer" : "enforcers"} live on
+              Intuition mainnet
             </span>
           </span>
           <header className="sec__head sec__head--tight">
