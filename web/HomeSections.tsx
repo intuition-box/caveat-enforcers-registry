@@ -519,7 +519,7 @@ function Openness() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetchRegistry({ signal: controller.signal })
+    void fetchRegistry({ hydrate: false, signal: controller.signal })
       .then((state) => {
         if (!controller.signal.aborted && state.kind === "ready") {
           setMembershipCount(state.entries.length);

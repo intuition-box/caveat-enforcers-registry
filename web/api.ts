@@ -36,6 +36,7 @@ export type RegistryListOptions = {
   chain?: string;
   domain?: string;
   operation?: string;
+  hydrate?: boolean;
   signal?: AbortSignal;
 };
 
@@ -48,7 +49,7 @@ export async function fetchRegistry(
   if (options.domain?.trim()) params.set("domain", options.domain.trim());
   if (options.operation?.trim())
     params.set("operation", options.operation.trim());
-  params.set("hydrate", "true");
+  params.set("hydrate", options.hydrate === false ? "false" : "true");
   return getJson<RegistryApiState>(`/api/registry?${params}`, options.signal);
 }
 
