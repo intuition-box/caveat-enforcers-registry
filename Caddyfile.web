@@ -1,0 +1,22 @@
+# Serve the Vite SPA with history-API fallback and the same security headers
+# the Vercel deploy uses (Vercel's vercel.json does not apply here).
+:80 {
+	root * /usr/share/caddy
+	encode gzip
+
+	header {
+		X-Frame-Options "DENY"
+		Content-Security-Policy "frame-ancestors 'none'"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), camera=(), microphone=()"
+		-Server
+	}
+
+	# Hashed build assets are immutable.
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	try_files {path} /index.html
+	file_server
+}

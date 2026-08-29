@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+#
+# Static frontend image for Coolify (caveats-registry.intuition.box).
+#
+# Why a Dockerfile instead of Coolify's nixpacks:
+#   1. nixpacks pins corepack@0.24.1 + Node 22.11, which cannot run pnpm 11.1.2
+#      (ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING). Installing pnpm via npm avoids
+#      corepack entirely.
+#   2. node:22-slim tracks the latest 22.x (>= 22.12), which Vite 8 / rolldown
+#      need for their native binding. nixpacks' 22.11 is too old and the build
+#      fails with "Cannot find native binding".
+# This mirrors the base of the working Render API Dockerfile.
+
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN npm install --global pnpm@11.1.2 \
+  && pnpm install --frozen-lockfile
+COPY . .
+# VITE_REGISTRY_API_BASE_URL is optional: without it the app falls back to the
+# public Render API. Set it as a Coolify build variable to override.
+ARG VITE_REGISTRY_API_BASE_URL
+RUN pnpm build
+
+# ---- serve the static SPA ----
+FROM caddy:2-alpine AS serve
+COPY Caddyfile.web /etc/caddy/Caddyfile
+COPY --from=build /app/dist /usr/share/caddy
+EXPOSE 80
