@@ -50,8 +50,10 @@ import {
 } from "./CaveatWallet";
 import {
   validateSubmission as validateSubmissionLocally,
+  type SubmissionAdditionalClaim,
   type SubmissionInput,
 } from "../src/validation";
+import { PROPOSED_ONTOLOGY_MANIFEST } from "../src/ontology";
 import type {
   CurationAction,
   CurationExecution,
@@ -68,6 +70,8 @@ import {
 } from "./submission-outcome";
 import { CaveatMarkSvg } from "./CaveatMark";
 import IntuitionLogo from "./IntuitionLogo";
+import { claimDistribution, intuitionClaimUrl } from "./claim-presentation";
+import { chainDisplayName, chainOptionLabel } from "./chain-presentation";
 
 /* ---------------------------------------------------------------- primitives */
 
@@ -366,7 +370,7 @@ export const REFERENCE: Reference[] = referenceDocument.enforcers.map(
       purpose: presentation.purpose,
       domain: presentation.domain,
       operation: presentation.operation,
-      chain: "Intuition 1155",
+      chain: "eip155:1155",
       state: entry.codeStatus === "observed" ? "observed" : "review",
       address: entry.address,
     };
@@ -544,6 +548,41 @@ function formattedTermsSchema(value: string | undefined): string {
   } catch {
     return value;
   }
+}
+
+function ClaimDistributionBar({ claim }: { claim: Claim }) {
+  const distribution = claimDistribution(claim.stake, claim.oppositionStake);
+  return (
+    <div className="claim-distribution">
+      <div className="claim-distribution__labels">
+        <span>
+          {distribution.hasSignal
+            ? `${distribution.supportPercent}% support`
+            : "No positions yet"}
+        </span>
+        {distribution.hasSignal && (
+          <span>{distribution.oppositionPercent}% oppose</span>
+        )}
+      </div>
+      <div
+        className="claim-distribution__track"
+        role="img"
+        aria-label={
+          distribution.hasSignal
+            ? `TRUST distribution: ${distribution.supportPercent}% support and ${distribution.oppositionPercent}% oppose`
+            : "No TRUST positions on this claim yet"
+        }
+      >
+        <span
+          className="claim-distribution__support"
+          style={{ width: `${distribution.supportPercent}%` }}
+        />
+      </div>
+      <span className="claim-distribution__basis">
+        TRUST-weighted positions
+      </span>
+    </div>
+  );
 }
 
 function RegistryDetailDrawer({
@@ -727,7 +766,7 @@ function RegistryDetailDrawer({
           <Spec
             rows={[
               ["Canonical type", row.canonicalName],
-              ["Chain", row.chain],
+              ["Chain", chainOptionLabel(row.chain)],
               ["Contract address", <code>{row.address}</code>],
               ...(row.termId
                 ? ([["Intuition term ID", <code>{row.termId}</code>]] as Array<
@@ -830,6 +869,7 @@ function RegistryDetailDrawer({
                           ? ` · ${formatTrustSignal(claim.oppositionStake)} opposition`
                           : " · 0 TRUST opposition"}
                       </span>
+                      <ClaimDistributionBar claim={claim} />
                     </div>
                     <div className="claim-ledger__actions">
                       <button
@@ -848,6 +888,16 @@ function RegistryDetailDrawer({
                       >
                         Dispute
                       </button>
+                      {intuitionClaimUrl(claim.id) && (
+                        <a
+                          className="web3-choice web3-choice--portal"
+                          href={intuitionClaimUrl(claim.id)!}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open in Intuition ↗
+                        </a>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -1037,7 +1087,15 @@ function RegistryPageContent() {
     [apiState, showingLive],
   );
   const showReferenceFallback = !showingLive;
-  const graphRows = showingLive ? allLiveRows : REFERENCE;
+  const graphRows = useMemo(() => {
+    if (!showingLive) return REFERENCE;
+    const byType = new Map<string, RegistryRow>();
+    for (const row of allLiveRows) {
+      const key = (row.canonicalName || row.name).toLowerCase();
+      if (!byType.has(key)) byType.set(key, row);
+    }
+    return [...byType.values()];
+  }, [allLiveRows, showingLive]);
 
   const matchesFilters = (row: RegistryRow): boolean => {
     const q = debouncedQuery.trim().toLowerCase();
@@ -1045,7 +1103,7 @@ function RegistryPageContent() {
     return (
       (domain === "all" || row.domain === domain) &&
       (operation === "all" || row.operation === operation) &&
-      (chain === "all" || chain === "eip155:1155") &&
+      (chain === "all" || row.chain === chain) &&
       (audit === "all" ||
         (audit === "with-claim" ? hasAuditClaim(row) : !hasAuditClaim(row))) &&
       signalValue(row) >= minimumSignal &&
@@ -1086,6 +1144,22 @@ function RegistryPageContent() {
     [allLiveRows, showingLive],
   );
 
+  const chains = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          showingLive && allLiveRows.length
+            ? allLiveRows
+                .map((entry) => entry.chain)
+                .filter((value) => /^eip155:\d+$/.test(value))
+            : REFERENCE.map((entry) => entry.chain),
+        ),
+      ).sort((left, right) =>
+        chainDisplayName(left).localeCompare(chainDisplayName(right)),
+      ),
+    [allLiveRows, showingLive],
+  );
+
   const referenceRows = useMemo(() => {
     const q = query.trim().toLowerCase();
     const minimumSignal = parseEther(minimumTrust);
@@ -1093,7 +1167,7 @@ function RegistryPageContent() {
       (r) =>
         (domain === "all" || r.domain === domain) &&
         (operation === "all" || r.operation === operation) &&
-        (chain === "all" || chain === "eip155:1155") &&
+        (chain === "all" || r.chain === chain) &&
         (audit === "all" || audit === "without-claim") &&
         signalValue(r) >= minimumSignal &&
         (q === "" ||
@@ -1181,10 +1255,14 @@ function RegistryPageContent() {
             </select>
           </label>
           <label>
-            <span className="mono-label">Chain evidence</span>
+            <span className="mono-label">Chain</span>
             <select value={chain} onChange={(e) => setChain(e.target.value)}>
               <option value="all">All chains</option>
-              <option value="eip155:1155">Intuition 1155</option>
+              {chains.map((value) => (
+                <option key={value} value={value}>
+                  {chainOptionLabel(value)}
+                </option>
+              ))}
             </select>
           </label>
           <label>
@@ -1263,7 +1341,9 @@ function RegistryPageContent() {
                   <em>{r.purpose}</em>
                 </span>
                 <span className="table__domain">{r.domain}</span>
-                <span className="table__chain">{r.chain}</span>
+                <span className="table__chain">
+                  {chainDisplayName(r.chain)}
+                </span>
                 <span className="table__trust">
                   {formatTrustSignal(r.supportSignal?.value)}
                 </span>
@@ -1303,13 +1383,17 @@ function RegistryPageContent() {
           </div>
           <p className="lede">
             {showingLive
-              ? `Every spoke is a live membership triple on Intuition: ${allLiveRows.length} ERC-7710 enforcers linked to one deployment class. Coloured by what they restrict.`
+              ? `${allLiveRows.length} chain-qualified deployment records resolve to ${graphRows.length} ERC-7710 enforcer types. Every spoke remains linked to live Intuition membership evidence.`
               : `The reference map contains ${referenceCount} ERC-7710 enforcers linked to one deployment class. Live membership appears here when the registry service is available.`}
           </p>
         </div>
         <BrowserFrame
           title="Caveat Registry"
-          label="Live · Intuition 1155"
+          label={
+            showingLive
+              ? `Live · ${chains.length} chain${chains.length === 1 ? "" : "s"}`
+              : "Reference · Intuition mainnet"
+          }
           tone="ink"
         >
           <EnforcerRadialGraph
@@ -1437,7 +1521,12 @@ export function DetailPage() {
 
             <Spec
               rows={[
-                ["Chain", "eip155:1155"],
+                [
+                  "Chain",
+                  chainOptionLabel(
+                    record?.chain ?? summary?.chain ?? "Chain claim pending",
+                  ),
+                ],
                 ["Address", address],
                 ["Canonical type", canonicalName],
                 ["Source family", "MetaMask Delegation Framework"],
@@ -1561,6 +1650,62 @@ type SubmissionReview = {
   write: SubmissionWriteOptions;
 };
 
+type AdditionalClaimDraft = SubmissionAdditionalClaim & { id: number };
+
+const MODULAR_CLAIM_PREDICATES = [
+  {
+    key: "describedBy",
+    label: "described by",
+    subject: "type",
+  },
+  { key: "usedBy", label: "used by", subject: "deployment" },
+  {
+    key: "coveredByAudit",
+    label: "covered by audit",
+    subject: "deployment",
+  },
+  { key: "restricts", label: "restricts", subject: "type" },
+  {
+    key: "affectsOperation",
+    label: "affects operation",
+    subject: "type",
+  },
+  { key: "complements", label: "complements", subject: "type" },
+  { key: "conflictsWith", label: "conflicts with", subject: "type" },
+  { key: "redundantWith", label: "redundant with", subject: "type" },
+  {
+    key: "appliesInContext",
+    label: "applies in context",
+    subject: "term",
+  },
+  {
+    key: "requiresOrdering",
+    label: "requires ordering",
+    subject: "term",
+  },
+  { key: "supportedBy", label: "supported by", subject: "term" },
+] as const;
+
+const CLAIM_PREDICATE_OPTIONS = MODULAR_CLAIM_PREDICATES.flatMap((option) => {
+  const predicateId = PROPOSED_ONTOLOGY_MANIFEST.predicates[option.key];
+  return predicateId ? [{ ...option, predicateId }] : [];
+});
+
+let claimDraftId = 0;
+
+function additionalClaimDraft(
+  option = CLAIM_PREDICATE_OPTIONS[1] ?? CLAIM_PREDICATE_OPTIONS[0],
+): AdditionalClaimDraft {
+  claimDraftId += 1;
+  return {
+    id: claimDraftId,
+    subject: option?.subject ?? "deployment",
+    predicateId: option?.predicateId ?? "",
+    predicateLabel: option?.label ?? "",
+    object: "",
+  };
+}
+
 const DEFAULT_TERMS_SCHEMA = JSON.stringify(
   {
     schemaVersion: "1.0.0",
@@ -1588,6 +1733,7 @@ function shortAddress(address: string): string {
 
 function SubmitPageContent() {
   const [mode, setMode] = useState<ContributionMode>("list");
+  const [chainId, setChainId] = useState("1155");
   const [name, setName] = useState("");
   const [category, setCategory] = useState("frequency");
   const [purpose, setPurpose] = useState("");
@@ -1595,6 +1741,9 @@ function SubmitPageContent() {
   const [sourceVersion, setSourceVersion] = useState("");
   const [contractAddress, setContractAddress] = useState("");
   const [termsJson, setTermsJson] = useState(DEFAULT_TERMS_SCHEMA);
+  const [additionalClaims, setAdditionalClaims] = useState<
+    AdditionalClaimDraft[]
+  >([]);
   const [claimId, setClaimId] = useState("");
   const [selectedDeploymentId, setSelectedDeploymentId] = useState("");
   const [amount, setAmount] = useState("0.1");
@@ -1644,6 +1793,7 @@ function SubmitPageContent() {
     setSubmissionReview(null);
   }, [
     mode,
+    chainId,
     name,
     category,
     purpose,
@@ -1651,6 +1801,7 @@ function SubmitPageContent() {
     sourceVersion,
     contractAddress,
     termsJson,
+    additionalClaims,
   ]);
 
   useEffect(() => {
@@ -1742,6 +1893,14 @@ function SubmitPageContent() {
     set("source URL", str(parsed.sourceUrl), setSourceUrl);
     set("source version", str(parsed.sourceVersion), setSourceVersion);
     set("contract address", str(parsed.contractAddress), setContractAddress);
+    if (
+      (typeof parsed.chainId === "string" ||
+        typeof parsed.chainId === "number") &&
+      /^\d+$/.test(String(parsed.chainId))
+    ) {
+      setChainId(String(parsed.chainId));
+      filled.push("chain");
+    }
 
     const domain = str(parsed.restrictionDomain).toLowerCase();
     const categoryKey = domain.includes("time")
@@ -1762,6 +1921,38 @@ function SubmitPageContent() {
       filled.push("terms schema");
     }
 
+    if (Array.isArray(parsed.additionalClaims)) {
+      const importedClaims = parsed.additionalClaims.flatMap((claim) => {
+        if (!claim || typeof claim !== "object" || Array.isArray(claim)) {
+          return [];
+        }
+        const value = claim as Record<string, unknown>;
+        const subject = value.subject;
+        if (
+          subject !== "deployment" &&
+          subject !== "type" &&
+          subject !== "term"
+        ) {
+          return [];
+        }
+        claimDraftId += 1;
+        return [
+          {
+            id: claimDraftId,
+            subject,
+            predicateId: str(value.predicateId),
+            predicateLabel: str(value.predicateLabel),
+            object: str(value.object),
+            ...(subject === "term" ? { subjectId: str(value.subjectId) } : {}),
+          } satisfies AdditionalClaimDraft,
+        ];
+      });
+      if (importedClaims.length) {
+        setAdditionalClaims(importedClaims);
+        filled.push(`${importedClaims.length} additional claims`);
+      }
+    }
+
     setImportNote(
       filled.length
         ? `Filled ${filled.length} field${filled.length === 1 ? "" : "s"}: ${filled.join(", ")}. Review, connect your wallet, and sign.`
@@ -1777,7 +1968,7 @@ function SubmitPageContent() {
       throw new Error("Terms schema must be valid JSON before submitting.");
     }
     return {
-      chainId: 1155,
+      chainId,
       contractAddress,
       enforcerName: name,
       description: purpose,
@@ -1789,13 +1980,7 @@ function SubmitPageContent() {
       termsSchema: termsSchema as SubmissionInput["termsSchema"],
       submitterWallet: activeWallet.address,
       initialSignal: "0",
-      evidence: {
-        audit: {
-          sourceUrl,
-          scope: "Repository and deployed contract evidence",
-          ...(sourceVersion.trim() ? { sourceVersion } : {}),
-        },
-      },
+      additionalClaims: additionalClaims.map(({ id: _id, ...claim }) => claim),
     };
   }
 
@@ -2038,6 +2223,16 @@ function SubmitPageContent() {
 
             {mode === "list" ? (
               <>
+                <div className="submission-step-heading">
+                  <span className="submission-step-heading__number">1</span>
+                  <div>
+                    <h3>Find or create the enforcer identity.</h3>
+                    <p>
+                      The identity is the deployed contract plus its EIP-155
+                      chain. The connected signing wallet is a separate actor.
+                    </p>
+                  </div>
+                </div>
                 <details className="form__import">
                   <summary>Have submission JSON? Autofill the form</summary>
                   <label>
@@ -2121,9 +2316,42 @@ function SubmitPageContent() {
                   </label>
                   <label>
                     <span className="mono-label">Chain</span>
-                    <select value="1155" disabled>
-                      <option value="1155">Intuition 1155</option>
+                    <select
+                      value={
+                        ["1155", "1", "8453", "11155111"].includes(chainId)
+                          ? chainId
+                          : "custom"
+                      }
+                      onChange={(event) =>
+                        setChainId(
+                          event.target.value === "custom"
+                            ? ""
+                            : event.target.value,
+                        )
+                      }
+                    >
+                      <option value="1155">Intuition mainnet · 1155</option>
+                      <option value="1">Ethereum mainnet · 1</option>
+                      <option value="8453">Base · 8453</option>
+                      <option value="11155111">Sepolia · 11155111</option>
+                      <option value="custom">Other EVM chain…</option>
                     </select>
+                    {!["1155", "1", "8453", "11155111"].includes(chainId) && (
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]+"
+                        value={chainId}
+                        onChange={(event) => setChainId(event.target.value)}
+                        placeholder="EIP-155 chain ID"
+                        aria-label="Custom EIP-155 chain ID"
+                        required
+                      />
+                    )}
+                    <span className="form__hint">
+                      Choose the chain where this exact contract has deployed
+                      bytecode. Availability is verified before any registry
+                      write.
+                    </span>
                   </label>
                 </div>
 
@@ -2159,20 +2387,30 @@ function SubmitPageContent() {
                 </div>
 
                 <label>
-                  <span className="mono-label">
-                    Deployer / submitter wallet
-                  </span>
+                  <span className="mono-label">Connected signing wallet</span>
                   <input
                     value={wallet?.address ?? "Connect a wallet to autofill"}
                     readOnly
                     aria-describedby="submitter-wallet-hint"
                   />
                   <span id="submitter-wallet-hint" className="form__hint">
-                    Filled from the wallet you connect and used as the
-                    contribution submitter. It never replaces the deployed
-                    contract address.
+                    This wallet submits the Intuition claims. It is never
+                    inferred to be the contract deployer or author. Add either
+                    identity as a separate claim when you can support it.
                   </span>
                 </label>
+
+                <div className="submission-step-heading submission-step-heading--claims">
+                  <span className="submission-step-heading__number">2</span>
+                  <div>
+                    <h3>Add claims about the identity.</h3>
+                    <p>
+                      The source, purpose, restriction, operation, and terms
+                      above form the required starting claims. Add as many exact
+                      ontology claims as the evidence supports.
+                    </p>
+                  </div>
+                </div>
 
                 <label>
                   <span className="mono-label">Terms schema JSON</span>
@@ -2184,6 +2422,247 @@ function SubmitPageContent() {
                     required
                   />
                 </label>
+
+                <section
+                  className="modular-claims"
+                  aria-labelledby="modular-claims-heading"
+                >
+                  <div className="modular-claims__header">
+                    <div>
+                      <h3 id="modular-claims-heading">Additional claims</h3>
+                      <p>
+                        Select a reviewed predicate or provide an exact
+                        Intuition predicate ID. Nothing here is treated as a
+                        badge or inferred from the connected wallet.
+                      </p>
+                    </div>
+                    <button
+                      className="cta cta--ghost"
+                      type="button"
+                      onClick={() =>
+                        setAdditionalClaims((claims) => [
+                          ...claims,
+                          additionalClaimDraft(),
+                        ])
+                      }
+                    >
+                      Add claim
+                    </button>
+                  </div>
+
+                  {additionalClaims.length === 0 ? (
+                    <p className="modular-claims__empty">
+                      No optional claims added. Use this for authorship,
+                      deployment provenance, audit evidence, usage context, or
+                      composability when you have an exact predicate and object.
+                    </p>
+                  ) : (
+                    <ol className="modular-claims__list">
+                      {additionalClaims.map((claim, index) => {
+                        const knownPredicate = CLAIM_PREDICATE_OPTIONS.find(
+                          (option) => option.predicateId === claim.predicateId,
+                        );
+                        return (
+                          <li key={claim.id}>
+                            <div className="modular-claims__claim-heading">
+                              <strong>Claim {index + 1}</strong>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setAdditionalClaims((claims) =>
+                                    claims.filter(
+                                      (candidate) => candidate.id !== claim.id,
+                                    ),
+                                  )
+                                }
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            <div className="form__pair">
+                              <label>
+                                <span className="mono-label">Predicate</span>
+                                <select
+                                  value={
+                                    knownPredicate?.predicateId ?? "custom"
+                                  }
+                                  onChange={(event) => {
+                                    const option = CLAIM_PREDICATE_OPTIONS.find(
+                                      (candidate) =>
+                                        candidate.predicateId ===
+                                        event.target.value,
+                                    );
+                                    setAdditionalClaims((claims) =>
+                                      claims.map((candidate) =>
+                                        candidate.id === claim.id
+                                          ? option
+                                            ? {
+                                                ...candidate,
+                                                predicateId: option.predicateId,
+                                                predicateLabel: option.label,
+                                                subject: option.subject,
+                                                subjectId:
+                                                  option.subject === "term"
+                                                    ? candidate.subjectId
+                                                    : undefined,
+                                              }
+                                            : {
+                                                ...candidate,
+                                                predicateId: "",
+                                                predicateLabel: "",
+                                              }
+                                          : candidate,
+                                      ),
+                                    );
+                                  }}
+                                >
+                                  {CLAIM_PREDICATE_OPTIONS.map((option) => (
+                                    <option
+                                      key={option.predicateId}
+                                      value={option.predicateId}
+                                    >
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                  <option value="custom">
+                                    Custom exact predicate
+                                  </option>
+                                </select>
+                              </label>
+                              <label>
+                                <span className="mono-label">Subject</span>
+                                <select
+                                  value={claim.subject}
+                                  onChange={(event) =>
+                                    setAdditionalClaims((claims) =>
+                                      claims.map((candidate) =>
+                                        candidate.id === claim.id
+                                          ? {
+                                              ...candidate,
+                                              subject: event.target.value as
+                                                "deployment" | "type" | "term",
+                                            }
+                                          : candidate,
+                                      ),
+                                    )
+                                  }
+                                >
+                                  <option value="deployment">
+                                    This chain deployment
+                                  </option>
+                                  <option value="type">
+                                    Chain-independent enforcer type
+                                  </option>
+                                  <option value="term">
+                                    Existing Intuition claim or term
+                                  </option>
+                                </select>
+                              </label>
+                            </div>
+
+                            {!knownPredicate && (
+                              <div className="form__pair">
+                                <label>
+                                  <span className="mono-label">
+                                    Predicate label
+                                  </span>
+                                  <input
+                                    value={claim.predicateLabel ?? ""}
+                                    onChange={(event) =>
+                                      setAdditionalClaims((claims) =>
+                                        claims.map((candidate) =>
+                                          candidate.id === claim.id
+                                            ? {
+                                                ...candidate,
+                                                predicateLabel:
+                                                  event.target.value,
+                                              }
+                                            : candidate,
+                                        ),
+                                      )
+                                    }
+                                    placeholder="deployed by"
+                                  />
+                                </label>
+                                <label>
+                                  <span className="mono-label">
+                                    Exact predicate term ID
+                                  </span>
+                                  <input
+                                    value={claim.predicateId}
+                                    onChange={(event) =>
+                                      setAdditionalClaims((claims) =>
+                                        claims.map((candidate) =>
+                                          candidate.id === claim.id
+                                            ? {
+                                                ...candidate,
+                                                predicateId: event.target.value,
+                                              }
+                                            : candidate,
+                                        ),
+                                      )
+                                    }
+                                    placeholder="0x… 32-byte Intuition atom ID"
+                                    pattern="^0x[a-fA-F0-9]{64}$"
+                                    required
+                                  />
+                                </label>
+                              </div>
+                            )}
+
+                            {claim.subject === "term" && (
+                              <label>
+                                <span className="mono-label">
+                                  Subject claim or term ID
+                                </span>
+                                <input
+                                  value={claim.subjectId ?? ""}
+                                  onChange={(event) =>
+                                    setAdditionalClaims((claims) =>
+                                      claims.map((candidate) =>
+                                        candidate.id === claim.id
+                                          ? {
+                                              ...candidate,
+                                              subjectId: event.target.value,
+                                            }
+                                          : candidate,
+                                      ),
+                                    )
+                                  }
+                                  placeholder="0x… relationship triple ID"
+                                  pattern="^0x[a-fA-F0-9]{64}$"
+                                  required
+                                />
+                              </label>
+                            )}
+
+                            <label>
+                              <span className="mono-label">Claim object</span>
+                              <textarea
+                                rows={3}
+                                value={claim.object}
+                                onChange={(event) =>
+                                  setAdditionalClaims((claims) =>
+                                    claims.map((candidate) =>
+                                      candidate.id === claim.id
+                                        ? {
+                                            ...candidate,
+                                            object: event.target.value,
+                                          }
+                                        : candidate,
+                                    ),
+                                  )
+                                }
+                                placeholder="The identity, evidence URL, context, or canonical value this claim points to"
+                                required
+                              />
+                            </label>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  )}
+                </section>
               </>
             ) : (
               <section
@@ -2438,12 +2917,18 @@ function SubmitPageContent() {
                         : "Choose a claim",
                 ],
                 ...(mode === "list"
+                  ? ([
+                      ["Chain identity", `eip155:${chainId}`],
+                      ["Optional claims", `${additionalClaims.length} added`],
+                    ] as Array<[string, React.ReactNode]>)
+                  : []),
+                ...(mode === "list"
                   ? []
                   : ([
                       ["Signal", mode === "attest" ? "Support" : "Dispute"],
                       ["Deposit", `${amount || "0"} TRUST`],
                     ] as Array<[string, React.ReactNode]>)),
-                ["Wallet", walletLabel],
+                [mode === "list" ? "Signing wallet" : "Wallet", walletLabel],
               ]}
             />
             {submissionReview && mode === "list" && (

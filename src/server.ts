@@ -55,6 +55,12 @@ function createBackend(): RegistryBackend {
       envValue("INTUITION_GRAPHQL_URL", INTUITION_MAINNET_GRAPHQL),
     ),
     rpcEndpoint,
+    verificationRpcEndpoints: {
+      "1": envValue("EVM_RPC_URL_1") || undefined,
+      "8453": envValue("EVM_RPC_URL_8453") || undefined,
+      "11155111": envValue("EVM_RPC_URL_11155111") || undefined,
+      [ontology.chainId]: rpcEndpoint,
+    },
     ontology,
     publicClient,
   });

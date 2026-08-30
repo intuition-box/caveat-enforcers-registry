@@ -4,6 +4,7 @@ import {
   createWalletClient,
   formatEther,
   http,
+  keccak256,
   type Address,
   type Hex,
 } from "viem";
@@ -43,6 +44,7 @@ type Options = {
   confirmMainnet: boolean;
   batchSize: number;
   indexTimeoutSeconds: number;
+  chainIds: string[];
 };
 
 type SeedState = {
@@ -67,6 +69,7 @@ Options:
   --execute --confirm-mainnet       Broadcast the reviewed mainnet seed
   --batch-size <n>                  Atoms/triples per transaction (default ${DEFAULT_BATCH_SIZE})
   --index-timeout-seconds <n>       GraphQL indexing wait (default ${DEFAULT_INDEX_TIMEOUT_SECONDS})
+  --chains <ids>                    Verified deployment chains, comma-separated (default 1155)
 `);
 }
 
@@ -98,14 +101,31 @@ function parseOptions(argv: string[]): Options {
 
   let batchSize = DEFAULT_BATCH_SIZE;
   let indexTimeoutSeconds = DEFAULT_INDEX_TIMEOUT_SECONDS;
+  let chainIds = [INTUITION_MAINNET_CHAIN_ID];
   for (let index = 0; index < argv.length; index += 1) {
     const flag = argv[index];
-    if (flag === "--batch-size" || flag === "--index-timeout-seconds") {
+    if (
+      flag === "--batch-size" ||
+      flag === "--index-timeout-seconds" ||
+      flag === "--chains"
+    ) {
       const value = argv[index + 1];
       if (!value) throw new Error(`${flag} requires a value.`);
-      const parsed = positiveInteger(value, flag);
-      if (flag === "--batch-size") batchSize = parsed;
-      else indexTimeoutSeconds = parsed;
+      if (flag === "--chains") {
+        chainIds = [...new Set(value.split(",").map((item) => item.trim()))];
+        if (
+          !chainIds.length ||
+          chainIds.some((chainId) => !/^\d+$/.test(chainId))
+        ) {
+          throw new Error(
+            "--chains must be a comma-separated list of EIP-155 chain IDs.",
+          );
+        }
+      } else {
+        const parsed = positiveInteger(value, flag);
+        if (flag === "--batch-size") batchSize = parsed;
+        else indexTimeoutSeconds = parsed;
+      }
       index += 1;
       continue;
     }
@@ -122,6 +142,7 @@ function parseOptions(argv: string[]): Options {
     confirmMainnet: argv.includes("--confirm-mainnet"),
     batchSize,
     indexTimeoutSeconds,
+    chainIds,
   };
 }
 
@@ -225,18 +246,55 @@ async function readSeedState(
   return { missingAtoms, missingTriples };
 }
 
+const PUBLIC_VERIFICATION_RPCS: Record<string, string> = {
+  "1": "https://ethereum-rpc.publicnode.com",
+  "8453": "https://base-rpc.publicnode.com",
+  "11155111": "https://ethereum-sepolia-rpc.publicnode.com",
+  [INTUITION_MAINNET_CHAIN_ID]: INTUITION_MAINNET_RPC,
+};
+
+function verificationRpc(chainId: string): string {
+  const endpoint =
+    process.env[`EVM_RPC_URL_${chainId}`]?.trim() ||
+    PUBLIC_VERIFICATION_RPCS[chainId];
+  if (!endpoint) {
+    throw new Error(
+      `Set EVM_RPC_URL_${chainId} to verify deployments on EIP-155 chain ${chainId}.`,
+    );
+  }
+  return endpoint;
+}
+
 async function assertSourceDeployments(
-  publicClient: ReturnType<typeof createPublicClient>,
   document: ReferenceSeedDocument,
+  chainIds: string[],
 ): Promise<void> {
-  await mapWithConcurrency(document.enforcers, async (entry) => {
-    const address = seedAddress(entry.address.toLowerCase());
-    const bytecode = await publicClient.getBytecode({ address });
-    if (!bytecode || bytecode === "0x") {
-      throw new Error(`No bytecode found for ${entry.name} at ${address}.`);
+  const hashes = new Map<string, Map<string, string>>();
+  for (const chainId of chainIds) {
+    const client = createPublicClient({
+      transport: http(verificationRpc(chainId)),
+    });
+    await mapWithConcurrency(document.enforcers, async (entry) => {
+      const address = seedAddress(entry.address.toLowerCase());
+      const bytecode = await client.getBytecode({ address });
+      if (!bytecode || bytecode === "0x") {
+        throw new Error(
+          `No bytecode found for ${entry.name} at ${address} on EIP-155 chain ${chainId}.`,
+        );
+      }
+      const byChain = hashes.get(entry.name) ?? new Map<string, string>();
+      byChain.set(chainId, keccak256(bytecode));
+      hashes.set(entry.name, byChain);
+      return null;
+    });
+  }
+  for (const [name, byChain] of hashes) {
+    if (new Set(byChain.values()).size !== 1) {
+      throw new Error(
+        `Runtime bytecode differs across selected chains for ${name}; review before writing deployment claims.`,
+      );
     }
-    return null;
-  });
+  }
 }
 
 async function assertConfiguredPredicates(
@@ -389,7 +447,7 @@ async function waitForIndexing(
         variables: {
           predicate: PROPOSED_ONTOLOGY_MANIFEST.predicates.membership!,
           object: plan.classId,
-          limit: 100,
+          limit: Math.max(wanted.size + 32, 100),
         },
       }),
     });
@@ -420,7 +478,7 @@ async function waitForIndexing(
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const document = await loadReferenceDocument();
-  const plan = buildReferenceSeedPlan(document);
+  const plan = buildReferenceSeedPlan(document, { chainIds: options.chainIds });
   const publicClient = createPublicClient({
     chain: INTUITION_CHAIN,
     transport: http(INTUITION_MAINNET_RPC),
@@ -432,12 +490,13 @@ async function main(): Promise<void> {
     );
   }
   await assertConfiguredPredicates(publicClient);
-  await assertSourceDeployments(publicClient, document);
+  await assertSourceDeployments(document, options.chainIds);
   const state = await readSeedState(publicClient, plan);
 
   console.log(
     `Reference seed: ${document.enforcers.length} MetaMask enforcers`,
   );
+  console.log(`Verified chains: ${options.chainIds.join(", ")}`);
   console.log(
     `Plan: ${plan.atoms.length} atoms, ${plan.triples.length} triples`,
   );
@@ -519,7 +578,9 @@ async function main(): Promise<void> {
     (triple) => triple.key === "membership",
   ).length;
   if (indexed === membershipCount) {
-    console.log("Registry indexing: all 32 seed memberships are discoverable.");
+    console.log(
+      `Registry indexing: all ${membershipCount} seed memberships are discoverable.`,
+    );
   } else {
     console.log(
       `Registry indexing pending: ${indexed}/${membershipCount} visible; re-run the read-only check later.`,

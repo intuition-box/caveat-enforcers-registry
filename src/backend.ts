@@ -62,7 +62,10 @@ import {
 
 export type BackendConfig = {
   endpoint: string;
+  /** Intuition RPC used for MultiVault reads, writes, and receipts. */
   rpcEndpoint?: string;
+  /** Target-chain RPCs used only to verify submitted deployment code. */
+  verificationRpcEndpoints?: Record<string, string | undefined>;
   ontology?: OntologyManifest;
   registry?: Omit<RegistryConfig, "endpoint" | "ontology">;
   publicClient?: IntuitionPublicClient;
@@ -389,10 +392,15 @@ export class RegistryBackend {
     const validated = validateSubmission(input);
     if (!validated.valid)
       return { status: "invalid", issues: validated.issues };
-    if (!this.config.rpcEndpoint?.trim()) {
+    const verificationRpcEndpoint =
+      this.config.verificationRpcEndpoints?.[validated.value.chainId]?.trim() ||
+      (validated.value.chainId === this.ontology.chainId
+        ? this.config.rpcEndpoint?.trim()
+        : undefined);
+    if (!verificationRpcEndpoint) {
       return {
         status: "blocked",
-        message: "An RPC endpoint is required for contract-code verification.",
+        message: `A target-chain RPC endpoint is required to verify deployment code on EIP-155 chain ${validated.value.chainId}.`,
       };
     }
     const address = normalizeEvmAddress(validated.value.contractAddress);
@@ -408,12 +416,12 @@ export class RegistryBackend {
       };
     }
     const codeCheck = await verifyContractCode(
-      this.config.rpcEndpoint,
+      verificationRpcEndpoint,
       address,
       this.config.rpcFetcher,
     );
     const chainCheck = await verifyRpcChainId(
-      this.config.rpcEndpoint,
+      verificationRpcEndpoint,
       validated.value.chainId,
       this.config.rpcFetcher,
     );
@@ -421,7 +429,7 @@ export class RegistryBackend {
       ? await Promise.all(
           validated.value.termsSchema.fixtures.map((_, fixtureIndex) =>
             verifyTermsDecoder(
-              this.config.rpcEndpoint!,
+              verificationRpcEndpoint,
               address,
               validated.value.termsSchema,
               fixtureIndex,

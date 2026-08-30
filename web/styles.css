@@ -7101,6 +7101,39 @@ main > .band:first-child {
   overflow-wrap: anywhere;
 }
 
+.claim-distribution {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  max-width: 24rem;
+}
+
+.claim-distribution__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font: 650 0.72rem/1.2 var(--body);
+}
+
+.claim-distribution__track {
+  height: 0.4rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.claim-distribution__support {
+  display: block;
+  height: 100%;
+  background: var(--signal);
+}
+
+.claim-distribution__basis {
+  color: var(--muted);
+  font: 0.62rem/1.3 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .claim-ledger__signal {
   display: block;
   margin-top: 0.55rem;
@@ -7117,6 +7150,7 @@ main > .band:first-child {
 }
 
 .claim-ledger__actions button,
+.claim-ledger__actions a,
 .claim-curation__actions button {
   min-height: 2.5rem;
   padding: 0 0.85rem;
@@ -7130,6 +7164,12 @@ main > .band:first-child {
     background-color 160ms ease,
     border-color 160ms ease,
     color 160ms ease;
+}
+
+.claim-ledger__actions a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .claim-ledger__actions button:hover,
@@ -7222,6 +7262,12 @@ main > .band:first-child {
 .claim-ledger__actions .web3-choice--oppose {
   border-color: var(--ink);
   background: var(--paper-bright);
+  color: var(--ink);
+}
+
+.claim-ledger__actions .web3-choice--portal {
+  border-color: var(--line-light);
+  background: transparent;
   color: var(--ink);
 }
 
@@ -7419,6 +7465,128 @@ main > .band:first-child {
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--line-light);
+}
+
+.submission-step-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.submission-step-heading--claims {
+  margin-top: 2.5rem;
+}
+
+.submission-step-heading__number {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  font: 700 0.78rem/1 var(--mono);
+}
+
+.submission-step-heading h3,
+.submission-step-heading p,
+.modular-claims__header h3,
+.modular-claims__header p,
+.modular-claims__empty {
+  margin: 0;
+}
+
+.submission-step-heading h3,
+.modular-claims__header h3 {
+  font-family: var(--display);
+  font-size: clamp(1.45rem, 2.5vw, 2rem);
+  font-weight: 580;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.submission-step-heading p,
+.modular-claims__header p,
+.modular-claims__empty {
+  margin-top: 0.45rem;
+  color: color-mix(in srgb, var(--ink) 68%, transparent);
+  line-height: 1.5;
+}
+
+.modular-claims {
+  margin-top: 2rem;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.modular-claims__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+}
+
+.modular-claims__header p {
+  max-width: 54ch;
+}
+
+.modular-claims__empty {
+  padding: 1.25rem 0 1.5rem;
+  border-top: 1px solid var(--line-light);
+}
+
+.modular-claims__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.modular-claims__list > li {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--line-light);
+}
+
+.modular-claims__claim-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.modular-claims__claim-heading strong {
+  font: 650 0.78rem/1 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.modular-claims__claim-heading button {
+  min-height: 2.25rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--line-light);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.modular-claims__claim-heading button:hover,
+.modular-claims__claim-heading button:focus-visible {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+@media (max-width: 42rem) {
+  .modular-claims__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
 
 .transaction-plan__heading h3 {
@@ -7966,6 +8134,38 @@ main > .band:first-child {
   font-size: 0.75rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+}
+.cgraph__position {
+  display: grid;
+  gap: 0.45rem;
+  width: min(28rem, 100%);
+  margin: 0.9rem 0;
+}
+.cgraph__position-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.cgraph__position-track {
+  height: 0.45rem;
+  overflow: hidden;
+  background: rgba(229, 101, 122, 0.55);
+}
+.cgraph__position-track span {
+  display: block;
+  height: 100%;
+  background: #46c88a;
+}
+.cgraph__position small {
+  color: color-mix(in srgb, var(--paper) 68%, transparent);
+  font: 0.68rem/1.4 var(--mono, "Space Mono", monospace);
+}
+.cgraph__links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 .cgraph__clear {
   flex: 0 0 auto;

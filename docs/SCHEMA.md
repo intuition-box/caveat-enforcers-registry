@@ -94,6 +94,12 @@ The language-neutral submission contract is published at [`schema/submission.sch
 
 Optional evidence includes an audit report, release record, deployment transaction, known usage, composition relationship, and examples. Optional evidence must remain absent when it is unavailable.
 
+The deployed contract, a claimed deployer or author, and the connected submitter are separate
+identities. The connected wallet signs the Intuition contribution only; clients must never infer
+that it deployed or authored the enforcer. A contributor can append repeatable claims using an
+exact predicate term ID and a deployment, type, or existing-term subject. This preserves an open
+ontology without silently minting predicate meaning from a display label.
+
 The portable submission contract currently models audit evidence as a source URL, scope, and
 optional source version, known usage as named references with optional URLs, and composability
 evidence as a relationship, use-case context, optional ordering, and optional supporting URL.
@@ -105,7 +111,7 @@ their subject, so they remain extensible and attestable by the community.
 
 1. Normalize the chain and contract address.
 2. Build the CAIP-10 deployment identity.
-3. Verify contract code on the selected chain.
+3. Verify contract code through an RPC for the selected chain; registry writes remain on Intuition.
 4. Resolve existing atoms and triples using canonical IDs.
 5. Validate and pin structured metadata and the terms schema.
 6. Preview and simulate the complete transaction plan.

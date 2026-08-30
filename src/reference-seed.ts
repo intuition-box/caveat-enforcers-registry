@@ -41,6 +41,7 @@ export type ReferenceSeedTriple = {
 
 export type ReferenceSeedPlan = {
   chainId: string;
+  chainIds: string[];
   sourceRepository: string;
   classId: string;
   atoms: ReferenceSeedAtom[];
@@ -48,7 +49,6 @@ export type ReferenceSeedPlan = {
 };
 
 const CHAIN_ID = "1155";
-const CHAIN_ATOM = `eip155:${CHAIN_ID}`;
 const IMPLEMENTS_PREDICATE = "implements";
 const SOURCE_AT_PREDICATE = "source at";
 
@@ -116,6 +116,7 @@ function addTriple(
  */
 export function buildReferenceSeedPlan(
   document: ReferenceSeedDocument,
+  options: { chainIds?: string[] } = {},
 ): ReferenceSeedPlan {
   const sourceRepository = requiredText(
     document.source?.repository,
@@ -131,6 +132,18 @@ export function buildReferenceSeedPlan(
   const triples = new Map<string, ReferenceSeedTriple>();
   const names = new Set<string>();
   const addresses = new Set<string>();
+  const chainIds = [
+    ...new Set(
+      (options.chainIds ?? [CHAIN_ID]).map((chainId) => {
+        const normalized = String(chainId).trim();
+        if (!/^\d+$/.test(normalized)) {
+          throw new Error(`Invalid EIP-155 chain ID: ${chainId}.`);
+        }
+        return normalized;
+      }),
+    ),
+  ];
+  if (!chainIds.length) throw new Error("At least one chain ID is required.");
 
   const classAtom = addAtom(
     atoms,
@@ -155,7 +168,12 @@ export function buildReferenceSeedPlan(
     "ontology-predicate:source-at",
     SOURCE_AT_PREDICATE,
   );
-  const chainAtom = addAtom(atoms, "chain", CHAIN_ATOM);
+  const chainAtoms = new Map(
+    chainIds.map((chainId) => [
+      chainId,
+      addAtom(atoms, `chain:${chainId}`, `eip155:${chainId}`),
+    ]),
+  );
   const sourceAtom = addAtom(atoms, "source-url", sourceRepository);
 
   const membershipPredicate = PROPOSED_ONTOLOGY_MANIFEST.predicates.membership;
@@ -182,49 +200,53 @@ export function buildReferenceSeedPlan(
     names.add(name);
     addresses.add(address);
 
-    const deployment = addAtom(
-      atoms,
-      `deployment:${name}`,
-      buildCaip10(CHAIN_ID, address),
-    );
     const type = addAtom(atoms, `enforcer-type:${name}`, name);
+    for (const chainId of chainIds) {
+      const deployment = addAtom(
+        atoms,
+        `deployment:${chainId}:${name}`,
+        buildCaip10(chainId, address),
+      );
+      const chainAtom = chainAtoms.get(chainId)!;
 
-    addTriple(
-      triples,
-      "membership",
-      name,
-      deployment.id,
-      membershipPredicate,
-      classAtom.id,
-    );
-    addTriple(
-      triples,
-      "implements",
-      name,
-      deployment.id,
-      implementsPredicateAtom.id,
-      type.id,
-    );
-    addTriple(
-      triples,
-      "deployed-on",
-      name,
-      deployment.id,
-      deployedOnPredicate,
-      chainAtom.id,
-    );
-    addTriple(
-      triples,
-      "source-at",
-      name,
-      deployment.id,
-      sourceAtPredicateAtom.id,
-      sourceAtom.id,
-    );
+      addTriple(
+        triples,
+        "membership",
+        name,
+        deployment.id,
+        membershipPredicate,
+        classAtom.id,
+      );
+      addTriple(
+        triples,
+        "implements",
+        name,
+        deployment.id,
+        implementsPredicateAtom.id,
+        type.id,
+      );
+      addTriple(
+        triples,
+        "deployed-on",
+        name,
+        deployment.id,
+        deployedOnPredicate,
+        chainAtom.id,
+      );
+      addTriple(
+        triples,
+        "source-at",
+        name,
+        deployment.id,
+        sourceAtPredicateAtom.id,
+        sourceAtom.id,
+      );
+    }
   }
 
   return {
-    chainId: CHAIN_ID,
+    chainId: chainIds[0]!,
+    chainIds,
     sourceRepository,
     classId: classAtom.id,
     atoms: [...atoms.values()],

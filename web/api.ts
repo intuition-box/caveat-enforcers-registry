@@ -43,14 +43,31 @@ export type RegistryListOptions = {
 export async function fetchRegistry(
   options: RegistryListOptions = {},
 ): Promise<RegistryApiState> {
-  const params = new URLSearchParams({ limit: "100", offset: "0" });
-  if (options.query?.trim()) params.set("query", options.query.trim());
-  if (options.chain?.trim()) params.set("chain", options.chain.trim());
-  if (options.domain?.trim()) params.set("domain", options.domain.trim());
-  if (options.operation?.trim())
-    params.set("operation", options.operation.trim());
-  params.set("hydrate", options.hydrate === false ? "false" : "true");
-  return getJson<RegistryApiState>(`/api/registry?${params}`, options.signal);
+  const pageSize = 100;
+  const maxPages = 10;
+  const entries: Extract<RegistryApiState, { kind: "ready" }>["entries"] = [];
+  for (let page = 0; page < maxPages; page += 1) {
+    const params = new URLSearchParams({
+      limit: String(pageSize),
+      offset: String(page * pageSize),
+    });
+    if (options.query?.trim()) params.set("query", options.query.trim());
+    if (options.chain?.trim()) params.set("chain", options.chain.trim());
+    if (options.domain?.trim()) params.set("domain", options.domain.trim());
+    if (options.operation?.trim())
+      params.set("operation", options.operation.trim());
+    params.set("hydrate", options.hydrate === false ? "false" : "true");
+    const state = await getJson<RegistryApiState>(
+      `/api/registry?${params}`,
+      options.signal,
+    );
+    if (state.kind !== "ready") return state;
+    entries.push(...state.entries);
+    if (!state.hasMore) {
+      return { kind: "ready", entries, hasMore: false };
+    }
+  }
+  return { kind: "ready", entries, hasMore: true };
 }
 
 export type RegistryDetailResponse =

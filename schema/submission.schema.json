@@ -49,11 +49,33 @@
     "evidence": {
       "$ref": "#/$defs/evidence"
     },
+    "additionalClaims": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/additionalClaim" }
+    },
     "termsSchema": {
       "$ref": "#/$defs/termsSchema"
     }
   },
   "$defs": {
+    "additionalClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "predicateId", "object"],
+      "properties": {
+        "subject": { "enum": ["deployment", "type", "term"] },
+        "subjectId": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$"
+        },
+        "predicateId": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$"
+        },
+        "predicateLabel": { "type": "string", "minLength": 1 },
+        "object": { "type": "string", "minLength": 1, "maxLength": 1000 }
+      }
+    },
     "evidence": {
       "type": "object",
       "additionalProperties": false,

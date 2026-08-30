@@ -15,6 +15,11 @@ The backend is a typed, backend-neutral registry client. It reads the canonical 
 - EVM address normalization and CAIP-10 deployment identity.
 - JSON-RPC contract-code verification through `eth_getCode`.
 - JSON-RPC selected-chain verification through `eth_chainId`.
+- Target deployment code is verified against the submitted EIP-155 chain, while
+  MultiVault writes and receipt checks continue to use Intuition mainnet. Configure
+  `EVM_RPC_URL_1`, `EVM_RPC_URL_8453`, and `EVM_RPC_URL_11155111` to enable Ethereum,
+  Base, and Sepolia submissions through the hosted backend; Intuition uses
+  `INTUITION_RPC_URL`.
 - JSON-RPC receipt verification through `eth_getTransactionReceipt`.
 - Direct MultiVault term, triple, and vault verification through the official Intuition protocol ABI.
 - Direct term and triple verification recomputes the deployed salted ID from the returned data or components, rejecting mismatched RPC responses.

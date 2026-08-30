@@ -145,6 +145,7 @@ export function buildSubmissionPlan(
     canonicalJson(usage),
   );
   const compositions = submission.evidence?.compositions ?? [];
+  const additionalClaims = submission.additionalClaims ?? [];
   const evidencePredicateRequirements = [
     ...(auditContent && !predicate("coveredByAudit")
       ? ["predicates.coveredByAudit"]
@@ -327,6 +328,12 @@ export function buildSubmissionPlan(
           ]
         : []),
     ]),
+    ...additionalClaims.map((claim, index) => ({
+      kind: "ensure-atom" as const,
+      key: `additional-claim-object:${index}`,
+      content: claim.object,
+      note: "Contributor-supplied claim object; its predicate remains the exact reviewed Intuition term ID.",
+    })),
     {
       kind: "create-triple",
       key: "membership",
@@ -473,6 +480,21 @@ export function buildSubmissionPlan(
           : []),
       ];
     }),
+    ...additionalClaims.map((claim, index) => ({
+      kind: "create-triple" as const,
+      key: `additional-claim:${index}`,
+      subject:
+        claim.subject === "deployment"
+          ? deployment
+          : claim.subject === "type"
+            ? submission.type
+            : claim.subjectId!,
+      predicateId: claim.predicateId,
+      object: claim.object,
+      note: claim.predicateLabel?.trim()
+        ? `Contributor-supplied ${claim.predicateLabel.trim()} claim.`
+        : "Contributor-supplied claim using an exact Intuition predicate term ID.",
+    })),
   ];
 
   return {

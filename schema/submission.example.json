@@ -10,6 +10,14 @@
   "sourceVersion": "abc123",
   "submitterWallet": "0x2222222222222222222222222222222222222222",
   "initialSignal": "0",
+  "additionalClaims": [
+    {
+      "subject": "deployment",
+      "predicateId": "0x9df1961750a1787da8ed4a143f23014393a2c63d6a0032766b643b8256e4a8e9",
+      "predicateLabel": "used by",
+      "object": "Example payroll agent"
+    }
+  ],
   "evidence": {
     "audit": {
       "sourceUrl": "https://example.com/audit.pdf",

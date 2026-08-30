@@ -41,6 +41,23 @@ test("reference seed plan contains 32 deployments with deterministic IDs", () =>
   );
 });
 
+test("reference seed plan keeps one chain-qualified deployment per verified chain", () => {
+  const chainIds = ["1", "8453", "11155111", "1155"];
+  const plan = buildReferenceSeedPlan(fixtureDocument(), { chainIds });
+  assert.deepEqual(plan.chainIds, chainIds);
+  assert.equal(plan.atoms.length, 168);
+  assert.equal(plan.triples.length, 512);
+  assert.equal(
+    plan.triples.filter((triple) => triple.key === "membership").length,
+    128,
+  );
+  const deploymentAtoms = plan.atoms.filter((atom) =>
+    atom.content.startsWith("caip10:eip155:"),
+  );
+  assert.equal(deploymentAtoms.length, 128);
+  assert.equal(new Set(deploymentAtoms.map((atom) => atom.content)).size, 128);
+});
+
 test("reference seed plan fails closed on an incomplete or duplicate dataset", () => {
   assert.throws(
     () => buildReferenceSeedPlan(fixtureDocument(31)),
@@ -51,5 +68,12 @@ test("reference seed plan fails closed on an incomplete or duplicate dataset", (
   assert.throws(
     () => buildReferenceSeedPlan(duplicate),
     /Duplicate enforcer address/,
+  );
+  assert.throws(
+    () =>
+      buildReferenceSeedPlan(fixtureDocument(), {
+        chainIds: ["8453", "base"],
+      }),
+    /Invalid EIP-155 chain ID/,
   );
 });

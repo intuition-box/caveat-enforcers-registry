@@ -63,6 +63,14 @@ export type SubmissionEvidence = {
   compositions?: SubmissionCompositionEvidence[];
 };
 
+export type SubmissionAdditionalClaim = {
+  subject: "deployment" | "type" | "term";
+  subjectId?: string;
+  predicateId: string;
+  predicateLabel?: string;
+  object: string;
+};
+
 export type SubmissionInput = {
   chainId: string | number;
   contractAddress: string;
@@ -77,6 +85,7 @@ export type SubmissionInput = {
   submitterWallet: string;
   initialSignal?: string;
   evidence?: SubmissionEvidence;
+  additionalClaims?: SubmissionAdditionalClaim[];
 };
 
 export type ValidationIssue = {
@@ -309,6 +318,74 @@ function validateEvidence(
       }
     }
   }
+  return issues;
+}
+
+function validateAdditionalClaims(
+  claims: SubmissionAdditionalClaim[] | undefined,
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  if (claims === undefined) return issues;
+  if (!Array.isArray(claims)) {
+    return [
+      {
+        path: "additionalClaims",
+        message: "Additional claims must be a list.",
+      },
+    ];
+  }
+  claims.forEach((claim, index) => {
+    const path = `additionalClaims[${index}]`;
+    if (!claim || typeof claim !== "object" || Array.isArray(claim)) {
+      issues.push({
+        path,
+        message: "Each additional claim must be an object.",
+      });
+      return;
+    }
+    if (
+      claim.subject !== "deployment" &&
+      claim.subject !== "type" &&
+      claim.subject !== "term"
+    ) {
+      issues.push({
+        path: `${path}.subject`,
+        message: "Claim subject must be deployment, type, or an existing term.",
+      });
+    }
+    if (
+      claim.subject === "term" &&
+      !/^0x[a-fA-F0-9]{64}$/.test(claim.subjectId?.trim() ?? "")
+    ) {
+      issues.push({
+        path: `${path}.subjectId`,
+        message:
+          "Existing claim subjects require a canonical Intuition term ID.",
+      });
+    }
+    if (!/^0x[a-fA-F0-9]{64}$/.test(claim.predicateId?.trim() ?? "")) {
+      issues.push({
+        path: `${path}.predicateId`,
+        message: "Predicate ID must be a canonical 32-byte Intuition term ID.",
+      });
+    }
+    if (!requiredString(issues, `${path}.object`, claim.object)) return;
+    if (new TextEncoder().encode(claim.object.trim()).length > 1_000) {
+      issues.push({
+        path: `${path}.object`,
+        message: "Claim objects must fit within the 1,000-byte atom limit.",
+      });
+    }
+    if (
+      claim.predicateLabel !== undefined &&
+      (typeof claim.predicateLabel !== "string" || !claim.predicateLabel.trim())
+    ) {
+      issues.push({
+        path: `${path}.predicateLabel`,
+        message: "Predicate label must be non-empty when supplied.",
+      });
+    }
+  });
   return issues;
 }
 
@@ -721,6 +798,7 @@ export function validateSubmission(input: SubmissionInput): ValidationResult {
   }
 
   issues.push(...validateEvidence(input.evidence));
+  issues.push(...validateAdditionalClaims(input.additionalClaims));
 
   issues.push(...validateTermsSchema(input.termsSchema));
 

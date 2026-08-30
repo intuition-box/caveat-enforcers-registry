@@ -23,6 +23,7 @@ import {
   type SimulationNodeDatum,
 } from "d3-force";
 import referenceDocument from "../data/metamask-v1.3.0.json";
+import { claimDistribution, intuitionClaimUrl } from "./claim-presentation";
 
 export type GraphRelationship = {
   key: string;
@@ -180,6 +181,12 @@ export default function ComposabilityGraph({
       ? relationships.find((r) => r.key === selection.value)
       : undefined;
   const selectedTerm = selection?.type === "term" ? selection.value : undefined;
+  const selectedDistribution = selectedRelationship?.live
+    ? claimDistribution(
+        selectedRelationship.support,
+        selectedRelationship.opposition,
+      )
+    : null;
   const inspectorConnected = selectedTerm
     ? relationships.filter(
         (r) => r.subjectType === selectedTerm || r.relatedType === selectedTerm,
@@ -427,19 +434,59 @@ export default function ComposabilityGraph({
                 </p>
               )}
               {selectedRelationship.live && (
-                <p>
-                  <strong>Signal:</strong> {selectedRelationship.support ?? "0"}{" "}
-                  support {" · "}
-                  {selectedRelationship.opposition ?? "0"} opposition
-                </p>
+                <div className="cgraph__position">
+                  <div className="cgraph__position-labels">
+                    <span>
+                      {selectedDistribution?.hasSignal
+                        ? `${selectedDistribution.supportPercent}% support`
+                        : "No positions yet"}
+                    </span>
+                    {selectedDistribution?.hasSignal && (
+                      <span>
+                        {selectedDistribution.oppositionPercent}% oppose
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className="cgraph__position-track"
+                    role="img"
+                    aria-label={
+                      selectedDistribution?.hasSignal
+                        ? `TRUST distribution: ${selectedDistribution.supportPercent}% support and ${selectedDistribution.oppositionPercent}% oppose`
+                        : "No TRUST positions on this relationship claim yet"
+                    }
+                  >
+                    <span
+                      style={{
+                        width: `${selectedDistribution?.supportPercent ?? 0}%`,
+                      }}
+                    />
+                  </div>
+                  <small>
+                    {selectedRelationship.support ?? "0 TRUST"} support ·{" "}
+                    {selectedRelationship.opposition ?? "0 TRUST"} opposition
+                  </small>
+                </div>
               )}
-              <a
-                href={selectedRelationship.supportedBy}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Read source <span aria-hidden="true">↗</span>
-              </a>
+              <div className="cgraph__links-row">
+                {selectedRelationship.live &&
+                  intuitionClaimUrl(selectedRelationship.claimId) && (
+                    <a
+                      href={intuitionClaimUrl(selectedRelationship.claimId)!}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open claim in Intuition <span aria-hidden="true">↗</span>
+                    </a>
+                  )}
+                <a
+                  href={selectedRelationship.supportedBy}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Read source <span aria-hidden="true">↗</span>
+                </a>
+              </div>
             </>
           ) : selectedTerm ? (
             <>

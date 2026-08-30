@@ -9,6 +9,11 @@ The open-registry proof and the launch seed are separate operations:
 deployment contracts still contain bytecode on Intuition mainnet, derives the collision-safe
 atom and triple IDs, checks `isTermCreated`/`getTriple`, and writes only missing records.
 
+The same runner can prepare chain-qualified deployment records for additional EVM chains. It
+checks every selected address with `eth_getCode` and requires the runtime bytecode hash to match
+across the selected chains before it plans an Intuition claim. The deployment atoms remain
+distinct (`caip10:eip155:<chain>:<address>`) even when CREATE2 produced the same address.
+
 The seed writes the minimal launch graph for each deployment:
 
 - deployment identity atom;
@@ -53,6 +58,18 @@ pnpm seed:reference -- --dry-run
 
 The dry run is read-only and prints the planned totals and currently missing totals.
 
+For the review-call multi-chain set, verify Ethereum mainnet, Base, Sepolia, and Intuition and
+prepare the idempotent missing-record report with:
+
+```bash
+pnpm seed:reference -- --dry-run --chains 1,8453,11155111,1155
+```
+
+The script has public read-only defaults for these four networks. Operators can override them
+with `EVM_RPC_URL_1`, `EVM_RPC_URL_8453`, `EVM_RPC_URL_11155111`, and
+`EVM_RPC_URL_1155`. An unknown chain has no fallback and fails closed until its RPC is supplied.
+No additional deployment identity should be written from a chain list alone.
+
 Run the reviewed enrichment independently:
 
 ```bash
@@ -81,6 +98,12 @@ read -r -s INTUITION_SEED_PRIVATE_KEY
 export INTUITION_SEED_PRIVATE_KEY
 printf '\n'
 pnpm seed:reference -- --execute --confirm-mainnet
+```
+
+Adding the reviewed multi-chain deployment identities uses the same explicit execution gate:
+
+```bash
+pnpm seed:reference -- --execute --confirm-mainnet --chains 1,8453,11155111,1155
 ```
 
 For the enrichment plan, use the same controlled key injection and explicit gate:

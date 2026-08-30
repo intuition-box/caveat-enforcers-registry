@@ -103,7 +103,7 @@ export default function EnforcerRadialGraph({
           viewBox={`0 0 ${SIZE} ${SIZE}`}
           className="radial__svg"
           role="img"
-          aria-label={`Radial map of ${placed.length} ERC-7710 caveat enforcers indexed on Intuition mainnet, each linked to the deployment class at the centre. The full list is in the registry table.`}
+          aria-label={`Radial map of ${placed.length} ERC-7710 caveat enforcer types represented by chain-qualified Intuition membership records. The full deployment list is in the registry table.`}
         >
           {placed.map((node) => (
             <line
@@ -184,9 +184,10 @@ export default function EnforcerRadialGraph({
             </>
           ) : (
             <p className="radial__readout-meta">
-              {placed.length} enforcers indexed on Intuition mainnet. Hover a
-              node to read it; open the table below for the full record. Node
-              size is uniform until community $TRUST staking varies.
+              {placed.length} enforcer types represented by live Intuition
+              membership records. Hover a node to read it; open the table for
+              the chain-qualified deployments. Node size is uniform until
+              community $TRUST staking varies.
             </p>
           )}
         </div>

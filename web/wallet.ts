@@ -272,16 +272,23 @@ export function subscribeBrowserWallet(listener: () => void): () => void {
   };
 }
 
-const directIntuitionRpcFetcher: RpcFetcher = (_input, init) =>
-  fetch(INTUITION_MAINNET_RPC, init);
+const TARGET_CHAIN_RPCS: Record<string, string> = {
+  "1": "https://ethereum-rpc.publicnode.com",
+  "8453": "https://base-rpc.publicnode.com",
+  "11155111": "https://ethereum-sepolia-rpc.publicnode.com",
+  "1155": INTUITION_MAINNET_RPC,
+};
+
+const directChainRpcFetcher: RpcFetcher = (input, init) => fetch(input, init);
 
 function backendForWallet(wallet: BrowserWallet): RegistryBackend {
   return new RegistryBackend({
     endpoint: INTUITION_MAINNET_GRAPHQL,
     rpcEndpoint: INTUITION_MAINNET_RPC,
+    verificationRpcEndpoints: TARGET_CHAIN_RPCS,
     ontology: PROPOSED_ONTOLOGY_MANIFEST,
     publicClient: wallet.publicClient as unknown as IntuitionPublicClient,
-    rpcFetcher: directIntuitionRpcFetcher,
+    rpcFetcher: directChainRpcFetcher,
   });
 }
 
