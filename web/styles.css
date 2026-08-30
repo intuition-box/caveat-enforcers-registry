@@ -8134,7 +8134,7 @@ main > .band:first-child {
   background: transparent;
 }
 
-@media (max-width: 60rem) {
+@media (max-width: 48rem) {
   .registry-workspace .filters {
     grid-template-columns: minmax(0, 1fr);
   }
