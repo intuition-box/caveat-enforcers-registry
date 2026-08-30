@@ -8,3 +8,4 @@ coverage/
 .vercel
 tmp/
 .DS_Store
+.superpowers/

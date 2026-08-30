@@ -72,6 +72,10 @@ import { CaveatMarkSvg } from "./CaveatMark";
 import IntuitionLogo from "./IntuitionLogo";
 import { claimDistribution, intuitionClaimUrl } from "./claim-presentation";
 import { chainDisplayName, chainOptionLabel } from "./chain-presentation";
+import {
+  LISTING_CLAIM_TEMPLATES,
+  listingClaimSummary,
+} from "./contribution-presentation";
 
 /* ---------------------------------------------------------------- primitives */
 
@@ -1050,6 +1054,7 @@ function RegistryPageContent() {
   const [apiState, setApiState] = useState<RegistryApiState | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState<RegistryRow | null>(null);
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query), 250);
@@ -1333,8 +1338,13 @@ function RegistryPageContent() {
               <button
                 type="button"
                 className="table__row-button"
-                onClick={() => setSelectedRow(r)}
-                aria-haspopup="dialog"
+                onClick={() =>
+                  setExpandedSlug((active) =>
+                    active === r.slug ? null : r.slug,
+                  )
+                }
+                aria-expanded={expandedSlug === r.slug}
+                aria-controls={`claims-${r.slug}`}
               >
                 <span className="table__name">
                   <strong>{r.name}</strong>
@@ -1351,9 +1361,68 @@ function RegistryPageContent() {
                   {hasAuditClaim(r) ? "Audit claim" : "No audit claim"}
                 </Pill>
                 <span className="table__open" aria-hidden="true">
-                  View
+                  {expandedSlug === r.slug ? "Hide claims" : "Claims"}
                 </span>
               </button>
+              {expandedSlug === r.slug && (
+                <section
+                  id={`claims-${r.slug}`}
+                  className="table__expanded registry-inline-ledger"
+                  aria-label={`${r.name} claims and positions`}
+                >
+                  <header className="registry-inline-ledger__header">
+                    <div>
+                      <span className="mono-sub">Claims and positions</span>
+                      <h3>
+                        {r.claims?.length ?? 0} indexed claim
+                        {(r.claims?.length ?? 0) === 1 ? "" : "s"}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      className="web3-action web3-action--quiet"
+                      onClick={() => setSelectedRow(r)}
+                    >
+                      Open full record
+                    </button>
+                  </header>
+                  {r.claims?.length ? (
+                    <ol className="claim-ledger">
+                      {r.claims.map((claim, index) => (
+                        <li key={claim.id ?? `${claim.predicate}-${index}`}>
+                          <div className="claim-ledger__record">
+                            <span className="claim-ledger__statement">
+                              <strong>{claim.predicate}</strong>
+                              <span>{claim.object}</span>
+                            </span>
+                            <span className="claim-ledger__signal">
+                              {formatTrustSignal(claim.stake)} support ·{" "}
+                              {formatTrustSignal(claim.oppositionStake)}{" "}
+                              opposition
+                            </span>
+                            <ClaimDistributionBar claim={claim} />
+                          </div>
+                          {intuitionClaimUrl(claim.id) ? (
+                            <a
+                              className="web3-choice web3-choice--portal"
+                              href={intuitionClaimUrl(claim.id)!}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Intuition ↗
+                            </a>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="band__note">
+                      This record has no hydrated claim ledger. Open the full
+                      record to inspect the indexed deployment fields.
+                    </p>
+                  )}
+                </section>
+              )}
             </li>
           ))}
           {rows.length === 0 && (
@@ -1706,6 +1775,32 @@ function additionalClaimDraft(
   };
 }
 
+function additionalClaimFromTemplate(
+  key: (typeof LISTING_CLAIM_TEMPLATES)[number]["key"],
+): AdditionalClaimDraft {
+  const predicateKey =
+    key === "audit"
+      ? "coveredByAudit"
+      : key === "usage"
+        ? "usedBy"
+        : key === "composability"
+          ? "complements"
+          : undefined;
+  const option = CLAIM_PREDICATE_OPTIONS.find(
+    (candidate) => candidate.key === predicateKey,
+  );
+  const draft = additionalClaimDraft(option);
+  if (option) return draft;
+  const template = LISTING_CLAIM_TEMPLATES.find(
+    (candidate) => candidate.key === key,
+  );
+  return {
+    ...draft,
+    predicateId: "",
+    predicateLabel: template?.label.toLowerCase() ?? "",
+  };
+}
+
 const DEFAULT_TERMS_SCHEMA = JSON.stringify(
   {
     schemaVersion: "1.0.0",
@@ -1970,9 +2065,9 @@ function SubmitPageContent() {
     return {
       chainId,
       contractAddress,
-      enforcerName: name,
+      enforcerName: name.trim() || contractAddress,
       description: purpose,
-      type: name,
+      type: name.trim() || contractAddress,
       restrictionDomain: category,
       operation: "Delegated contract call",
       sourceUrl,
@@ -2267,54 +2362,6 @@ function SubmitPageContent() {
 
                 <div className="form__pair">
                   <label>
-                    <span className="mono-label">Enforcer name</span>
-                    <input
-                      value={name}
-                      onChange={(event) => setName(event.target.value)}
-                      placeholder="SessionFrequencyEnforcer"
-                      maxLength={128}
-                      required
-                    />
-                  </label>
-                  <label>
-                    <span className="mono-label">Constraint category</span>
-                    <select
-                      value={category}
-                      onChange={(event) => setCategory(event.target.value)}
-                    >
-                      <option value="frequency">Frequency</option>
-                      <option value="amount">Amount limit</option>
-                      <option value="target">Target address</option>
-                      <option value="method">Callable method</option>
-                      <option value="time">Time window</option>
-                    </select>
-                  </label>
-                </div>
-
-                <label>
-                  <span className="mono-label">Plain-language purpose</span>
-                  <textarea
-                    value={purpose}
-                    onChange={(event) => setPurpose(event.target.value)}
-                    rows={3}
-                    maxLength={800}
-                    placeholder="Limits how often a delegated session may execute within a defined interval."
-                    required
-                  />
-                </label>
-
-                <div className="form__pair">
-                  <label>
-                    <span className="mono-label">Source URL</span>
-                    <input
-                      type="url"
-                      value={sourceUrl}
-                      onChange={(event) => setSourceUrl(event.target.value)}
-                      placeholder="https://github.com/example/enforcers"
-                      required
-                    />
-                  </label>
-                  <label>
                     <span className="mono-label">Chain</span>
                     <select
                       value={
@@ -2376,52 +2423,133 @@ function SubmitPageContent() {
                     </span>
                   </label>
                   <label>
-                    <span className="mono-label">Source version</span>
+                    <span className="mono-label">Display name · optional</span>
                     <input
-                      value={sourceVersion}
-                      onChange={(event) => setSourceVersion(event.target.value)}
-                      placeholder="v1.0.0 or commit SHA"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="AllowedTimeOfDayEnforcer"
                       maxLength={128}
                     />
                   </label>
                 </div>
 
-                <label>
-                  <span className="mono-label">Connected signing wallet</span>
-                  <input
-                    value={wallet?.address ?? "Connect a wallet to autofill"}
-                    readOnly
-                    aria-describedby="submitter-wallet-hint"
-                  />
-                  <span id="submitter-wallet-hint" className="form__hint">
+                <p className="identity-preview" aria-live="polite">
+                  <span className="mono-label">Chain-qualified identity</span>
+                  <code>
+                    {
+                      listingClaimSummary({
+                        chainId,
+                        contractAddress: contractAddress || "0x…",
+                        name,
+                        purpose,
+                        category,
+                        sourceUrl,
+                        termsJson,
+                      }).identity
+                    }
+                  </code>
+                </p>
+
+                <section
+                  className="signing-actor"
+                  aria-labelledby="signing-actor-heading"
+                >
+                  <span className="mono-label">Signing actor</span>
+                  <h3 id="signing-actor-heading">
+                    {wallet?.address ?? "Connect a wallet to sign"}
+                  </h3>
+                  <p>
                     This wallet submits the Intuition claims. It is never
-                    inferred to be the contract deployer or author. Add either
-                    identity as a separate claim when you can support it.
-                  </span>
-                </label>
+                    inferred to be the contract deployer, author, or auditor.
+                  </p>
+                </section>
 
                 <div className="submission-step-heading submission-step-heading--claims">
                   <span className="submission-step-heading__number">2</span>
                   <div>
-                    <h3>Add claims about the identity.</h3>
+                    <h3>Review the claims about this identity.</h3>
                     <p>
-                      The source, purpose, restriction, operation, and terms
-                      above form the required starting claims. Add as many exact
-                      ontology claims as the evidence supports.
+                      These five core claims make the record usable. Extra
+                      evidence stays optional, explicit, and separately
+                      inspectable.
                     </p>
                   </div>
                 </div>
 
-                <label>
-                  <span className="mono-label">Terms schema JSON</span>
-                  <textarea
-                    rows={8}
-                    value={termsJson}
-                    onChange={(event) => setTermsJson(event.target.value)}
-                    spellCheck={false}
-                    required
-                  />
-                </label>
+                <section
+                  className="submission-claim-ledger"
+                  aria-label="Core registry claims"
+                >
+                  <label>
+                    <span className="mono-label">
+                      Claim · plain-language purpose
+                    </span>
+                    <textarea
+                      value={purpose}
+                      onChange={(event) => setPurpose(event.target.value)}
+                      rows={3}
+                      maxLength={800}
+                      placeholder="Limits calls to a permitted time window."
+                      required
+                    />
+                  </label>
+                  <div className="form__pair">
+                    <label>
+                      <span className="mono-label">Claim · source release</span>
+                      <input
+                        type="url"
+                        value={sourceUrl}
+                        onChange={(event) => setSourceUrl(event.target.value)}
+                        placeholder="https://github.com/example/enforcers"
+                        required
+                      />
+                    </label>
+                    <label>
+                      <span className="mono-label">
+                        Source version · optional
+                      </span>
+                      <input
+                        value={sourceVersion}
+                        onChange={(event) =>
+                          setSourceVersion(event.target.value)
+                        }
+                        placeholder="v1.0.0 or commit SHA"
+                        maxLength={128}
+                      />
+                    </label>
+                  </div>
+                  <div className="form__pair">
+                    <label>
+                      <span className="mono-label">Claim · restriction</span>
+                      <select
+                        value={category}
+                        onChange={(event) => setCategory(event.target.value)}
+                      >
+                        <option value="frequency">Frequency</option>
+                        <option value="amount">Amount limit</option>
+                        <option value="target">Target address</option>
+                        <option value="method">Callable method</option>
+                        <option value="time">Time window</option>
+                      </select>
+                    </label>
+                    <div className="submission-claim-ledger__fixed">
+                      <span className="mono-label">Claim · operation</span>
+                      <strong>Delegated contract call</strong>
+                    </div>
+                  </div>
+                  <label>
+                    <span className="mono-label">
+                      Claim · terms schema JSON
+                    </span>
+                    <textarea
+                      rows={8}
+                      value={termsJson}
+                      onChange={(event) => setTermsJson(event.target.value)}
+                      spellCheck={false}
+                      required
+                    />
+                  </label>
+                </section>
 
                 <section
                   className="modular-claims"
@@ -2429,11 +2557,10 @@ function SubmitPageContent() {
                 >
                   <div className="modular-claims__header">
                     <div>
-                      <h3 id="modular-claims-heading">Additional claims</h3>
+                      <h3 id="modular-claims-heading">Add evidence claims</h3>
                       <p>
-                        Select a reviewed predicate or provide an exact
-                        Intuition predicate ID. Nothing here is treated as a
-                        badge or inferred from the connected wallet.
+                        Add only claims you can support. A signer never becomes
+                        a deployer, author, or auditor by implication.
                       </p>
                     </div>
                     <button
@@ -2450,11 +2577,41 @@ function SubmitPageContent() {
                     </button>
                   </div>
 
+                  <div
+                    className="claim-template-row"
+                    aria-label="Evidence claim templates"
+                  >
+                    {LISTING_CLAIM_TEMPLATES.filter((template) =>
+                      [
+                        "audit",
+                        "usage",
+                        "composability",
+                        "deployer",
+                        "author",
+                      ].includes(template.key),
+                    ).map((template) => (
+                      <button
+                        key={template.key}
+                        type="button"
+                        title={template.description}
+                        onClick={() =>
+                          setAdditionalClaims((claims) => [
+                            ...claims,
+                            additionalClaimFromTemplate(template.key),
+                          ])
+                        }
+                      >
+                        + {template.label}
+                      </button>
+                    ))}
+                  </div>
+
                   {additionalClaims.length === 0 ? (
                     <p className="modular-claims__empty">
-                      No optional claims added. Use this for authorship,
-                      deployment provenance, audit evidence, usage context, or
-                      composability when you have an exact predicate and object.
+                      No extra evidence claims added. Use the templates for
+                      authorship, deployment provenance, audit evidence, usage,
+                      or composability only when you have an exact predicate and
+                      object.
                     </p>
                   ) : (
                     <ol className="modular-claims__list">
@@ -2889,7 +3046,9 @@ function SubmitPageContent() {
                 [
                   "Identity",
                   mode === "list"
-                    ? name || "Required"
+                    ? contractAddress
+                      ? `eip155:${chainId}`
+                      : "Deployment required"
                     : selectedEnforcer
                       ? `${selectedEnforcer.numberLabel} · ${selectedEnforcer.canonicalName}`
                       : claimId
@@ -2897,11 +3056,19 @@ function SubmitPageContent() {
                         : "Choose an enforcer",
                 ],
                 [
-                  "Source",
+                  "Core claims",
                   mode === "list"
-                    ? sourceUrl
-                      ? "Provided"
-                      : "Required"
+                    ? `${
+                        listingClaimSummary({
+                          chainId,
+                          contractAddress,
+                          name,
+                          purpose,
+                          category,
+                          sourceUrl,
+                          termsJson,
+                        }).claimCount
+                      } to review`
                     : "Intuition triple",
                 ],
                 [
@@ -2919,7 +3086,7 @@ function SubmitPageContent() {
                 ...(mode === "list"
                   ? ([
                       ["Chain identity", `eip155:${chainId}`],
-                      ["Optional claims", `${additionalClaims.length} added`],
+                      ["Additional claims", `${additionalClaims.length} added`],
                     ] as Array<[string, React.ReactNode]>)
                   : []),
                 ...(mode === "list"
@@ -2928,7 +3095,7 @@ function SubmitPageContent() {
                       ["Signal", mode === "attest" ? "Support" : "Dispute"],
                       ["Deposit", `${amount || "0"} TRUST`],
                     ] as Array<[string, React.ReactNode]>)),
-                [mode === "list" ? "Signing wallet" : "Wallet", walletLabel],
+                [mode === "list" ? "Signing actor" : "Wallet", walletLabel],
               ]}
             />
             {submissionReview && mode === "list" && (
