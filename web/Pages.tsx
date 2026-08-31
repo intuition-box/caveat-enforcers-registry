@@ -50,6 +50,7 @@ import {
 } from "./CaveatWallet";
 import {
   validateSubmission as validateSubmissionLocally,
+  type LegacySubmissionInput,
   type SubmissionAdditionalClaim,
   type SubmissionInput,
 } from "../src/validation";
@@ -2083,7 +2084,7 @@ function SubmitPageContent() {
       operation: "Delegated contract call",
       sourceUrl,
       ...(sourceVersion.trim() ? { sourceVersion } : {}),
-      termsSchema: termsSchema as SubmissionInput["termsSchema"],
+      termsSchema: termsSchema as LegacySubmissionInput["termsSchema"],
       submitterWallet: activeWallet.address,
       initialSignal: "0",
       additionalClaims: additionalClaims.map(({ id: _id, ...claim }) => claim),

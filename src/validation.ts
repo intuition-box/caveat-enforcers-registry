@@ -71,7 +71,7 @@ export type SubmissionAdditionalClaim = {
   object: string;
 };
 
-export type SubmissionInput = {
+export type LegacySubmissionInput = {
   chainId: string | number;
   contractAddress: string;
   enforcerName: string;
@@ -88,6 +88,34 @@ export type SubmissionInput = {
   additionalClaims?: SubmissionAdditionalClaim[];
 };
 
+export type SubmissionTermReference =
+  | { kind: "value"; value: string }
+  | { kind: "term"; termId: string; label?: string };
+
+export type SubmissionClaim = {
+  subject:
+    | { kind: "deployment" }
+    | { kind: "term"; termId: string; label?: string };
+  predicate:
+    | { kind: "term"; termId: string; label: string }
+    | { kind: "value"; value: string };
+  object: SubmissionTermReference;
+};
+
+export type ClaimFirstSubmissionInput = {
+  version: "2";
+  identity: {
+    chainId: string | number;
+    contractAddress: string;
+    displayName?: string;
+  };
+  claims: SubmissionClaim[];
+  submitterWallet: string;
+  initialSignal?: string;
+};
+
+export type SubmissionInput = LegacySubmissionInput | ClaimFirstSubmissionInput;
+
 export type ValidationIssue = {
   path: string;
   message: string;
@@ -97,8 +125,8 @@ export type ValidationResult =
   | { valid: true; value: NormalizedSubmission }
   | { valid: false; issues: ValidationIssue[] };
 
-export type NormalizedSubmission = Omit<
-  SubmissionInput,
+export type NormalizedLegacySubmission = Omit<
+  LegacySubmissionInput,
   "chainId" | "contractAddress" | "submitterWallet"
 > & {
   chainId: string;
@@ -106,6 +134,38 @@ export type NormalizedSubmission = Omit<
   submitterWallet: string;
   caip10: string;
 };
+
+export type NormalizedClaimFirstSubmission = Omit<
+  ClaimFirstSubmissionInput,
+  "identity" | "submitterWallet" | "claims"
+> & {
+  identity: {
+    chainId: string;
+    contractAddress: string;
+    displayName?: string;
+  };
+  claims: SubmissionClaim[];
+  submitterWallet: string;
+  chainId: string;
+  contractAddress: string;
+  caip10: string;
+};
+
+export type NormalizedSubmission =
+  | NormalizedLegacySubmission
+  | NormalizedClaimFirstSubmission;
+
+export function isClaimFirstSubmissionInput(
+  input: SubmissionInput,
+): input is ClaimFirstSubmissionInput {
+  return "version" in input && input.version === "2";
+}
+
+export function isNormalizedClaimFirstSubmission(
+  input: NormalizedSubmission,
+): input is NormalizedClaimFirstSubmission {
+  return "version" in input && input.version === "2";
+}
 
 export type ContractCodeCheck =
   | { status: "verified"; address: string; codeLength: number }
@@ -737,7 +797,196 @@ export function validateTermsSchema(schema: TermsSchema): ValidationIssue[] {
   return issues;
 }
 
+const termIdPattern = /^0x[a-fA-F0-9]{64}$/;
+
+function validateClaimFirstSubmission(
+  input: ClaimFirstSubmissionInput,
+): ValidationResult {
+  const issues: ValidationIssue[] = [];
+  const chainId = normalizeChainId(input.identity?.chainId ?? "");
+  const contractAddress = normalizeEvmAddress(
+    input.identity?.contractAddress ?? "",
+  );
+  const submitterWallet = normalizeEvmAddress(input.submitterWallet ?? "");
+
+  if (!chainId) {
+    issues.push({
+      path: "identity.chainId",
+      message: "Chain ID must be decimal digits.",
+    });
+  }
+  if (!contractAddress) {
+    issues.push({
+      path: "identity.contractAddress",
+      message: "Enter a valid 20-byte EVM contract address.",
+    });
+  }
+  if (!submitterWallet) {
+    issues.push({
+      path: "submitterWallet",
+      message: "Enter a valid submitter wallet address.",
+    });
+  }
+  if (
+    input.identity?.displayName !== undefined &&
+    (typeof input.identity.displayName !== "string" ||
+      !input.identity.displayName.trim() ||
+      input.identity.displayName.trim().length > 128)
+  ) {
+    issues.push({
+      path: "identity.displayName",
+      message: "Display name must contain between 1 and 128 characters.",
+    });
+  }
+  if (!Array.isArray(input.claims) || input.claims.length === 0) {
+    issues.push({
+      path: "claims",
+      message: "Add at least one explicit claim about this enforcer.",
+    });
+  } else if (input.claims.length > 20) {
+    issues.push({
+      path: "claims",
+      message: "A contribution can contain at most 20 claims.",
+    });
+  }
+
+  const normalizedClaims: SubmissionClaim[] = [];
+  if (Array.isArray(input.claims)) {
+    input.claims.forEach((claim, index) => {
+      const path = `claims[${index}]`;
+      if (!claim || typeof claim !== "object") {
+        issues.push({ path, message: "Each claim must be an object." });
+        return;
+      }
+
+      let subject: SubmissionClaim["subject"] | null = null;
+      if (claim.subject?.kind === "deployment") {
+        subject = { kind: "deployment" };
+      } else if (
+        claim.subject?.kind === "term" &&
+        termIdPattern.test(claim.subject.termId?.trim() ?? "")
+      ) {
+        subject = {
+          kind: "term",
+          termId: claim.subject.termId.trim().toLowerCase(),
+          ...(claim.subject.label?.trim()
+            ? { label: claim.subject.label.trim() }
+            : {}),
+        };
+      } else {
+        issues.push({
+          path: `${path}.subject.termId`,
+          message: "Existing claim subjects require a canonical Intuition term ID.",
+        });
+      }
+
+      let predicate: SubmissionClaim["predicate"] | null = null;
+      if (
+        claim.predicate?.kind === "term" &&
+        termIdPattern.test(claim.predicate.termId?.trim() ?? "") &&
+        claim.predicate.label?.trim()
+      ) {
+        predicate = {
+          kind: "term",
+          termId: claim.predicate.termId.trim().toLowerCase(),
+          label: claim.predicate.label.trim(),
+        };
+      } else if (
+        claim.predicate?.kind === "value" &&
+        claim.predicate.value?.trim()
+      ) {
+        predicate = {
+          kind: "value",
+          value: claim.predicate.value.trim(),
+        };
+      } else {
+        issues.push({
+          path: `${path}.predicate`,
+          message: "Choose a reviewed predicate or enter a readable custom predicate.",
+        });
+      }
+
+      let object: SubmissionClaim["object"] | null = null;
+      if (
+        claim.object?.kind === "term" &&
+        termIdPattern.test(claim.object.termId?.trim() ?? "")
+      ) {
+        object = {
+          kind: "term",
+          termId: claim.object.termId.trim().toLowerCase(),
+          ...(claim.object.label?.trim()
+            ? { label: claim.object.label.trim() }
+            : {}),
+        };
+      } else if (
+        claim.object?.kind === "value" &&
+        claim.object.value?.trim()
+      ) {
+        const value = claim.object.value.trim();
+        if (new TextEncoder().encode(value).length > 1_000) {
+          issues.push({
+            path: `${path}.object.value`,
+            message: "Claim objects must fit within the 1,000-byte atom limit.",
+          });
+        } else {
+          object = { kind: "value", value };
+        }
+      } else {
+        issues.push({
+          path:
+            claim.object?.kind === "term"
+              ? `${path}.object.termId`
+              : `${path}.object`,
+          message: "Create a readable object or choose an existing Intuition term.",
+        });
+      }
+
+      if (subject && predicate && object) {
+        normalizedClaims.push({ subject, predicate, object });
+      }
+    });
+  }
+
+  if (
+    input.initialSignal !== undefined &&
+    !/^\d+$/.test(input.initialSignal.trim())
+  ) {
+    issues.push({
+      path: "initialSignal",
+      message: "Initial signal must be a non-negative decimal amount.",
+    });
+  }
+
+  if (issues.length || !chainId || !contractAddress || !submitterWallet) {
+    return { valid: false, issues };
+  }
+  return {
+    valid: true,
+    value: {
+      version: "2",
+      identity: {
+        chainId,
+        contractAddress,
+        ...(input.identity.displayName?.trim()
+          ? { displayName: input.identity.displayName.trim() }
+          : {}),
+      },
+      claims: normalizedClaims,
+      submitterWallet,
+      ...(input.initialSignal !== undefined
+        ? { initialSignal: input.initialSignal.trim() }
+        : {}),
+      chainId,
+      contractAddress,
+      caip10: buildCaip10(chainId, contractAddress),
+    },
+  };
+}
+
 export function validateSubmission(input: SubmissionInput): ValidationResult {
+  if (isClaimFirstSubmissionInput(input)) {
+    return validateClaimFirstSubmission(input);
+  }
   const issues: ValidationIssue[] = [];
   const chainId = normalizeChainId(input.chainId);
   const contractAddress = normalizeEvmAddress(input.contractAddress);

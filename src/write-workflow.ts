@@ -187,6 +187,19 @@ function tripleOperations(
   );
 }
 
+function requiredTermOperations(
+  plan: SubmissionPlan,
+): Extract<SubmissionPlanOperation, { kind: "require-term" }>[] {
+  return plan.operations.filter(
+    (
+      operation,
+    ): operation is Extract<
+      SubmissionPlanOperation,
+      { kind: "require-term" }
+    > => operation.kind === "require-term",
+  );
+}
+
 async function termExists(
   publicClient: RawReadClient,
   termId: string,
@@ -323,9 +336,11 @@ export async function resolveSubmissionWorkflow(
     );
     const configuredIds = [
       ontology.deploymentClassId,
-      ...Object.values(ontology.predicates).filter((id): id is string =>
-        Boolean(id?.trim()),
-      ),
+      ...plan.requiredPredicateKeys.flatMap((key) => {
+        const id = ontology.predicates[key];
+        return id?.trim() ? [id] : [];
+      }),
+      ...requiredTermOperations(plan).map((operation) => operation.id),
     ].filter((id) => !plannedOntologyIds.has(id.toLowerCase()));
     const configuredExists = await Promise.all(
       configuredIds.map(async (id) => ({

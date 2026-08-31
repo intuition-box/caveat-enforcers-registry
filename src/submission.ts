@@ -6,10 +6,12 @@ import {
 } from "./ontology.js";
 import type { RpcChainCheck } from "./chain.js";
 import type {
+  NormalizedClaimFirstSubmission,
   NormalizedSubmission,
   ContractCodeCheck,
   SubmissionCompositionEvidence,
 } from "./validation.js";
+import { isNormalizedClaimFirstSubmission } from "./validation.js";
 import { intuitionAtomIdFromText } from "./intuition.js";
 
 function canonicalJsonValue(value: unknown): unknown {
@@ -33,6 +35,13 @@ export type SubmissionPlanOperation =
       kind: "ensure-atom";
       key: string;
       content: string;
+      note: string;
+    }
+  | {
+      kind: "require-term";
+      key: string;
+      id: string;
+      label?: string;
       note: string;
     }
   | {
@@ -70,6 +79,8 @@ const requiredPredicates: PredicateKey[] = [
   "restricts",
   "affectsOperation",
 ];
+
+const claimFirstRequiredPredicates: PredicateKey[] = ["membership"];
 
 const compositionPredicateKeys: Record<
   SubmissionCompositionEvidence["relation"],
@@ -118,12 +129,175 @@ function missingPredicateKeys(ontology: OntologyManifest): string[] {
     .map((key) => `predicates.${key}`);
 }
 
+function buildClaimFirstSubmissionPlan(
+  submission: NormalizedClaimFirstSubmission,
+  ontology: OntologyManifest,
+  codeCheck: ContractCodeCheck,
+  chainCheck?: RpcChainCheck,
+): SubmissionPlan {
+  const ontologyIssues = validateOntologyManifest(ontology);
+  const missingOntologyKeys = [
+    ...ontologyIssues.map((issue) => issue.path),
+    ...claimFirstRequiredPredicates
+      .filter((key) => !predicateIdFor(ontology, key))
+      .map((key) => `predicates.${key}`),
+  ];
+  const deployment = submission.caip10;
+  const membershipPredicate = predicateIdFor(ontology, "membership") ?? "";
+  const requiredTerms = new Map<
+    string,
+    { key: string; id: string; label?: string; note: string }
+  >();
+  const requireTerm = (
+    key: string,
+    id: string,
+    label: string | undefined,
+    note: string,
+  ) => {
+    const normalized = id.toLowerCase();
+    if (!requiredTerms.has(normalized)) {
+      requiredTerms.set(normalized, {
+        key,
+        id: normalized,
+        ...(label ? { label } : {}),
+        note,
+      });
+    }
+  };
+
+  submission.claims.forEach((claim, index) => {
+    if (claim.subject.kind === "term") {
+      requireTerm(
+        `claim-subject:${index}`,
+        claim.subject.termId,
+        claim.subject.label,
+        "Contributor selected an existing Intuition term as the claim subject.",
+      );
+    }
+    if (claim.predicate.kind === "term") {
+      requireTerm(
+        `claim-predicate:${index}`,
+        claim.predicate.termId,
+        claim.predicate.label,
+        "Contributor selected an existing reviewed predicate.",
+      );
+    }
+    if (claim.object.kind === "term") {
+      requireTerm(
+        `claim-object:${index}`,
+        claim.object.termId,
+        claim.object.label,
+        "Contributor selected an existing Intuition term as the claim object.",
+      );
+    }
+  });
+
+  const operations: SubmissionPlanOperation[] = [
+    ...(ontology.version.startsWith("proposed-") &&
+    ontology.deploymentClassId.toLowerCase() ===
+      PROPOSED_DEPLOYMENT_CLASS_ID.toLowerCase()
+      ? [
+          {
+            kind: "ensure-atom" as const,
+            key: "ontology-class:deployment",
+            content: PROPOSED_DEPLOYMENT_CLASS_LABEL,
+            note: "Create the collision-safe ERC-7710 deployment class before membership triples.",
+          },
+        ]
+      : []),
+    {
+      kind: "ensure-atom",
+      key: "deployment",
+      content: deployment,
+      note: "Deployment identity uses the normalized CAIP-10 value.",
+    },
+    ...submission.claims.flatMap((claim, index) => [
+      ...(claim.predicate.kind === "value"
+        ? [
+            {
+              kind: "ensure-atom" as const,
+              key: `claim-predicate:${index}`,
+              content: claim.predicate.value,
+              note: "Contributor chose a readable custom predicate.",
+            },
+          ]
+        : []),
+      ...(claim.object.kind === "value"
+        ? [
+            {
+              kind: "ensure-atom" as const,
+              key: `claim-object:${index}`,
+              content: claim.object.value,
+              note: "Contributor created a readable claim object.",
+            },
+          ]
+        : []),
+    ]),
+    ...Array.from(requiredTerms.values()).map((term) => ({
+      kind: "require-term" as const,
+      ...term,
+    })),
+    {
+      kind: "create-triple",
+      key: "membership",
+      subject: deployment,
+      predicateId: membershipPredicate,
+      object: ontology.deploymentClassId,
+      note: "Registry infrastructure that makes this deployment discoverable.",
+    },
+    ...submission.claims.map((claim, index) => ({
+      kind: "create-triple" as const,
+      key: `claim:${index}`,
+      subject:
+        claim.subject.kind === "deployment"
+          ? deployment
+          : claim.subject.termId,
+      predicateId:
+        claim.predicate.kind === "term"
+          ? claim.predicate.termId
+          : intuitionAtomIdFromText(claim.predicate.value),
+      object:
+        claim.object.kind === "term" ? claim.object.termId : claim.object.value,
+      note:
+        claim.predicate.kind === "term"
+          ? `Contributor-selected ${claim.predicate.label} claim.`
+          : `Contributor-selected ${claim.predicate.value} claim.`,
+    })),
+  ];
+
+  return {
+    status:
+      missingOntologyKeys.length === 0 &&
+      codeCheck.status === "verified" &&
+      (chainCheck === undefined || chainCheck.status === "verified")
+        ? "ready-for-simulation"
+        : "blocked-by-configuration",
+    deployment,
+    initialSignal: submission.initialSignal ?? "0",
+    operations,
+    requiredPredicateKeys: claimFirstRequiredPredicates,
+    missingOntologyKeys,
+    codeCheck,
+    chainCheck,
+    warning:
+      "Only registry membership and the contributor-selected claims are planned. Simulate and verify every receipt before treating the contribution as canonical.",
+  };
+}
+
 export function buildSubmissionPlan(
   submission: NormalizedSubmission,
   ontology: OntologyManifest,
   codeCheck: ContractCodeCheck,
   chainCheck?: RpcChainCheck,
 ): SubmissionPlan {
+  if (isNormalizedClaimFirstSubmission(submission)) {
+    return buildClaimFirstSubmissionPlan(
+      submission,
+      ontology,
+      codeCheck,
+      chainCheck,
+    );
+  }
   const ontologyIssues = validateOntologyManifest(ontology);
   const missingOntologyKeys = [
     ...ontologyIssues.map((issue) => issue.path),

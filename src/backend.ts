@@ -33,6 +33,7 @@ import {
 } from "./indexing.js";
 import {
   normalizeEvmAddress,
+  isNormalizedClaimFirstSubmission,
   validateSubmission,
   verifyContractCode,
   type ContractCodeCheck,
@@ -425,13 +426,16 @@ export class RegistryBackend {
       validated.value.chainId,
       this.config.rpcFetcher,
     );
-    const decoderChecks = validated.value.termsSchema.decoderFunction
+    const legacySubmission = isNormalizedClaimFirstSubmission(validated.value)
+      ? null
+      : validated.value;
+    const decoderChecks = legacySubmission?.termsSchema.decoderFunction
       ? await Promise.all(
-          validated.value.termsSchema.fixtures.map((_, fixtureIndex) =>
+          legacySubmission.termsSchema.fixtures.map((_, fixtureIndex) =>
             verifyTermsDecoder(
               verificationRpcEndpoint,
               address,
-              validated.value.termsSchema,
+              legacySubmission.termsSchema,
               fixtureIndex,
               this.config.rpcFetcher,
             ),
