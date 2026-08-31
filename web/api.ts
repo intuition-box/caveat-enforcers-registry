@@ -1,12 +1,11 @@
 import type { RegistryEntry, RegistryState } from "../src/registry";
 import type { ComposabilityState } from "../src/composability";
+import { resolveRegistryApiBase } from "./api-base";
 
-const configuredBase = (
-  import.meta.env.VITE_REGISTRY_API_BASE_URL ?? ""
-).trim();
-const apiBase = (
-  configuredBase || "https://caveat-enforcers-registry.onrender.com"
-).replace(/\/$/, "");
+const apiBase = resolveRegistryApiBase(
+  import.meta.env.VITE_REGISTRY_API_BASE_URL,
+  import.meta.env.DEV,
+);
 
 export type RegistryApiState = RegistryState;
 

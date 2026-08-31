@@ -1,21 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveInspectorRow } from "../web/registry-inspector.js";
+import { toggleExpandedRegistryRow } from "../web/registry-inspector.js";
 
-const rows = [
-  { slug: "first", name: "First" },
-  { slug: "second", name: "Second" },
-];
-
-test("registry inspector keeps the selected row when it remains visible", () => {
-  assert.equal(resolveInspectorRow(rows, "second")?.slug, "second");
+test("clicking a closed registry row expands that row", () => {
+  assert.equal(toggleExpandedRegistryRow(null, "second"), "second");
 });
 
-test("registry inspector falls back to the first visible row after filtering", () => {
-  assert.equal(resolveInspectorRow(rows, "missing")?.slug, "first");
-  assert.equal(resolveInspectorRow(rows, null)?.slug, "first");
+test("clicking the expanded registry row closes it", () => {
+  assert.equal(toggleExpandedRegistryRow("second", "second"), null);
 });
 
-test("registry inspector has an honest empty state", () => {
-  assert.equal(resolveInspectorRow([], "missing"), null);
+test("clicking another registry row moves the expansion", () => {
+  assert.equal(toggleExpandedRegistryRow("first", "second"), "second");
 });

@@ -76,7 +76,7 @@ import {
   LISTING_CLAIM_TEMPLATES,
   listingClaimSummary,
 } from "./contribution-presentation";
-import { resolveInspectorRow } from "./registry-inspector";
+import { toggleExpandedRegistryRow } from "./registry-inspector";
 
 /* ---------------------------------------------------------------- primitives */
 
@@ -590,111 +590,65 @@ function ClaimDistributionBar({ claim }: { claim: Claim }) {
   );
 }
 
-function RegistryInspectorPanel({
-  row,
-  mobileOpen,
-  onCloseMobile,
-  onOpenFull,
-}: {
-  row: RegistryRow | null;
-  mobileOpen: boolean;
-  onCloseMobile: () => void;
-  onOpenFull: (row: RegistryRow) => void;
-}) {
+function RegistryInlineClaims({ row }: { row: RegistryRow }) {
+  const claims = row.claims ?? [];
+
   return (
-    <aside
-      id="registry-inspector"
-      className={`registry-inspector${mobileOpen ? " registry-inspector--open" : ""}`}
-      aria-label="Selected enforcer inspector"
+    <section
+      id={`registry-claims-${row.slug}`}
+      className="registry-inline-claims"
+      aria-label={`${row.name} claims`}
     >
-      <button
-        type="button"
-        className="registry-inspector__mobile-close"
-        onClick={onCloseMobile}
-      >
-        Close inspector
-      </button>
-      {row ? (
-        <div className="registry-inspector__content">
-          <header className="registry-inspector__header">
-            <div>
-              <span className="mono-sub">Selected record</span>
-              <h3>{row.name}</h3>
-            </div>
-            <Pill tone={row.live ? "observed" : "review"}>
-              {row.live ? "Indexed" : "Reference"}
-            </Pill>
-          </header>
-
-          <p className="registry-inspector__purpose">{row.purpose}</p>
-          <Spec
-            rows={[
-              ["Chain", chainOptionLabel(row.chain)],
-              ["Constraint", row.domain],
-              ["Operation", row.operation],
-              ["Contract", <code>{row.address}</code>],
-            ]}
-          />
-
-          <section className="registry-inspector__claims">
-            <header>
-              <h4>Claims and positions</h4>
-              <span className="mono-sub">
-                {row.claims?.length ?? 0} indexed
-              </span>
-            </header>
-            {row.claims?.length ? (
-              <ol className="claim-ledger">
-                {row.claims.map((claim, index) => (
-                  <li key={claim.id ?? `${claim.predicate}-${index}`}>
-                    <div className="claim-ledger__record">
-                      <span className="claim-ledger__statement">
-                        <strong>{claim.predicate}</strong>
-                        <span>{claim.object}</span>
-                      </span>
-                      <span className="claim-ledger__signal">
-                        {formatTrustSignal(claim.stake)} support ·{" "}
-                        {formatTrustSignal(claim.oppositionStake)} opposition
-                      </span>
-                      <ClaimDistributionBar claim={claim} />
-                    </div>
-                    {intuitionClaimUrl(claim.id) ? (
-                      <a
-                        className="web3-choice web3-choice--portal"
-                        href={intuitionClaimUrl(claim.id)!}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Intuition ↗
-                      </a>
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="registry-inspector__empty">
-                No hydrated claims are available for this reference record.
-              </p>
-            )}
-          </section>
-
-          <button
-            type="button"
-            className="web3-action web3-action--primary registry-inspector__action"
-            onClick={() => onOpenFull(row)}
-          >
-            Review full record and positions
-          </button>
-        </div>
-      ) : (
-        <div className="registry-inspector__empty-state">
-          <h3>No matching record</h3>
+      <header className="registry-inline-claims__header">
+        <div>
+          <h3>Claims and positions</h3>
           <p>
-            Change the filters to select an enforcer and inspect its claims.
+            Each statement is an independent Intuition claim. Support and
+            opposition remain separate.
           </p>
         </div>
+        <span className="mono-sub">{claims.length} indexed</span>
+      </header>
+
+      {claims.length ? (
+        <ol className="claim-ledger registry-inline-claims__ledger">
+          {claims.map((claim, index) => (
+            <li key={claim.id ?? `${claim.predicate}-${index}`}>
+              <div className="claim-ledger__record">
+                <span className="claim-ledger__statement">
+                  <strong>{claim.predicate}</strong>
+                  <span>{claim.object}</span>
+                </span>
+                <span className="claim-ledger__signal">
+                  {formatTrustSignal(claim.stake)} support ·{" "}
+                  {formatTrustSignal(claim.oppositionStake)} opposition
+                </span>
+                <ClaimDistributionBar claim={claim} />
+              </div>
+              {intuitionClaimUrl(claim.id) ? (
+                <a
+                  className="web3-choice web3-choice--portal"
+                  href={intuitionClaimUrl(claim.id)!}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Support or oppose ↗
+                </a>
+              ) : (
+                <span className="registry-inline-claims__unavailable">
+                  Claim link unavailable
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="registry-inline-claims__empty">
+          This reference record has no hydrated Intuition claims. Start the
+          registry service to inspect live positions.
+        </p>
       )}
-    </aside>
+    </section>
   );
 }
 
@@ -1163,8 +1117,7 @@ function RegistryPageContent() {
   const [apiState, setApiState] = useState<RegistryApiState | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState<RegistryRow | null>(null);
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
-  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query), 250);
@@ -1312,8 +1265,6 @@ function RegistryPageContent() {
         ? -1
         : 1;
   });
-  const inspectorRow = resolveInspectorRow(rows, selectedSlug);
-
   const statusLabel = loading
     ? "Connecting to registry service"
     : allLiveRows.length
@@ -1443,69 +1394,56 @@ function RegistryPageContent() {
           </span>
         </div>
 
-        <div
-          className={`registry-browser${inspectorOpen ? " registry-browser--inspecting" : ""}`}
-        >
-          <div className="registry-browser__results">
-            <ul className="table" aria-label="Registry results">
-              {rows.map((r) => {
-                const active = inspectorOpen && inspectorRow?.slug === r.slug;
-                return (
-                  <li
-                    key={r.slug}
-                    className={active ? "table__item--active" : undefined}
-                  >
-                    <button
-                      type="button"
-                      className="table__row-button"
-                      onClick={() => {
-                        setSelectedSlug(r.slug);
-                        setInspectorOpen(true);
-                      }}
-                      aria-pressed={active}
-                      aria-controls="registry-inspector"
-                    >
-                      <span className="table__name">
-                        <strong>{r.name}</strong>
-                        <em>{r.purpose}</em>
-                      </span>
-                      <span className="table__domain">{r.domain}</span>
-                      <span className="table__chain">
-                        {chainDisplayName(r.chain)}
-                      </span>
-                      <span className="table__trust">
-                        {formatTrustSignal(r.supportSignal?.value)}
-                      </span>
-                      <Pill tone={hasAuditClaim(r) ? "observed" : "review"}>
-                        {hasAuditClaim(r) ? "Audit claim" : "No audit claim"}
-                      </Pill>
-                      <span className="table__open" aria-hidden="true">
-                        Inspect
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-              {rows.length === 0 && (
-                <li className="table__empty">
-                  {allLiveRows.length && !showReferenceFallback
-                    ? "No indexed membership claims match this view."
-                    : "The live service is unavailable, so no reference type matches that filter."}
-                </li>
-              )}
-            </ul>
-          </div>
-
-          <RegistryInspectorPanel
-            row={inspectorRow}
-            mobileOpen={inspectorOpen}
-            onCloseMobile={() => {
-              setInspectorOpen(false);
-              setSelectedSlug(null);
-            }}
-            onOpenFull={setSelectedRow}
-          />
-        </div>
+        <ul className="table registry-results" aria-label="Registry results">
+          {rows.map((r) => {
+            const expanded = expandedSlug === r.slug;
+            return (
+              <li
+                id={`registry-row-${r.slug}`}
+                key={r.slug}
+                className={expanded ? "table__item--active" : undefined}
+              >
+                <button
+                  type="button"
+                  className="table__row-button"
+                  onClick={() =>
+                    setExpandedSlug((current) =>
+                      toggleExpandedRegistryRow(current, r.slug),
+                    )
+                  }
+                  aria-expanded={expanded}
+                  aria-controls={`registry-claims-${r.slug}`}
+                >
+                  <span className="table__name">
+                    <strong>{r.name}</strong>
+                    <em>{r.purpose}</em>
+                  </span>
+                  <span className="table__domain">{r.domain}</span>
+                  <span className="table__chain">
+                    {chainDisplayName(r.chain)}
+                  </span>
+                  <span className="table__trust">
+                    {formatTrustSignal(r.supportSignal?.value)}
+                  </span>
+                  <Pill tone={hasAuditClaim(r) ? "observed" : "review"}>
+                    {hasAuditClaim(r) ? "Audit claim" : "No audit claim"}
+                  </Pill>
+                  <span className="table__open" aria-hidden="true">
+                    {expanded ? "Close claims" : "View claims"}
+                  </span>
+                </button>
+                {expanded && <RegistryInlineClaims row={r} />}
+              </li>
+            );
+          })}
+          {rows.length === 0 && (
+            <li className="table__empty">
+              {allLiveRows.length && !showReferenceFallback
+                ? "No indexed membership claims match this view."
+                : "The live service is unavailable, so no reference type matches that filter."}
+            </li>
+          )}
+        </ul>
 
         <p className="band__note">
           {allLiveRows.length && !showReferenceFallback
