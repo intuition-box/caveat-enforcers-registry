@@ -20,9 +20,10 @@ author, or auditor.
 ## Selected approach
 
 Rebuild both the Submit interface and submission plan around an identity plus an ordered list of
-explicit claims. The fixed purpose, source, restriction, operation, and terms questionnaire is
-removed. Those concepts remain available as starter predicates, but none is mandatory merely
-because the application anticipated it.
+explicit claims, presented as a dynamic guided wizard. Only one task panel is active at a time.
+Completed panels compress into editable summaries while the next panel enters. The fixed purpose,
+source, restriction, operation, and terms questionnaire is removed. Those concepts remain available
+as starter predicates, but none is mandatory merely because the application anticipated it.
 
 Two alternatives are rejected:
 
@@ -30,6 +31,9 @@ Two alternatives are rejected:
   the modular builder would still be an appendix.
 - **Expose a raw triple editor:** rejected because requiring atom and triple IDs would make the
   registry technically flexible but unusable for ordinary contributors.
+- **Show the entire claim workspace at once:** rejected as the default because it preserves the
+  current scanning burden. A compact claim stack remains visible, but claim creation happens one
+  decision at a time.
 
 ## Visitor and job
 
@@ -59,12 +63,24 @@ identity is already known. The connected signing wallet is displayed separately.
 author, or auditor value is populated from it.
 
 After successful identity verification, Step 1 becomes a compact summary that can be reopened for
-editing. Advancing opens Step 2; the entire form is not shown at once.
+editing. Advancing opens the claim loop; the entire form is not shown at once.
 
-### Step 2 — Claims
+### Step 2 — Claim loop
 
-The claims stage is the primary contribution workspace. It starts with an empty ordered list and a
-visible **Add claim** action. A contribution must contain at least one contributor-selected claim.
+The claims stage is the primary contribution workspace. It starts with an empty ordered claim stack
+and immediately opens **Choose a claim**. A contribution must contain at least one
+contributor-selected claim.
+
+Each pass through the loop contains three focused panels:
+
+1. **Choose a claim:** select a readable predicate template or choose **Another claim**.
+2. **Complete the claim:** show only the subject and object controls relevant to that predicate.
+3. **Confirm the claim:** present the readable subject–predicate–object statement before adding it
+   to the claim stack.
+
+After confirmation, ask **Add another claim** or **Review contribution**. Adding another claim
+returns to **Choose a claim**. The stack remains visible as a compact ordered list; every saved claim
+has Edit, Move up, Move down, and Remove controls.
 
 Each claim contains:
 
@@ -75,8 +91,9 @@ Each claim contains:
 - **Object:** a readable value, URL, address, chain, enforcer, or existing Intuition term as
   appropriate to the selected predicate.
 
-The contributor can add, edit, reorder, and remove claims. Creating another claim repeats the same
-composer; no separate “extra evidence” section exists.
+The contributor can add, edit, reorder, and remove claims. Editing a saved claim reopens its focused
+completion panel and returns it to the same position after confirmation. No separate “extra
+evidence” section exists.
 
 Starter predicates reflect only the written mission ontology and existing reviewed terms:
 
@@ -93,8 +110,11 @@ Starter predicates reflect only the written mission ontology and existing review
 - used by / usage context;
 - composability relationships already supported by the ontology.
 
-Templates preselect a predicate and the appropriate subject/object editor. They do not silently add
-claims and do not imply evidence.
+Templates preselect a predicate and open the appropriate subject/object editor. They do not silently
+add claims and do not imply evidence. Editors are predicate-aware: chains use a chain selector,
+sources use URL and optional release controls, identities use an address or readable identity
+selector, composability uses an enforcer selector, terms use the schema editor, and general claims
+use a readable object field.
 
 For a reviewed predicate, the interface stores its canonical term ID while showing its readable
 label. The advanced custom path accepts a readable predicate label, derives or resolves its atom,
@@ -144,22 +164,35 @@ This is an Operate surface inside the current Caveat visual system. Preserve the
 paper workspace, typography, Signal Orange actions, rounded wallet/Web3 controls, and existing
 success/error notices.
 
-On desktop, the active step occupies the main column and a compact contribution summary remains
-visible beside it. Completed steps collapse into editable summaries. On mobile, the steps form one
-column; the summary appears inside Step 3 rather than duplicating the form below it.
+On desktop, the active wizard panel occupies the main column. A compact summary beside it contains
+the verified identity, claim count, claim stack, and signing actor. On mobile, the summary sits above
+the active panel and the claim stack remains collapsed until opened. The same controls and order are
+used at both sizes.
+
+These are sequential **steps and panels**, not navigation tabs. The interface shows a short progress
+label—Identity, Claims, Review—without pretending that every claim-loop pass is a new top-level
+stage. Back returns to the previous decision without deleting saved claims.
 
 The primary action is singular at each stage:
 
 - Step 1: **Verify identity**.
-- Step 2: **Review contribution**.
+- Claim selection: **Continue**.
+- Claim completion: **Confirm claim**.
+- Saved claim: **Add another claim** or **Review contribution**.
 - Step 3: **Prepare transaction plan**, followed by **Approve writes** only after successful
   resolution.
+
+Panel motion communicates continuity rather than decoration. A completed panel compresses upward
+into its summary and the next panel enters with a short fade and vertical translation. Back and Edit
+reverse the relationship. Animations never delay input, and reduced-motion users receive immediate
+state changes.
 
 ## States and boundaries
 
 - Identity: empty, verifying, existing, new, no bytecode, RPC unavailable, and editable-complete.
-- Claims: empty guidance, populated list, invalid claim, unresolved existing term, custom predicate
-  warning, and reordered list.
+- Claims: choosing predicate, completing claim, confirming claim, empty stack, populated stack,
+  editing saved claim, invalid claim, unresolved existing term, custom predicate warning, and
+  reordered list.
 - Review: resolving, blocked, ready, awaiting wallet, submitted, partially confirmed, indexed, and
   retryable failure.
 - Wallet: disconnected, wrong network, connected signer, account changed, and user rejection.
@@ -169,6 +202,7 @@ The primary action is singular at each stage:
 ## Accessibility and responsive requirements
 
 - Every step, claim, error, and status message has a programmatic heading or live region.
+- Advancing a panel moves focus to its heading; Back and Edit return focus to the initiating control.
 - Claim reordering works with explicit Move up/Move down controls; drag-and-drop is optional and
   never the only mechanism.
 - Focus moves to the first invalid field after validation and to the next stage heading after a
@@ -192,9 +226,9 @@ The primary action is singular at each stage:
 - Unit tests prove legacy JSON imports become visible editable claims.
 - Unit tests cover add, remove, reorder, reviewed predicate, custom predicate, and existing-term
   resolution behavior.
-- Component/browser checks cover identity verification, one-claim and twenty-claim contributions,
-  signer/deployer separation, validation focus, wallet/network states, successful submission, and
-  partial failure recovery.
+- Component/browser checks cover every panel transition, Back and Edit, identity verification,
+  one-claim and twenty-claim contributions, signer/deployer separation, validation focus,
+  wallet/network states, successful submission, and partial failure recovery.
 - Run `pnpm check`, `pnpm test`, `pnpm build`, and `pnpm format:check`.
 - Inspect `/submit` once at desktop and 390px, fix the complete defect batch, then perform one final
   confirmation pass.
@@ -205,4 +239,6 @@ The primary action is singular at each stage:
 - Identity, claims, and signing actor are independent throughout the data model and interface.
 - The planner no longer depends on application-imposed semantic claims.
 - The design remains permissionless without turning the normal interface into a raw graph editor.
+- The wizard guides one decision at a time without limiting which reviewed or custom claim can be
+  added.
 - Scope is limited to the Submit surface and its submission model.
