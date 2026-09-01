@@ -45,7 +45,10 @@ test("claim-first submissions require identity and at least one explicit claim",
   });
   assert.equal(result.valid, false);
   if (result.valid) return;
-  assert.equal(result.issues.some((issue) => issue.path === "claims"), true);
+  assert.equal(
+    result.issues.some((issue) => issue.path === "claims"),
+    true,
+  );
 });
 
 test("claim-first submissions accept reviewed and readable custom predicates", () => {
@@ -101,9 +104,7 @@ test("claim-first plans contain membership and only contributor-selected semanti
     false,
   );
   assert.equal(
-    plan.operations.some(
-      (operation) => operation.key === "has-terms-schema",
-    ),
+    plan.operations.some((operation) => operation.key === "has-terms-schema"),
     false,
   );
 });

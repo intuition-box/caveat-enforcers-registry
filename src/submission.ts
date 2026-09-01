@@ -249,9 +249,7 @@ function buildClaimFirstSubmissionPlan(
       kind: "create-triple" as const,
       key: `claim:${index}`,
       subject:
-        claim.subject.kind === "deployment"
-          ? deployment
-          : claim.subject.termId,
+        claim.subject.kind === "deployment" ? deployment : claim.subject.termId,
       predicateId:
         claim.predicate.kind === "term"
           ? claim.predicate.termId

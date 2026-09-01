@@ -28,6 +28,7 @@ import type {
   CurationPlan,
 } from "../src/curation";
 import type { RpcFetcher, SubmissionInput } from "../src/validation";
+import { verifyContractCode } from "../src/validation";
 import type {
   SubmissionWriteAdapter,
   SubmissionWriteOptions,
@@ -280,6 +281,30 @@ const TARGET_CHAIN_RPCS: Record<string, string> = {
 };
 
 const directChainRpcFetcher: RpcFetcher = (input, init) => fetch(input, init);
+
+export async function verifyDeploymentIdentity(
+  chainId: string,
+  contractAddress: string,
+): Promise<void> {
+  const rpcEndpoint = TARGET_CHAIN_RPCS[chainId];
+  if (!rpcEndpoint) {
+    throw new Error(
+      `Caveat Registry does not have a verification RPC for EIP-155 chain ${chainId}. Use Intuition, Ethereum, Base, or Sepolia.`,
+    );
+  }
+  const result = await verifyContractCode(
+    rpcEndpoint,
+    contractAddress,
+    directChainRpcFetcher,
+  );
+  if (result.status !== "verified") {
+    throw new Error(
+      result.status === "missing"
+        ? "No deployed bytecode was found at that address on the selected chain."
+        : result.message,
+    );
+  }
+}
 
 function backendForWallet(wallet: BrowserWallet): RegistryBackend {
   return new RegistryBackend({

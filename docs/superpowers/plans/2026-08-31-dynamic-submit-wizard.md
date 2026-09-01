@@ -60,7 +60,8 @@ export type SubmissionTermReference =
   | { kind: "term"; termId: string; label?: string };
 
 export type SubmissionClaim = {
-  subject: { kind: "deployment" } | { kind: "term"; termId: string; label?: string };
+  subject:
+    { kind: "deployment" } | { kind: "term"; termId: string; label?: string };
   predicate:
     | { kind: "term"; termId: string; label: string }
     | { kind: "value"; value: string };
@@ -69,7 +70,11 @@ export type SubmissionClaim = {
 
 export type ClaimFirstSubmissionInput = {
   version: "2";
-  identity: { chainId: string | number; contractAddress: string; displayName?: string };
+  identity: {
+    chainId: string | number;
+    contractAddress: string;
+    displayName?: string;
+  };
   claims: SubmissionClaim[];
   submitterWallet: string;
   initialSignal?: string;
@@ -112,12 +117,27 @@ git commit -m "Add claim-first submission contract"
 
 ```ts
 test("claim-first plans contain membership and only contributor-selected semantic claims", () => {
-  const plan = buildSubmissionPlan(validated.value, PROPOSED_ONTOLOGY_MANIFEST, verifiedCode,
-    verifiedChain);
-  const triples = plan.operations.filter((operation) => operation.kind === "create-triple");
-  assert.deepEqual(triples.map((triple) => triple.key), ["membership", "claim:0", "claim:1"]);
-  assert.equal(triples.some((triple) => triple.key === "source-at"), false);
-  assert.equal(triples.some((triple) => triple.key === "has-terms-schema"), false);
+  const plan = buildSubmissionPlan(
+    validated.value,
+    PROPOSED_ONTOLOGY_MANIFEST,
+    verifiedCode,
+    verifiedChain,
+  );
+  const triples = plan.operations.filter(
+    (operation) => operation.kind === "create-triple",
+  );
+  assert.deepEqual(
+    triples.map((triple) => triple.key),
+    ["membership", "claim:0", "claim:1"],
+  );
+  assert.equal(
+    triples.some((triple) => triple.key === "source-at"),
+    false,
+  );
+  assert.equal(
+    triples.some((triple) => triple.key === "has-terms-schema"),
+    false,
+  );
 });
 ```
 
@@ -182,8 +202,14 @@ git commit -m "Plan explicit claim-first registry writes"
 test("the wizard advances identity through a repeatable claim loop to review", () => {
   let state = initialSubmitWizardState();
   state = submitWizardReducer(state, { type: "identity-verified", identity });
-  state = submitWizardReducer(state, { type: "choose-predicate", predicate: SOURCE });
-  state = submitWizardReducer(state, { type: "update-draft", patch: { objectValue: URL } });
+  state = submitWizardReducer(state, {
+    type: "choose-predicate",
+    predicate: SOURCE,
+  });
+  state = submitWizardReducer(state, {
+    type: "update-draft",
+    patch: { objectValue: URL },
+  });
   state = submitWizardReducer(state, { type: "confirm-claim" });
   assert.equal(state.panel, "claim-saved");
   assert.equal(state.claims.length, 1);
@@ -215,12 +241,16 @@ export type SubmitWizardPanel =
 export function submitWizardReducer(
   state: SubmitWizardState,
   action: SubmitWizardAction,
-): SubmitWizardState { /* deterministic transitions only */ }
+): SubmitWizardState {
+  /* deterministic transitions only */
+}
 
 export function claimFirstInputFromWizard(
   state: SubmitWizardState,
   submitterWallet: string,
-): ClaimFirstSubmissionInput { /* visible claims only */ }
+): ClaimFirstSubmissionInput {
+  /* visible claims only */
+}
 ```
 
 `LISTING_CLAIM_TEMPLATES` becomes the reviewed predicate catalogue. Each template owns its subject

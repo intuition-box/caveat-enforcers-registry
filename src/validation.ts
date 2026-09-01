@@ -94,8 +94,7 @@ export type SubmissionTermReference =
 
 export type SubmissionClaim = {
   subject:
-    | { kind: "deployment" }
-    | { kind: "term"; termId: string; label?: string };
+    { kind: "deployment" } | { kind: "term"; termId: string; label?: string };
   predicate:
     | { kind: "term"; termId: string; label: string }
     | { kind: "value"; value: string };
@@ -152,8 +151,7 @@ export type NormalizedClaimFirstSubmission = Omit<
 };
 
 export type NormalizedSubmission =
-  | NormalizedLegacySubmission
-  | NormalizedClaimFirstSubmission;
+  NormalizedLegacySubmission | NormalizedClaimFirstSubmission;
 
 export function isClaimFirstSubmissionInput(
   input: SubmissionInput,
@@ -876,7 +874,8 @@ function validateClaimFirstSubmission(
       } else {
         issues.push({
           path: `${path}.subject.termId`,
-          message: "Existing claim subjects require a canonical Intuition term ID.",
+          message:
+            "Existing claim subjects require a canonical Intuition term ID.",
         });
       }
 
@@ -902,7 +901,8 @@ function validateClaimFirstSubmission(
       } else {
         issues.push({
           path: `${path}.predicate`,
-          message: "Choose a reviewed predicate or enter a readable custom predicate.",
+          message:
+            "Choose a reviewed predicate or enter a readable custom predicate.",
         });
       }
 
@@ -918,10 +918,7 @@ function validateClaimFirstSubmission(
             ? { label: claim.object.label.trim() }
             : {}),
         };
-      } else if (
-        claim.object?.kind === "value" &&
-        claim.object.value?.trim()
-      ) {
+      } else if (claim.object?.kind === "value" && claim.object.value?.trim()) {
         const value = claim.object.value.trim();
         if (new TextEncoder().encode(value).length > 1_000) {
           issues.push({
@@ -937,7 +934,8 @@ function validateClaimFirstSubmission(
             claim.object?.kind === "term"
               ? `${path}.object.termId`
               : `${path}.object`,
-          message: "Create a readable object or choose an existing Intuition term.",
+          message:
+            "Create a readable object or choose an existing Intuition term.",
         });
       }
 
