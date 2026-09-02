@@ -18,6 +18,7 @@ import {
   executeSubmissionWriteBatch,
   filterRegistryEntries,
   loadComposabilityClaims,
+  loadAllComposabilityClaims,
   loadDeploymentClaims,
   loadRegistryPage,
   normalizeEvmAddress,
@@ -2296,6 +2297,45 @@ test("composability reader keeps support and opposition separate", async () => {
   assert.equal(result.claims[0].opposition.value, "3");
 });
 
+test("global composability discovery queries reviewed predicates without seeded subjects", async () => {
+  let requestBody: Record<string, unknown> | undefined;
+  const result = await loadAllComposabilityClaims({
+    endpoint: "https://mainnet.intuition.sh/v1/graphql",
+    predicateIds: ["predicate-complements", "predicate-conflicts"],
+    fetcher: async (_input, init) => {
+      requestBody = JSON.parse(init.body) as Record<string, unknown>;
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: {
+            triples: [
+              {
+                term_id: "relationship-1",
+                subject: { term_id: "enforcer-a", label: "Enforcer A" },
+                predicate: {
+                  term_id: "predicate-complements",
+                  label: "complements",
+                },
+                object: { term_id: "enforcer-b", label: "Enforcer B" },
+              },
+            ],
+          },
+        }),
+      };
+    },
+  });
+
+  assert.equal(result.kind, "ready");
+  if (result.kind !== "ready") return;
+  assert.equal(result.claims[0]?.subjectId, "enforcer-a");
+  assert.equal(result.claims[0]?.subjectLabel, "Enforcer A");
+  assert.deepEqual(requestBody?.variables, {
+    predicateIds: ["predicate-complements", "predicate-conflicts"],
+    limit: 100,
+  });
+});
+
 test("composability reader resolves contextual evidence by reviewed predicate ID", async () => {
   let calls = 0;
   const result = await loadComposabilityClaims({
@@ -2414,6 +2454,46 @@ test("backend exposes reviewed composability claims through its service boundary
   assert.equal(result.claims[0]?.kind, "complements");
   assert.equal(result.claims[0]?.support.value, "4");
   assert.equal(result.claims[0]?.opposition.value, "1");
+});
+
+test("backend discovers every reviewed composability claim without seeded subjects", async () => {
+  const ontology = createOntologyManifest({
+    version: "1.0.0",
+    deploymentClassId: termId("a"),
+    predicates: {
+      membership: termId("b"),
+      complements: termId("c"),
+      conflictsWith: termId("d"),
+      redundantWith: termId("e"),
+    },
+  });
+  const backend = new RegistryBackend({
+    endpoint: "https://graph.example",
+    ontology,
+    registry: {
+      fetcher: fakeFetcher({
+        data: {
+          triples: [
+            {
+              term_id: "relationship-1",
+              subject: { term_id: address, label: "Source guard" },
+              predicate: {
+                term_id: ontology.predicates.complements,
+                label: "complements",
+              },
+              object: { term_id: secondAddress, label: "Target guard" },
+            },
+          ],
+        },
+      }),
+    },
+  });
+
+  const result = await backend.composabilityIndex();
+  assert.equal(result.kind, "ready");
+  if (result.kind !== "ready") return;
+  assert.equal(result.claims[0]?.subjectLabel, "Source guard");
+  assert.equal(result.claims[0]?.relatedLabel, "Target guard");
 });
 
 test("curation preparation verifies the claim and encodes support or opposition", async () => {

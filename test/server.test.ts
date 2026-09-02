@@ -37,6 +37,15 @@ test("backend server exposes honest health when ontology is incomplete", async (
     };
     assert.equal(composabilityPayload.kind, "unconfigured");
 
+    const composabilityIndex = await fetch(
+      `http://127.0.0.1:${address.port}/api/composability`,
+    );
+    assert.equal(composabilityIndex.status, 200);
+    const composabilityIndexPayload = (await composabilityIndex.json()) as {
+      kind: string;
+    };
+    assert.equal(composabilityIndexPayload.kind, "unconfigured");
+
     const execute = await fetch(
       `http://127.0.0.1:${address.port}/api/submissions/execute`,
       { method: "POST", body: "{}" },

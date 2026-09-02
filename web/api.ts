@@ -1,5 +1,8 @@
 import type { RegistryEntry, RegistryState } from "../src/registry";
-import type { ComposabilityState } from "../src/composability";
+import type {
+  ComposabilityIndexState,
+  ComposabilityState,
+} from "../src/composability";
 import { resolveRegistryApiBase } from "./api-base";
 
 const apiBase = resolveRegistryApiBase(
@@ -110,6 +113,15 @@ export async function fetchComposability(
 ): Promise<ComposabilityState> {
   return getJson<ComposabilityState>(
     `/api/registry/${encodeURIComponent(subjectId)}/composability?limit=100`,
+    signal,
+  );
+}
+
+export async function fetchComposabilityIndex(
+  signal?: AbortSignal,
+): Promise<ComposabilityIndexState> {
+  return getJson<ComposabilityIndexState>(
+    "/api/composability?limit=100",
     signal,
   );
 }

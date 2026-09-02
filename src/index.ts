@@ -81,12 +81,15 @@ export {
 } from "./filter.js";
 export {
   loadComposabilityClaims,
+  loadAllComposabilityClaims,
+  allComposabilityClaimsQuery,
   composabilityClaimsQuery,
   composabilityContextQuery,
   type ComposabilityClaim,
   type ComposabilityContextClaim,
   type ComposabilityContextKind,
   type ComposabilityKind,
+  type ComposabilityIndexState,
 } from "./composability.js";
 export {
   verifyRpcChainId,

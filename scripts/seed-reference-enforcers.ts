@@ -5,6 +5,7 @@ import {
   formatEther,
   http,
   keccak256,
+  webSocket,
   type Address,
   type Hex,
 } from "viem";
@@ -265,6 +266,10 @@ function verificationRpc(chainId: string): string {
   return endpoint;
 }
 
+function rpcTransport(endpoint: string) {
+  return endpoint.startsWith("ws") ? webSocket(endpoint) : http(endpoint);
+}
+
 async function assertSourceDeployments(
   document: ReferenceSeedDocument,
   chainIds: string[],
@@ -272,7 +277,7 @@ async function assertSourceDeployments(
   const hashes = new Map<string, Map<string, string>>();
   for (const chainId of chainIds) {
     const client = createPublicClient({
-      transport: http(verificationRpc(chainId)),
+      transport: rpcTransport(verificationRpc(chainId)),
     });
     await mapWithConcurrency(document.enforcers, async (entry) => {
       const address = seedAddress(entry.address.toLowerCase());
@@ -479,9 +484,11 @@ async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const document = await loadReferenceDocument();
   const plan = buildReferenceSeedPlan(document, { chainIds: options.chainIds });
+  const intuitionRpc =
+    process.env.INTUITION_RPC_URL?.trim() || INTUITION_MAINNET_RPC;
   const publicClient = createPublicClient({
     chain: INTUITION_CHAIN,
-    transport: http(INTUITION_MAINNET_RPC),
+    transport: rpcTransport(intuitionRpc),
   });
   const chainId = await publicClient.getChainId();
   if (chainId !== Number(INTUITION_MAINNET_CHAIN_ID)) {
@@ -520,7 +527,7 @@ async function main(): Promise<void> {
   const walletClient = createWalletClient({
     account,
     chain: INTUITION_CHAIN,
-    transport: http(INTUITION_MAINNET_RPC),
+    transport: rpcTransport(intuitionRpc),
   });
   console.log(`Execution wallet: ${account.address}`);
 

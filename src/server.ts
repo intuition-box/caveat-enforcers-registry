@@ -193,6 +193,12 @@ export async function handleBackendRequest(
       return;
     }
 
+    if (pathname === "/api/composability" && request.method === "GET") {
+      const limit = Number(url.searchParams.get("limit") ?? "100");
+      json(response, 200, await backend.composabilityIndex({ limit }));
+      return;
+    }
+
     const detailMatch = pathname.match(/^\/api\/registry\/([^/]+)$/);
     if (detailMatch && request.method === "GET") {
       const pageSize = Number(url.searchParams.get("pageSize") ?? "100");

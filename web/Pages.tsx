@@ -20,14 +20,12 @@ import {
 } from "../src/enforcer-display-name";
 import { deriveEnforcerPresentation } from "../src/enforcer-presentation";
 import referenceDocument from "../data/metamask-v1.3.0.json";
-import composabilityDocument from "../data/composability-seed.json";
-import composabilityTriplesDocument from "../data/composability-seed.triples.json";
 import ComposabilityGraph from "./ComposabilityGraph";
 import EnforcerRadialGraph from "./EnforcerRadialGraph";
 import BrowserFrame from "./BrowserFrame";
 import {
   fetchRegistry,
-  fetchComposability,
+  fetchComposabilityIndex,
   fetchRegistryDetail,
   type RegistryApiState,
   type RegistryDetailResponse,
@@ -64,7 +62,7 @@ import type {
   CurationPlan,
 } from "../src/curation";
 import type { Claim, RegistrySignal } from "../src/types";
-import type { ComposabilityClaim } from "../src/composability";
+import type { ComposabilityIndexState } from "../src/composability";
 import type { ResolvedSubmission } from "../src/backend";
 import type { SubmissionWriteOptions } from "../src/write-workflow";
 import {
@@ -81,6 +79,7 @@ import {
 } from "./contribution-presentation";
 import { toggleExpandedRegistryRow } from "./registry-inspector";
 import SubmitListingWizard from "./SubmitListingWizard";
+import { displayComposabilityRelationships } from "./composability-presentation";
 
 /* ---------------------------------------------------------------- primitives */
 
@@ -3547,138 +3546,111 @@ export function LearnPage() {
 
 /* --------------------------------------------------------------- composability */
 
-type ComposabilityRelationship = {
-  key: string;
-  subjectType: string;
-  relation: "conflicts" | "complements";
-  relatedType: string;
-  context: string;
-  ordering?: string;
-  evidenceNote?: string;
-  supportedBy: string;
-};
+type ComposabilityUiState = { kind: "loading" } | ComposabilityIndexState;
 
-type ComposabilityTriplePlan = {
-  key: string;
-  relationship: {
-    id: string;
-    subject: { id: string };
-  };
-};
-
-type DisplayComposabilityRelationship = ComposabilityRelationship & {
-  claimId: string;
-  live: boolean;
-  support?: string;
-  opposition?: string;
-};
-
-const COMPOSABILITY_RELATIONSHIPS =
-  composabilityDocument.relationships as ComposabilityRelationship[];
-const COMPOSABILITY_TRIPLE_PLANS = composabilityTriplesDocument.triples as
-  ComposabilityTriplePlan[] | undefined;
+type RegistryTypeIndex =
+  | { kind: "loading" }
+  | { kind: "ready"; ids: Set<string>; labels: string[] }
+  | { kind: "error" };
 
 const COMPOSABILITY_PRESETS = [
   {
     title: "Time-gated token transfer",
-    keys: ["erc20-amount-timestamp-complement"],
+    terms: ["ERC20TransferAmountEnforcer", "TimestampEnforcer"],
     body: "Cap the ERC-20 amount and independently limit when the delegation may be redeemed. Both terms must describe the same intended transfer.",
   },
   {
     title: "Exact batch with a redemption cap",
-    keys: ["exact-batch-limited-calls-complement"],
+    terms: ["ExactExecutionBatchEnforcer", "LimitedCallsEnforcer"],
     body: "Fix every call in the batch, then independently cap how many times that exact delegation may be redeemed.",
   },
   {
     title: "Scoped agent action",
-    keys: [
-      "allowed-targets-methods-complement",
-      "allowed-targets-call-count-complement",
-      "allowed-targets-time-complement",
+    terms: [
+      "AllowedTargetsEnforcer",
+      "AllowedMethodsEnforcer",
+      "LimitedCallsEnforcer",
+      "TimestampEnforcer",
     ],
     body: "Target, method, call-count, and time-window restrictions reinforce one another when their terms describe the same delegation.",
   },
 ] as const;
 
 export function ComposabilityPage() {
-  const [claims, setClaims] = useState<Map<string, ComposabilityClaim>>(
-    () => new Map(),
-  );
-  const [liveStatus, setLiveStatus] = useState<"loading" | "ready" | "error">(
-    "loading",
-  );
+  const [claimState, setClaimState] = useState<ComposabilityUiState>({
+    kind: "loading",
+  });
+  const [registryTypes, setRegistryTypes] = useState<RegistryTypeIndex>({
+    kind: "loading",
+  });
 
   useEffect(() => {
     const controller = new AbortController();
-    const subjectIds = Array.from(
-      new Set(
-        (COMPOSABILITY_TRIPLE_PLANS ?? []).map(
-          (plan) => plan.relationship.subject.id,
-        ),
-      ),
-    );
-    void Promise.all(
-      subjectIds.map((subjectId) =>
-        fetchComposability(subjectId, controller.signal),
-      ),
-    )
-      .then((states) => {
-        if (controller.signal.aborted) return;
-        const next = new Map<string, ComposabilityClaim>();
-        for (const state of states) {
-          if (state.kind !== "ready") continue;
-          for (const claim of state.claims) next.set(claim.id, claim);
+    void fetchComposabilityIndex(controller.signal)
+      .then((state) => {
+        if (!controller.signal.aborted) setClaimState(state);
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setClaimState({
+            kind: "error",
+            message:
+              error instanceof Error
+                ? error.message
+                : "The live composability index could not be loaded.",
+          });
         }
-        setClaims(next);
-        setLiveStatus("ready");
+      });
+    void fetchRegistry({ hydrate: true, signal: controller.signal })
+      .then((state) => {
+        if (controller.signal.aborted) return;
+        if (state.kind !== "ready") {
+          setRegistryTypes({ kind: "error" });
+          return;
+        }
+        const implementations = state.entries
+          .map((entry) =>
+            entry.claims.find(
+              (claim) =>
+                claim.predicateId ===
+                PROPOSED_ONTOLOGY_MANIFEST.predicates.implements,
+            ),
+          )
+          .filter((claim) => Boolean(claim?.objectId));
+        setRegistryTypes({
+          kind: "ready",
+          ids: new Set(implementations.map((claim) => claim!.objectId!)),
+          labels: Array.from(
+            new Set(
+              implementations
+                .map((claim) => claim!.objectLabel?.trim())
+                .filter((label): label is string => Boolean(label)),
+            ),
+          ),
+        });
       })
       .catch(() => {
-        if (!controller.signal.aborted) setLiveStatus("error");
+        if (!controller.signal.aborted) setRegistryTypes({ kind: "error" });
       });
     return () => controller.abort();
   }, []);
 
-  const relationships = useMemo<DisplayComposabilityRelationship[]>(() => {
-    const plans = new Map(
-      (COMPOSABILITY_TRIPLE_PLANS ?? []).map((plan) => [plan.key, plan]),
-    );
-    return COMPOSABILITY_RELATIONSHIPS.map((relationship) => {
-      const plan = plans.get(relationship.key);
-      const claim = plan ? claims.get(plan.relationship.id) : undefined;
-      const context = claim?.context.find(
-        (item) => item.kind === "applies-in-context",
-      );
-      const ordering = claim?.context.find(
-        (item) => item.kind === "requires-ordering",
-      );
-      const evidence = claim?.context.find(
-        (item) => item.kind === "supported-by",
-      );
-      return {
-        ...relationship,
-        claimId: plan?.relationship.id ?? "",
-        live: Boolean(claim),
-        ...(claim?.kind === "conflicts" || claim?.kind === "complements"
-          ? { relation: claim.kind }
-          : {}),
-        ...(claim?.relatedLabel ? { relatedType: claim.relatedLabel } : {}),
-        ...(context?.objectLabel ? { context: context.objectLabel } : {}),
-        ...(ordering?.objectLabel ? { ordering: ordering.objectLabel } : {}),
-        ...(externalUrl(evidence?.objectLabel ?? undefined)
-          ? { supportedBy: evidence!.objectLabel! }
-          : {}),
-        ...(claim
-          ? {
-              support: formatTrustSignal(claim.support.value),
-              opposition: formatTrustSignal(claim.opposition.value),
-            }
-          : {}),
-      };
-    });
-  }, [claims]);
-  const liveCount = relationships.filter(
-    (relationship) => relationship.live,
-  ).length;
+  const relationships = useMemo(
+    () =>
+      claimState.kind === "ready" && registryTypes.kind === "ready"
+        ? displayComposabilityRelationships(
+            claimState.claims,
+            registryTypes.ids,
+          )
+        : [],
+    [claimState, registryTypes],
+  );
+  const graphLoading =
+    claimState.kind === "loading" || registryTypes.kind === "loading";
+  const graphError =
+    claimState.kind === "error" || registryTypes.kind === "error";
+  const graphReady =
+    claimState.kind === "ready" && registryTypes.kind === "ready";
 
   return (
     <main>
@@ -3713,20 +3685,42 @@ export function ComposabilityPage() {
           aria-live="polite"
         >
           <span className="mono-sub">
-            {liveStatus === "loading"
+            {graphLoading
               ? "Resolving Intuition claims"
-              : liveStatus === "error"
+              : graphError
                 ? "Intuition claims unavailable"
-                : `${liveCount} of ${relationships.length} relationship claims live`}
+                : claimState.kind === "unconfigured"
+                  ? "Composability ontology unavailable"
+                  : `${relationships.length} live relationship claims`}
           </span>
           <span>
-            {liveStatus === "ready" && liveCount === relationships.length
+            {graphReady && relationships.length > 0
               ? "Graph, context, ordering, and signal are resolved from Intuition mainnet."
-              : "Unpublished relationships remain visibly labelled as canonical plans."}
+              : graphReady
+                ? "No composability relationship claims are indexed yet."
+                : "The graph stays empty until live Intuition claims can be resolved."}
           </span>
         </div>
 
-        <ComposabilityGraph relationships={relationships} />
+        {graphReady && relationships.length > 0 ? (
+          <ComposabilityGraph
+            relationships={relationships}
+            knownTerms={registryTypes.labels}
+          />
+        ) : (
+          <div className="composability-empty" role="status">
+            <h2>
+              {graphLoading
+                ? "Resolving the live graph."
+                : "No inferred edges."}
+            </h2>
+            <p>
+              {graphLoading
+                ? "Reading reviewed relationship predicates and registry implementations from Intuition mainnet."
+                : "This surface only draws relationships returned by Intuition. It does not substitute bundled plans when the index is empty or unavailable."}
+            </p>
+          </div>
+        )}
 
         <section
           className="composability-presets"
@@ -3738,21 +3732,20 @@ export function ComposabilityPage() {
           </div>
           <div className="composability-presets__grid">
             {COMPOSABILITY_PRESETS.map((preset, index) => {
-              const presetRelationships = relationships.filter((relationship) =>
-                preset.keys.includes(relationship.key as never),
+              const presetRelationships = relationships.filter(
+                (relationship) =>
+                  preset.terms.includes(relationship.subjectType as never) &&
+                  preset.terms.includes(relationship.relatedType as never),
               );
-              const presetLiveCount = presetRelationships.filter(
-                (relationship) => relationship.live,
-              ).length;
               return (
                 <article key={preset.title}>
                   <span className="mono-sub">0{index + 1}</span>
                   <h3>{preset.title}</h3>
                   <p>{preset.body}</p>
                   <span className="composability-presets__state">
-                    {presetLiveCount === presetRelationships.length
-                      ? "Live on Intuition"
-                      : `${presetLiveCount}/${presetRelationships.length} claims live`}
+                    {presetRelationships.length > 0
+                      ? `${presetRelationships.length} live ${presetRelationships.length === 1 ? "claim" : "claims"}`
+                      : "No matching claim indexed"}
                   </span>
                 </article>
               );
@@ -3769,9 +3762,9 @@ export function ComposabilityPage() {
           <p className="lede">
             Published relationships are resolved from Intuition as triples with
             their use-case context, ordering, evidence, and separate community
-            signals. Canonical plans stay marked as plans until those exact IDs
-            exist onchain. Anyone can support or dispute a live claim with
-            TRUST; the registry never turns that signal into a universal score.
+            signals. Nothing is drawn until that exact relationship exists
+            onchain. Anyone can support or dispute a live claim with TRUST; the
+            registry never turns that signal into a universal score.
           </p>
         </div>
       </section>

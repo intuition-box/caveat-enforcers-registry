@@ -22,13 +22,13 @@ import {
   type SimulationLinkDatum,
   type SimulationNodeDatum,
 } from "d3-force";
-import referenceDocument from "../data/metamask-v1.3.0.json";
 import { claimDistribution, intuitionClaimUrl } from "./claim-presentation";
+import { formatComposabilityTrust } from "./composability-presentation";
 
 export type GraphRelationship = {
   key: string;
   subjectType: string;
-  relation: "conflicts" | "complements";
+  relation: "conflicts" | "complements" | "redundant";
   relatedType: string;
   context: string;
   ordering?: string;
@@ -86,8 +86,10 @@ function curvePath(a: Position, b: Position): string {
 
 export default function ComposabilityGraph({
   relationships,
+  knownTerms = [],
 }: {
   relationships: GraphRelationship[];
+  knownTerms?: string[];
 }) {
   const [selection, setSelection] = useState<Selection>(null);
   const [hoveredTerm, setHoveredTerm] = useState<string | null>(null);
@@ -152,9 +154,9 @@ export default function ComposabilityGraph({
 
     // Orphan halo: real registry enforcers with no composability relationship
     // yet. Deterministic golden-angle scatter in an elliptical outer ring.
-    const orphanNames = (referenceDocument.enforcers as Array<{ name: string }>)
-      .map((e) => e.name)
-      .filter((name) => !present.has(name));
+    const orphanNames = Array.from(new Set(knownTerms)).filter(
+      (name) => name && !present.has(name),
+    );
     const orphanNodes = orphanNames.map((name, i) => {
       const t = orphanNames.length > 1 ? i / (orphanNames.length - 1) : 0;
       const angle = i * GOLDEN;
@@ -173,7 +175,7 @@ export default function ComposabilityGraph({
       orphans: orphanNodes,
       maxDegree: Math.max(1, ...named.map((id) => degree.get(id) ?? 0)),
     };
-  }, [relationships]);
+  }, [knownTerms, relationships]);
 
   // Details panel + persistent selection come from a click.
   const selectedRelationship =
@@ -248,6 +250,7 @@ export default function ComposabilityGraph({
             Complements
           </span>
           <span className="cgraph__key cgraph__key--conflict">Conflicts</span>
+          <span className="cgraph__key cgraph__key--redundant">Repeats</span>
         </div>
       </header>
 
@@ -305,7 +308,7 @@ export default function ComposabilityGraph({
                   }`}
                   role="button"
                   tabIndex={0}
-                  aria-label={`${shortLabel(relationship.subjectType)} ${relationship.relation === "conflicts" ? "conflicts with" : "complements"} ${shortLabel(relationship.relatedType)}`}
+                  aria-label={`${shortLabel(relationship.subjectType)} ${relationship.relation === "conflicts" ? "conflicts with" : relationship.relation === "redundant" ? "repeats" : "complements"} ${shortLabel(relationship.relatedType)}`}
                   onClick={() => selectRelationship(relationship)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
@@ -314,7 +317,7 @@ export default function ComposabilityGraph({
                     }
                   }}
                 >
-                  <title>{`${shortLabel(relationship.subjectType)} ${relationship.relation === "conflicts" ? "conflicts with" : "complements"} ${shortLabel(relationship.relatedType)} — ${relationship.context}`}</title>
+                  <title>{`${shortLabel(relationship.subjectType)} ${relationship.relation === "conflicts" ? "conflicts with" : relationship.relation === "redundant" ? "repeats" : "complements"} ${shortLabel(relationship.relatedType)} — ${relationship.context}`}</title>
                 </path>
               );
             })}
@@ -419,7 +422,11 @@ export default function ComposabilityGraph({
               </p>
               <h3>
                 {shortLabel(selectedRelationship.subjectType)}{" "}
-                {selectedRelationship.relation === "conflicts" ? "×" : "+"}{" "}
+                {selectedRelationship.relation === "conflicts"
+                  ? "×"
+                  : selectedRelationship.relation === "redundant"
+                    ? "≈"
+                    : "+"}{" "}
                 {shortLabel(selectedRelationship.relatedType)}
               </h3>
               <p>{selectedRelationship.context}</p>
@@ -463,8 +470,10 @@ export default function ComposabilityGraph({
                     />
                   </div>
                   <small>
-                    {selectedRelationship.support ?? "0 TRUST"} support ·{" "}
-                    {selectedRelationship.opposition ?? "0 TRUST"} opposition
+                    {formatComposabilityTrust(selectedRelationship.support)}{" "}
+                    support ·{" "}
+                    {formatComposabilityTrust(selectedRelationship.opposition)}{" "}
+                    opposition
                   </small>
                 </div>
               )}
@@ -479,13 +488,15 @@ export default function ComposabilityGraph({
                       Open claim in Intuition <span aria-hidden="true">↗</span>
                     </a>
                   )}
-                <a
-                  href={selectedRelationship.supportedBy}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Read source <span aria-hidden="true">↗</span>
-                </a>
+                {selectedRelationship.supportedBy && (
+                  <a
+                    href={selectedRelationship.supportedBy}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Read source <span aria-hidden="true">↗</span>
+                  </a>
+                )}
               </div>
             </>
           ) : selectedTerm ? (
@@ -527,25 +538,40 @@ export default function ComposabilityGraph({
       <div className="cgraph__ledger" aria-label="Relationship ledger">
         {relationships.map((relationship) => {
           const selected = selectedRelationship?.key === relationship.key;
+          const claimUrl = intuitionClaimUrl(relationship.claimId);
           return (
-            <button
+            <div
               key={relationship.key}
-              type="button"
               className={`cgraph__ledger-row cgraph__ledger-row--${relationship.relation} ${selected ? "is-selected" : ""}`}
-              onClick={() => selectRelationship(relationship)}
-              aria-pressed={selected}
             >
-              <span>{shortLabel(relationship.subjectType)}</span>
-              <span className="cgraph__ledger-relation">
-                {relationship.relation === "conflicts"
-                  ? "conflicts with"
-                  : "complements"}
-              </span>
-              <span>{shortLabel(relationship.relatedType)}</span>
-              <span className="cgraph__ledger-state">
-                {relationship.live ? "Live" : "Plan"}
-              </span>
-            </button>
+              <button
+                type="button"
+                className="cgraph__ledger-main"
+                onClick={() => selectRelationship(relationship)}
+                aria-pressed={selected}
+              >
+                <span>{shortLabel(relationship.subjectType)}</span>
+                <span className="cgraph__ledger-relation">
+                  {relationship.relation === "conflicts"
+                    ? "conflicts with"
+                    : relationship.relation === "redundant"
+                      ? "repeats"
+                      : "complements"}
+                </span>
+                <span>{shortLabel(relationship.relatedType)}</span>
+              </button>
+              {claimUrl && (
+                <a
+                  className="cgraph__ledger-link"
+                  href={intuitionClaimUrl(relationship.claimId)!}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Open relationship claim in Intuition"
+                >
+                  Open claim <span aria-hidden="true">↗</span>
+                </a>
+              )}
+            </div>
           );
         })}
       </div>

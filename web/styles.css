@@ -6481,6 +6481,29 @@ main > .band:first-child {
   text-align: right;
 }
 
+.composability-empty {
+  display: grid;
+  gap: 0.65rem;
+  min-height: 18rem;
+  place-content: center;
+  padding: clamp(2rem, 6vw, 5rem);
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+  text-align: center;
+}
+.composability-empty h2,
+.composability-empty p {
+  margin: 0;
+}
+.composability-empty h2 {
+  font: 600 clamp(1.8rem, 4vw, 3.4rem) / 0.95 var(--display);
+  letter-spacing: -0.045em;
+}
+.composability-empty p {
+  max-width: 48ch;
+  color: color-mix(in srgb, var(--ink) 66%, transparent);
+}
+
 .composability-presets {
   margin-top: clamp(4rem, 8vw, 8rem);
 }
@@ -8502,10 +8525,14 @@ main > .band:first-child {
 .cgraph__key--conflict {
   color: #e5657a;
 }
+.cgraph__key--redundant {
+  color: #d8ae55;
+}
 
 .cgraph__canvas {
   --cg-complement: #46c88a;
   --cg-conflict: #e5657a;
+  --cg-redundant: #d8ae55;
   --cg-node: #c6c0dc;
   --cg-hub: #8b6dff;
   border-radius: 12px;
@@ -8545,6 +8572,9 @@ main > .band:first-child {
 }
 .cgraph__link--conflicts {
   stroke: var(--cg-conflict);
+}
+.cgraph__link--redundant {
+  stroke: var(--cg-redundant);
 }
 .cgraph__link.is-active {
   opacity: 1;
@@ -8703,18 +8733,14 @@ main > .band:first-child {
 }
 .cgraph__ledger-row {
   display: grid;
-  grid-template-columns: 1fr auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.65rem 0.85rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.02);
   color: inherit;
-  font-size: 0.85rem;
-  text-align: left;
-  cursor: pointer;
   transition:
     border-color 0.15s ease,
     background 0.15s ease;
@@ -8723,6 +8749,26 @@ main > .band:first-child {
 .cgraph__ledger-row.is-selected {
   border-color: rgba(255, 255, 255, 0.3);
   background: rgba(255, 255, 255, 0.05);
+}
+.cgraph__ledger-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.75rem 0.85rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+.cgraph__ledger-main:focus-visible,
+.cgraph__ledger-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -3px;
 }
 .cgraph__ledger-relation {
   font-family: var(--mono, "Space Mono", monospace);
@@ -8736,11 +8782,26 @@ main > .band:first-child {
 .cgraph__ledger-row--conflicts .cgraph__ledger-relation {
   color: #e5657a;
 }
-.cgraph__ledger-state {
+.cgraph__ledger-row--redundant .cgraph__ledger-relation {
+  color: #d8ae55;
+}
+.cgraph__ledger-link {
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  color: inherit;
   font-family: var(--mono, "Space Mono", monospace);
   font-size: 0.68rem;
   text-transform: uppercase;
-  opacity: 0.5;
+  text-decoration: none;
+  opacity: 0.72;
+  white-space: nowrap;
+}
+.cgraph__ledger-link:hover {
+  opacity: 1;
 }
 
 @media (max-width: 48rem) {
@@ -8759,15 +8820,14 @@ main > .band:first-child {
   }
 
   .cgraph__ledger-row {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
-  .cgraph__ledger-row > :nth-child(2),
-  .cgraph__ledger-row > :nth-child(3) {
-    grid-column: 1;
+  .cgraph__ledger-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
   }
-  .cgraph__ledger-row > :last-child {
-    grid-column: 2;
-    grid-row: 1 / span 3;
+  .cgraph__ledger-link {
+    padding-inline: 0.7rem;
   }
   .cgraph__node-label {
     font-size: 21px;

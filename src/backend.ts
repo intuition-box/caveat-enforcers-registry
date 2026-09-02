@@ -5,7 +5,9 @@ import {
   summarizeDeploymentClaims,
 } from "./registry.js";
 import {
+  loadAllComposabilityClaims,
   loadComposabilityClaims,
+  type ComposabilityIndexState,
   type ComposabilityState,
 } from "./composability.js";
 import {
@@ -344,6 +346,27 @@ export class RegistryBackend {
     return loadComposabilityClaims({
       endpoint: this.config.endpoint,
       subjectId,
+      predicateIds,
+      contextPredicateIds: {
+        appliesInContext: this.ontology.predicates.appliesInContext,
+        requiresOrdering: this.ontology.predicates.requiresOrdering,
+        supportedBy: this.ontology.predicates.supportedBy,
+      },
+      limit: options.limit,
+      fetcher: this.config.registry?.fetcher,
+    });
+  }
+
+  async composabilityIndex(
+    options: { limit?: number } = {},
+  ): Promise<ComposabilityIndexState> {
+    const predicateIds = [
+      this.ontology.predicates.complements,
+      this.ontology.predicates.conflictsWith,
+      this.ontology.predicates.redundantWith,
+    ].filter((id): id is string => Boolean(id?.trim()));
+    return loadAllComposabilityClaims({
+      endpoint: this.config.endpoint,
       predicateIds,
       contextPredicateIds: {
         appliesInContext: this.ontology.predicates.appliesInContext,
