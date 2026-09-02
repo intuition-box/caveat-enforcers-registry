@@ -10,9 +10,10 @@ The project has two deployable surfaces:
 2. The registry API is the Node service in `Dockerfile`. `render.yaml` is a portable Render
    handoff; the same container can run on another platform that supports a Docker web service.
 
-The API must expose `/health` and bind to `0.0.0.0` in production. Set `CORS_ORIGIN` to the exact
-frontend origin, for example `https://registry.example`. Preview deployments can use a scoped
-subdomain pattern such as `https://*.registry.example`; broad `*` access is not appropriate for a
+The API must expose `/health` and bind to `0.0.0.0` in production. The canonical Intuition Box
+frontend and its numbered preview subdomains are explicit first-party CORS origins in the server.
+Use `CORS_ORIGIN` only to add another exact frontend origin, such as `https://registry.example`, or
+a scoped pattern such as `https://*.registry.example`; broad `*` access is not appropriate for a
 write-capable service. The API uses these canonical Intuition endpoints by default:
 
 - GraphQL: `https://mainnet.intuition.sh/v1/graphql`
