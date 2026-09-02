@@ -158,10 +158,9 @@ test("backend HTTP registry route forwards browse filters", async () => {
   }
 });
 
-test("backend CORS is opt-in and supports browser preflight", async () => {
+test("backend CORS allows first-party Intuition Box surfaces and configured origins", async () => {
   const previous = process.env.CORS_ORIGIN;
-  process.env.CORS_ORIGIN =
-    "https://registry.example,https://*.caveats-registry.intuition.box";
+  process.env.CORS_ORIGIN = "https://registry.example";
   const server = startBackendServer(0, {
     backend: new RegistryBackend({
       endpoint: "https://mainnet.intuition.sh/v1/graphql",
@@ -189,6 +188,18 @@ test("backend CORS is opt-in and supports browser preflight", async () => {
     assert.equal(
       health.headers.get("access-control-allow-origin"),
       "https://registry.example",
+    );
+
+    const production = await fetch(
+      `http://127.0.0.1:${address.port}/api/registry`,
+      {
+        method: "OPTIONS",
+        headers: { origin: "https://caveats-registry.intuition.box" },
+      },
+    );
+    assert.equal(
+      production.headers.get("access-control-allow-origin"),
+      "https://caveats-registry.intuition.box",
     );
 
     const preview = await fetch(

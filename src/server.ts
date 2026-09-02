@@ -22,6 +22,10 @@ import type {
 } from "./write-workflow.js";
 
 const maxBodyBytes = 2 * 1024 * 1024;
+const firstPartyCorsOrigins = [
+  "https://caveats-registry.intuition.box",
+  "https://*.caveats-registry.intuition.box",
+];
 
 class RequestBodyError extends Error {}
 
@@ -132,11 +136,14 @@ function applyCors(
 ): boolean {
   const configured = envValue("CORS_ORIGIN");
   const requestOrigin = request.headers.origin;
-  if (configured && requestOrigin) {
-    const allowed = configured
-      .split(",")
-      .map((origin) => origin.trim())
-      .filter(Boolean);
+  if (requestOrigin) {
+    const allowed = [
+      ...firstPartyCorsOrigins,
+      ...configured
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    ];
     if (allowed.some((origin) => corsOriginMatches(origin, requestOrigin))) {
       response.setHeader("access-control-allow-origin", requestOrigin);
       response.setHeader("vary", "origin");
