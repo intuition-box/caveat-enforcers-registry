@@ -11,7 +11,8 @@ The project has two deployable surfaces:
    handoff; the same container can run on another platform that supports a Docker web service.
 
 The API must expose `/health` and bind to `0.0.0.0` in production. Set `CORS_ORIGIN` to the exact
-frontend origin, for example `https://registry.example`, rather than using a wildcard for a
+frontend origin, for example `https://registry.example`. Preview deployments can use a scoped
+subdomain pattern such as `https://*.registry.example`; broad `*` access is not appropriate for a
 write-capable service. The API uses these canonical Intuition endpoints by default:
 
 - GraphQL: `https://mainnet.intuition.sh/v1/graphql`
@@ -20,8 +21,8 @@ write-capable service. The API uses these canonical Intuition endpoints by defau
 
 Current public deployment:
 
-- Frontend: `https://caveat-enforcers-registry.vercel.app`
-- Read API: `https://caveat-enforcers-registry.onrender.com`
+- Frontend: `https://caveats-registry.intuition.box`
+- Read API: `https://caveats-registry-api.intuition.box`
 
 The release is verified when `/health` reports chain `1155` with no ontology issues,
 `/api/registry` returns the seeded membership records, and browser-wallet CORS preflight from

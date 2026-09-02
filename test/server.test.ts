@@ -160,7 +160,8 @@ test("backend HTTP registry route forwards browse filters", async () => {
 
 test("backend CORS is opt-in and supports browser preflight", async () => {
   const previous = process.env.CORS_ORIGIN;
-  process.env.CORS_ORIGIN = "https://registry.example";
+  process.env.CORS_ORIGIN =
+    "https://registry.example,https://*.caveats-registry.intuition.box";
   const server = startBackendServer(0, {
     backend: new RegistryBackend({
       endpoint: "https://mainnet.intuition.sh/v1/graphql",
@@ -189,6 +190,29 @@ test("backend CORS is opt-in and supports browser preflight", async () => {
       health.headers.get("access-control-allow-origin"),
       "https://registry.example",
     );
+
+    const preview = await fetch(
+      `http://127.0.0.1:${address.port}/api/registry`,
+      {
+        method: "OPTIONS",
+        headers: { origin: "https://4.caveats-registry.intuition.box" },
+      },
+    );
+    assert.equal(
+      preview.headers.get("access-control-allow-origin"),
+      "https://4.caveats-registry.intuition.box",
+    );
+
+    const lookalike = await fetch(
+      `http://127.0.0.1:${address.port}/api/registry`,
+      {
+        method: "OPTIONS",
+        headers: {
+          origin: "https://4.caveats-registry.intuition.box.evil.example",
+        },
+      },
+    );
+    assert.equal(lookalike.headers.get("access-control-allow-origin"), null);
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));

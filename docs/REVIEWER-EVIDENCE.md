@@ -2,9 +2,9 @@
 
 Last verified: 2026-08-10. Chain: Intuition mainnet `1155`.
 
-Public application: <https://caveat-enforcers-registry.vercel.app>
+Public application: <https://caveats-registry.intuition.box>
 
-Public read API: <https://caveat-enforcers-registry.onrender.com>
+Public read API: <https://caveats-registry-api.intuition.box>
 
 The table separates implemented code, live evidence, and the remaining external-publication
 step.
