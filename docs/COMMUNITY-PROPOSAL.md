@@ -76,7 +76,7 @@ We would like review from ERC-7710 wallet, SDK, and enforcer authors on:
 3. the contextual composability vocabulary; and
 4. the most useful upstream home for the integration pattern.
 
-Registry: <https://caveat-enforcers-registry.vercel.app>
+Registry: <https://caveats-registry.intuition.box>
 
 Repository: <https://github.com/intuition-box/caveat-enforcers-registry>
 

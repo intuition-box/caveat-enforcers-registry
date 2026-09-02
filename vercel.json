@@ -2,7 +2,7 @@
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
   "env": {
-    "VITE_REGISTRY_API_BASE_URL": "https://caveat-enforcers-registry.onrender.com"
+    "VITE_REGISTRY_API_BASE_URL": "https://caveats-registry-api.intuition.box"
   },
   "headers": [
     {

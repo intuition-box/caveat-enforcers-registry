@@ -18,7 +18,7 @@ RUN npm install --global pnpm@11.1.2 \
   && pnpm install --frozen-lockfile
 COPY . .
 # VITE_REGISTRY_API_BASE_URL is optional: without it the app falls back to the
-# public Render API. Set it as a Coolify build variable to override.
+# public Intuition Box API. Set it as a Coolify build variable to override.
 ARG VITE_REGISTRY_API_BASE_URL
 RUN pnpm build
 

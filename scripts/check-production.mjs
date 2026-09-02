@@ -1,12 +1,10 @@
 import { readFileSync } from "node:fs";
 
 const frontendUrl = (
-  process.env.REGISTRY_FRONTEND_URL ??
-  "https://caveat-enforcers-registry.vercel.app"
+  process.env.REGISTRY_FRONTEND_URL ?? "https://caveats-registry.intuition.box"
 ).replace(/\/$/, "");
 const apiUrl = (
-  process.env.REGISTRY_API_URL ??
-  "https://caveat-enforcers-registry.onrender.com"
+  process.env.REGISTRY_API_URL ?? "https://caveats-registry-api.intuition.box"
 ).replace(/\/$/, "");
 const expectedRecords = Number(process.env.REGISTRY_EXPECTED_RECORDS ?? "33");
 const requireFinal = process.argv.includes("--require-final");

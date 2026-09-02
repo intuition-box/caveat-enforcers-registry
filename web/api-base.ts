@@ -1,4 +1,4 @@
-const HOSTED_REGISTRY_API = "https://caveat-enforcers-registry.onrender.com";
+const HOSTED_REGISTRY_API = "https://caveats-registry-api.intuition.box";
 
 export function resolveRegistryApiBase(
   configuredBase: string | undefined,

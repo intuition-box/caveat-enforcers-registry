@@ -137,7 +137,7 @@ function applyCors(
       .split(",")
       .map((origin) => origin.trim())
       .filter(Boolean);
-    if (allowed.includes("*") || allowed.includes(requestOrigin)) {
+    if (allowed.some((origin) => corsOriginMatches(origin, requestOrigin))) {
       response.setHeader("access-control-allow-origin", requestOrigin);
       response.setHeader("vary", "origin");
       response.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
@@ -150,6 +150,30 @@ function applyCors(
     return true;
   }
   return false;
+}
+
+function corsOriginMatches(allowed: string, requestOrigin: string): boolean {
+  if (allowed === "*" || allowed === requestOrigin) return true;
+  const wildcard = allowed.match(
+    /^(https?):\/\/\*\.([a-z0-9.-]+)(?::(\d+))?$/i,
+  );
+  if (!wildcard) return false;
+  try {
+    const request = new URL(requestOrigin);
+    const [, protocol, hostname, port = ""] = wildcard;
+    return (
+      request.protocol === `${protocol}:` &&
+      request.hostname.endsWith(`.${hostname}`) &&
+      request.port === port &&
+      request.username === "" &&
+      request.password === "" &&
+      request.pathname === "/" &&
+      request.search === "" &&
+      request.hash === ""
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function handleBackendRequest(

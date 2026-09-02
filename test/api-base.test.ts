@@ -9,7 +9,7 @@ test("local development uses the Vite proxy when no API base is configured", () 
 test("production falls back to the hosted registry API", () => {
   assert.equal(
     resolveRegistryApiBase("", false),
-    "https://caveat-enforcers-registry.onrender.com",
+    "https://caveats-registry-api.intuition.box",
   );
 });
 
