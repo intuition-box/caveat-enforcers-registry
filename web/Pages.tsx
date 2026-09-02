@@ -77,7 +77,6 @@ import {
   LISTING_CLAIM_TEMPLATES,
   listingClaimSummary,
 } from "./contribution-presentation";
-import { toggleExpandedRegistryRow } from "./registry-inspector";
 import SubmitListingWizard from "./SubmitListingWizard";
 import { displayComposabilityRelationships } from "./composability-presentation";
 
@@ -593,68 +592,6 @@ function ClaimDistributionBar({ claim }: { claim: Claim }) {
   );
 }
 
-function RegistryInlineClaims({ row }: { row: RegistryRow }) {
-  const claims = row.claims ?? [];
-
-  return (
-    <section
-      id={`registry-claims-${row.slug}`}
-      className="registry-inline-claims"
-      aria-label={`${row.name} claims`}
-    >
-      <header className="registry-inline-claims__header">
-        <div>
-          <h3>Claims and positions</h3>
-          <p>
-            Each statement is an independent Intuition claim. Support and
-            opposition remain separate.
-          </p>
-        </div>
-        <span className="mono-sub">{claims.length} indexed</span>
-      </header>
-
-      {claims.length ? (
-        <ol className="claim-ledger registry-inline-claims__ledger">
-          {claims.map((claim, index) => (
-            <li key={claim.id ?? `${claim.predicate}-${index}`}>
-              <div className="claim-ledger__record">
-                <span className="claim-ledger__statement">
-                  <strong>{claim.predicate}</strong>
-                  <span>{claim.object}</span>
-                </span>
-                <span className="claim-ledger__signal">
-                  {formatTrustSignal(claim.stake)} support ·{" "}
-                  {formatTrustSignal(claim.oppositionStake)} opposition
-                </span>
-                <ClaimDistributionBar claim={claim} />
-              </div>
-              {intuitionClaimUrl(claim.id) ? (
-                <a
-                  className="web3-choice web3-choice--portal"
-                  href={intuitionClaimUrl(claim.id)!}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Support or oppose ↗
-                </a>
-              ) : (
-                <span className="registry-inline-claims__unavailable">
-                  Claim link unavailable
-                </span>
-              )}
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="registry-inline-claims__empty">
-          This reference record has no hydrated Intuition claims. Start the
-          registry service to inspect live positions.
-        </p>
-      )}
-    </section>
-  );
-}
-
 function RegistryDetailDrawer({
   row,
   onClose,
@@ -690,7 +627,18 @@ function RegistryDetailDrawer({
     if (!dialog) return;
     openerRef.current = document.activeElement as HTMLElement | null;
     dialog.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    dialog.addEventListener("keydown", onKeyDown);
     return () => {
+      dialog.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
       if (dialog.open) dialog.close();
       openerRef.current?.focus();
     };
@@ -1120,7 +1068,6 @@ function RegistryPageContent() {
   const [apiState, setApiState] = useState<RegistryApiState | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState<RegistryRow | null>(null);
-  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query), 250);
@@ -1399,23 +1346,18 @@ function RegistryPageContent() {
 
         <ul className="table registry-results" aria-label="Registry results">
           {rows.map((r) => {
-            const expanded = expandedSlug === r.slug;
+            const active = selectedRow?.slug === r.slug;
             return (
               <li
                 id={`registry-row-${r.slug}`}
                 key={r.slug}
-                className={expanded ? "table__item--active" : undefined}
+                className={active ? "table__item--active" : undefined}
               >
                 <button
                   type="button"
                   className="table__row-button"
-                  onClick={() =>
-                    setExpandedSlug((current) =>
-                      toggleExpandedRegistryRow(current, r.slug),
-                    )
-                  }
-                  aria-expanded={expanded}
-                  aria-controls={`registry-claims-${r.slug}`}
+                  onClick={() => setSelectedRow(r)}
+                  aria-haspopup="dialog"
                 >
                   <span className="table__name">
                     <strong>{r.name}</strong>
@@ -1432,10 +1374,9 @@ function RegistryPageContent() {
                     {hasAuditClaim(r) ? "Audit claim" : "No audit claim"}
                   </Pill>
                   <span className="table__open" aria-hidden="true">
-                    {expanded ? "Close claims" : "View claims"}
+                    View claims
                   </span>
                 </button>
-                {expanded && <RegistryInlineClaims row={r} />}
               </li>
             );
           })}

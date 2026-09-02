@@ -6970,84 +6970,14 @@ main > .band:first-child {
   text-decoration: none;
 }
 
-.registry-inline-claims {
-  border-top: 1px solid var(--line-light);
-  background: var(--paper-bright);
-}
-
-.registry-inline-claims__header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 1.5rem;
-  padding: clamp(1.5rem, 3vw, 2.5rem);
-}
-
-.registry-inline-claims__header h3 {
-  margin: 0;
-  font-family: var(--display);
-  font-size: clamp(1.7rem, 3vw, 2.4rem);
-  font-weight: 580;
-  letter-spacing: -0.025em;
-  line-height: 1;
-}
-
-.registry-inline-claims__header p {
-  max-width: 48rem;
-  margin: 0.65rem 0 0;
-  color: color-mix(in srgb, var(--ink) 68%, transparent);
-  line-height: 1.5;
-}
-
-.registry-inline-claims__ledger {
-  margin: 0;
-  border-top: 1px solid var(--line-light);
-}
-
-.registry-inline-claims__ledger li {
-  padding: 1.25rem clamp(1.5rem, 3vw, 2.5rem);
-}
-
-.registry-inline-claims .web3-choice--portal {
-  display: inline-flex;
-  min-height: 3rem;
-  align-items: center;
-  padding: 0 1rem;
-  border: 1px solid var(--line-light);
-  border-radius: 0.2rem;
-  color: inherit;
-  font: 650 0.78rem/1 var(--body);
-  text-decoration: none;
-}
-
-.registry-inline-claims .web3-choice--portal:hover,
-.registry-inline-claims .web3-choice--portal:focus-visible {
-  border-color: var(--signal);
-  outline: 2px solid var(--signal);
-  outline-offset: 3px;
-}
-
-.registry-inline-claims__empty {
-  margin: 0;
-  padding: clamp(1.5rem, 3vw, 2.5rem);
-  border-top: 1px solid var(--line-light);
-  color: color-mix(in srgb, var(--ink) 68%, transparent);
-  line-height: 1.55;
-}
-
-.registry-inline-claims__unavailable {
-  color: var(--muted);
-  font: 0.68rem/1.4 var(--mono);
-}
-
 .registry-drawer {
-  width: min(38rem, 100%);
+  width: min(64rem, calc(100vw - 4rem));
   max-width: none;
-  height: 100svh;
+  height: min(48rem, calc(100dvh - 7rem));
   max-height: none;
-  margin: 0 0 0 auto;
+  margin: auto;
   padding: 0;
-  border: 0;
+  border: 1px solid var(--line-light);
   background: var(--paper-bright);
   color: var(--ink);
 }
@@ -8403,19 +8333,6 @@ main > .band:first-child {
     justify-self: start;
   }
 
-  .registry-inline-claims__header {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .registry-inline-claims__ledger li {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .registry-inline-claims .web3-choice--portal {
-    width: 100%;
-    justify-content: center;
-  }
-
   .transaction-plan__actions {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -8443,9 +8360,9 @@ main > .band:first-child {
   }
 
   .registry-drawer {
-    width: 100%;
-    height: min(88svh, 48rem);
-    margin: auto 0 0;
+    width: calc(100vw - 2rem);
+    height: calc(100dvh - 2rem);
+    margin: auto;
   }
 
   .registry-drawer__header {
