@@ -760,7 +760,7 @@ function RegistryDetailDrawer({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <article className="registry-drawer__panel">
+      <article className="registry-drawer__panel" data-lenis-prevent>
         <header className="registry-drawer__header">
           <div>
             <span className="mono-sub">Enforcer record</span>
@@ -798,6 +798,64 @@ function RegistryDetailDrawer({
               ],
             ]}
           />
+
+          <section className="registry-drawer__section">
+            <div className="registry-drawer__section-heading">
+              <span className="mono-sub">Claim ledger</span>
+              <h3>{claims.length} indexed claims</h3>
+            </div>
+            {claims.length ? (
+              <ol className="claim-ledger">
+                {claims.map((claim, index) => (
+                  <li key={claim.id ?? `${claim.predicate}-${index}`}>
+                    <div className="claim-ledger__record">
+                      <span className="claim-ledger__statement">
+                        <strong>{claim.predicate}</strong>
+                        <span>{claim.object}</span>
+                      </span>
+                      <span className="claim-ledger__signal">
+                        {formatTrustSignal(claim.stake)} support
+                        {claim.oppositionStake
+                          ? ` · ${formatTrustSignal(claim.oppositionStake)} opposition`
+                          : " · 0 TRUST opposition"}
+                      </span>
+                      <ClaimDistributionBar claim={claim} />
+                    </div>
+                    <div className="claim-ledger__actions">
+                      <button
+                        className="web3-choice web3-choice--support"
+                        type="button"
+                        disabled={!claim.id}
+                        onClick={() => selectSignal(claim, "support")}
+                      >
+                        Support
+                      </button>
+                      <button
+                        className="web3-choice web3-choice--oppose"
+                        type="button"
+                        disabled={!claim.id}
+                        onClick={() => selectSignal(claim, "oppose")}
+                      >
+                        Dispute
+                      </button>
+                      {intuitionClaimUrl(claim.id) && (
+                        <a
+                          className="web3-choice web3-choice--portal"
+                          href={intuitionClaimUrl(claim.id)!}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open in Intuition ↗
+                        </a>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="band__note">No hydrated claims are available.</p>
+            )}
+          </section>
 
           <section className="registry-drawer__section">
             <div className="registry-drawer__section-heading">
@@ -865,64 +923,6 @@ function RegistryDetailDrawer({
               <summary>Terms encoding / ABI schema</summary>
               <pre>{formattedTermsSchema(row.terms)}</pre>
             </details>
-          </section>
-
-          <section className="registry-drawer__section">
-            <div className="registry-drawer__section-heading">
-              <span className="mono-sub">Claim ledger</span>
-              <h3>{claims.length} indexed claims</h3>
-            </div>
-            {claims.length ? (
-              <ol className="claim-ledger">
-                {claims.map((claim, index) => (
-                  <li key={claim.id ?? `${claim.predicate}-${index}`}>
-                    <div className="claim-ledger__record">
-                      <span className="claim-ledger__statement">
-                        <strong>{claim.predicate}</strong>
-                        <span>{claim.object}</span>
-                      </span>
-                      <span className="claim-ledger__signal">
-                        {formatTrustSignal(claim.stake)} support
-                        {claim.oppositionStake
-                          ? ` · ${formatTrustSignal(claim.oppositionStake)} opposition`
-                          : " · 0 TRUST opposition"}
-                      </span>
-                      <ClaimDistributionBar claim={claim} />
-                    </div>
-                    <div className="claim-ledger__actions">
-                      <button
-                        className="web3-choice web3-choice--support"
-                        type="button"
-                        disabled={!claim.id}
-                        onClick={() => selectSignal(claim, "support")}
-                      >
-                        Support
-                      </button>
-                      <button
-                        className="web3-choice web3-choice--oppose"
-                        type="button"
-                        disabled={!claim.id}
-                        onClick={() => selectSignal(claim, "oppose")}
-                      >
-                        Dispute
-                      </button>
-                      {intuitionClaimUrl(claim.id) && (
-                        <a
-                          className="web3-choice web3-choice--portal"
-                          href={intuitionClaimUrl(claim.id)!}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Open in Intuition ↗
-                        </a>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="band__note">No hydrated claims are available.</p>
-            )}
           </section>
 
           {selection && (
