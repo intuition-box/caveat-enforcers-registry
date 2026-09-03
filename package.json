@@ -33,7 +33,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "seed:composability": "tsx scripts/seed-composability.ts",
-    "curate:claim": "tsx scripts/curate-claim.ts"
+    "curate:claim": "tsx scripts/curate-claim.ts",
+    "pin:proof": "tsx scripts/pin-proof.ts"
   },
   "devDependencies": {
     "@metamask/smart-accounts-kit": "^1.7.0",
