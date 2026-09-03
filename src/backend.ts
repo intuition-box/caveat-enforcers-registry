@@ -53,6 +53,7 @@ import {
 import type { IntuitionPublicClient } from "./intuition.js";
 import { verifyTermsDecoder, type TermsDecoderCheck } from "./terms-decoder.js";
 import type { Claim } from "./types.js";
+import { preferIpfsBackedClaims } from "./claims-ipfs.js";
 import { filterRegistryEntries, type RegistryFilters } from "./filter.js";
 import {
   executeCurationDeposit,
@@ -319,15 +320,19 @@ export class RegistryBackend {
       }
     }
 
+    // Hide a raw-JSON object atom when its ipfs-backed twin exists, so the
+    // migrated records never show "json object" beside the readable claim.
+    const visibleClaims = preferIpfsBackedClaims(claims);
+
     return {
       kind: "ready" as const,
       deploymentId,
       label,
-      claims,
+      claims: visibleClaims,
       hasMore,
       summary: summarizeDeploymentClaims(
         deploymentId,
-        claims,
+        visibleClaims,
         this.ontology,
         label,
       ),
