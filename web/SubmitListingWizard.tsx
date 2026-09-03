@@ -180,32 +180,6 @@ export default function SubmitListingWizard({
                   </button>
                   <button
                     type="button"
-                    disabled={index === 0}
-                    onClick={() =>
-                      dispatch({
-                        type: "move-claim",
-                        id: claim.id,
-                        direction: "up",
-                      })
-                    }
-                  >
-                    Move up
-                  </button>
-                  <button
-                    type="button"
-                    disabled={index === state.claims.length - 1}
-                    onClick={() =>
-                      dispatch({
-                        type: "move-claim",
-                        id: claim.id,
-                        direction: "down",
-                      })
-                    }
-                  >
-                    Move down
-                  </button>
-                  <button
-                    type="button"
                     onClick={() =>
                       dispatch({ type: "remove-claim", id: claim.id })
                     }

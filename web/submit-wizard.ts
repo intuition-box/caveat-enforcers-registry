@@ -189,7 +189,6 @@ export type SubmitWizardAction =
   | { type: "review" }
   | { type: "edit-claim"; id: number }
   | { type: "remove-claim"; id: number }
-  | { type: "move-claim"; id: number; direction: "up" | "down" }
   | { type: "back" }
   | { type: "replace-claims"; claims: WizardClaim[] };
 
@@ -280,15 +279,6 @@ export function submitWizardReducer(
         claims: state.claims.filter((claim) => claim.id !== action.id),
         panel: state.claims.length === 1 ? "claim-choice" : state.panel,
       };
-    case "move-claim": {
-      const index = state.claims.findIndex((claim) => claim.id === action.id);
-      const target = action.direction === "up" ? index - 1 : index + 1;
-      if (index < 0 || target < 0 || target >= state.claims.length)
-        return state;
-      const claims = [...state.claims];
-      [claims[index], claims[target]] = [claims[target]!, claims[index]!];
-      return { ...state, claims };
-    }
     case "back": {
       if (state.panel === "claim-confirm")
         return { ...state, panel: "claim-details" };

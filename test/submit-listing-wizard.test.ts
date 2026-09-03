@@ -13,8 +13,6 @@ test("the wizard component exposes the complete guided action language", () => {
     "Add another claim",
     "Review contribution",
     "Edit",
-    "Move up",
-    "Move down",
     "Remove",
   ]) {
     assert.equal(source.includes(label), true, `missing ${label}`);
