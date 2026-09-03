@@ -12,8 +12,12 @@
  * resolves to the Thing's `name` instead of "json object". Run this once to
  * validate the whole path before the funded reference-set migration.
  *
- *   PINATA_JWT=<jwt> pnpm pin:proof
- *   PINATA_JWT=<jwt> INTUITION_SEED_PRIVATE_KEY=<secret> pnpm pin:proof -- --write
+ * Run in an interactive terminal — the script prompts for each secret with the
+ * typed characters masked, so keys never reach a command line, shell history,
+ * a file, or the agent. (Env vars PINATA_JWT / CAVEAT_DEPLOYER_PRIVATE_KEY are
+ * still honoured if already set.)
+ *   pnpm pin:proof            # phase A, no TRUST  (prompts: Pinata JWT)
+ *   pnpm pin:proof -- --write # phase B, ~0.1 TRUST (prompts: JWT + deployer key)
  */
 import {
   createPublicClient,
@@ -34,6 +38,7 @@ import {
   INTUITION_MAINNET_MULTIVAULT,
   INTUITION_MAINNET_RPC,
 } from "../src/ontology.js";
+import { createInterface } from "node:readline";
 import {
   pinAtomDocument,
   pinataPinner,
@@ -63,6 +68,45 @@ const PROOF_THING: AtomThing = {
   },
 };
 
+/**
+ * Read a secret from the environment, or — when run in an interactive terminal
+ * and the env var is unset — prompt for it with the typed characters masked, so
+ * the value never reaches a command line, shell history, a file, or this agent.
+ */
+async function resolveSecret(envName: string, label: string): Promise<string> {
+  const fromEnv = process.env[envName]?.trim();
+  if (fromEnv) return fromEnv;
+  if (!process.stdin.isTTY) {
+    throw new Error(
+      `${envName} is not set and there is no interactive terminal to prompt from.`,
+    );
+  }
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: true,
+  });
+  const masked = rl as unknown as {
+    _writeToOutput: (value: string) => void;
+    output: NodeJS.WriteStream;
+  };
+  let prompted = false;
+  masked._writeToOutput = (value: string) => {
+    if (!prompted) {
+      masked.output.write(value);
+      prompted = true;
+    }
+    // Swallow every echoed keystroke after the prompt itself.
+  };
+  return new Promise<string>((resolve) => {
+    rl.question(`${label}: `, (answer) => {
+      rl.close();
+      process.stdout.write("\n");
+      resolve(answer.trim());
+    });
+  });
+}
+
 async function graphqlAtom(
   termId: string,
 ): Promise<{ term_id: string; label: string | null; data: string } | null> {
@@ -85,12 +129,8 @@ async function graphqlAtom(
 async function main(): Promise<void> {
   const write = process.argv.includes("--write");
 
-  const jwt = process.env.PINATA_JWT?.trim();
-  if (!jwt) {
-    throw new Error(
-      "PINATA_JWT is required. Create a JWT at pinata.cloud (scope: pinFileToIPFS) and pass it as an env var.",
-    );
-  }
+  const jwt = await resolveSecret("PINATA_JWT", "Pinata JWT");
+  if (!jwt) throw new Error("A Pinata JWT is required.");
 
   // ---- Phase A: pin and verify the CID (no chain writes) -----------------
   const prepared = prepareAtomDocument(PROOF_THING);
@@ -131,10 +171,15 @@ async function main(): Promise<void> {
   }
 
   // ---- Phase B: create one atom on mainnet (~0.1 TRUST) ------------------
-  const rawKey = process.env.INTUITION_SEED_PRIVATE_KEY?.trim();
-  if (!rawKey || !/^0x[0-9a-f]{64}$/i.test(rawKey)) {
+  const rawKey = process.env.INTUITION_SEED_PRIVATE_KEY?.trim()
+    ? process.env.INTUITION_SEED_PRIVATE_KEY.trim()
+    : await resolveSecret(
+        "CAVEAT_DEPLOYER_PRIVATE_KEY",
+        "Deployer private key (0x…, hidden)",
+      );
+  if (!/^0x[0-9a-f]{64}$/i.test(rawKey)) {
     throw new Error(
-      "INTUITION_SEED_PRIVATE_KEY must be a 32-byte 0x-prefixed secret for --write.",
+      "The deployer private key must be a 32-byte 0x-prefixed secret.",
     );
   }
   const intuitionRpc =
