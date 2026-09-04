@@ -5,6 +5,7 @@ import {
 } from "./intuition.js";
 import { PROPOSED_ONTOLOGY_MANIFEST } from "./ontology.js";
 import { canonicalJson } from "./submission.js";
+import type { AtomThing } from "./pin.js";
 import type {
   ReferenceSeedAtom,
   ReferenceSeedDocument,
@@ -178,10 +179,17 @@ function requiredPredicate(key: keyof typeof PREDICATE_LABELS): {
 export function buildReferenceEnrichmentPlan(
   metadata: ReferenceMetadataDocument,
   reference: ReferenceSeedDocument,
+  options: { ipfsContent?: ReadonlyMap<string, string> } = {},
 ): ReferenceEnrichmentPlan {
   if (metadata.enforcers.length !== 32 || reference.enforcers.length !== 32) {
     throw new Error("Reference enrichment requires exactly 32 enforcers.");
   }
+  // When an IPFS content map is supplied, the JSON-valued atoms (terms schema,
+  // audit, usage) are written as their `ipfs://<CID>` pointer instead of a raw
+  // on-chain JSON blob, so the indexer resolves a readable name. The atom key
+  // is the join point; see collectReferenceEnrichmentThings.
+  const ipfsContentFor = (key: string, fallback: string): string =>
+    options.ipfsContent?.get(key) ?? fallback;
   const referenceByName = new Map(
     reference.enforcers.map((entry) => [entry.name, entry]),
   );
@@ -264,7 +272,10 @@ export function buildReferenceEnrichmentPlan(
     const terms = addAtom(
       atoms,
       `terms-schema:${name}`,
-      termsSchemaAtomContent(entry.termsSchema, entryIndex),
+      ipfsContentFor(
+        `terms-schema:${name}`,
+        termsSchemaAtomContent(entry.termsSchema, entryIndex),
+      ),
     );
 
     for (const domainValue of entry.restrictionDomains) {
@@ -361,7 +372,10 @@ export function buildReferenceEnrichmentPlan(
       const auditAtom = addAtom(
         atoms,
         `audit:${name}:${index}`,
-        canonicalJson(normalizedAudit),
+        ipfsContentFor(
+          `audit:${name}:${index}`,
+          canonicalJson(normalizedAudit),
+        ),
       );
       const auditorAtom = addAtom(
         atoms,
@@ -387,8 +401,11 @@ export function buildReferenceEnrichmentPlan(
     }
 
     for (const [index, usage] of entry.usage.entries()) {
-      const usageContent = canonicalJson(usage);
-      const usageAtom = addAtom(atoms, `usage:${name}:${index}`, usageContent);
+      const usageAtom = addAtom(
+        atoms,
+        `usage:${name}:${index}`,
+        ipfsContentFor(`usage:${name}:${index}`, canonicalJson(usage)),
+      );
       addTriple(
         triples,
         `used-by:${index}`,
@@ -409,4 +426,55 @@ export function buildReferenceEnrichmentPlan(
     atoms: [...atoms.values()],
     triples: [...triples.values()],
   };
+}
+
+export type EnrichmentThing = { key: string; thing: AtomThing };
+
+/**
+ * The JSON-valued atoms (terms schema, audit, usage) as schema.org Things to
+ * pin to IPFS. Each `key` matches the atom key buildReferenceEnrichmentPlan
+ * uses, so the pinned `ipfs://<CID>` can be threaded back in via `ipfsContent`.
+ * Because the payload lives on IPFS, the full terms schema is preserved rather
+ * than truncated to fit the on-chain atom byte limit.
+ */
+export function collectReferenceEnrichmentThings(
+  metadata: ReferenceMetadataDocument,
+): EnrichmentThing[] {
+  const things: EnrichmentThing[] = [];
+  for (const entry of metadata.enforcers) {
+    const name = requiredText(entry.name, "enforcer.name");
+    things.push({
+      key: `terms-schema:${name}`,
+      thing: {
+        name: `${name} — terms schema`,
+        description: `How the encoded caveat terms for ${name} are interpreted.`,
+        termsSchema: entry.termsSchema,
+      },
+    });
+    entry.audits?.forEach((audit, index) => {
+      things.push({
+        key: `audit:${name}:${index}`,
+        thing: {
+          name: `${requiredText(audit.auditor, "audit.auditor")} audit — ${name}`,
+          description: `${audit.scope} · ${audit.qualification}`,
+          audit,
+        },
+      });
+    });
+    entry.usage?.forEach((usage, index) => {
+      // Usage contexts are shared identities: keep the Thing content free of
+      // enforcer-specific fields so an identical context across enforcers
+      // resolves to one atom (as the raw-JSON plan already deduplicates).
+      things.push({
+        key: `usage:${name}:${index}`,
+        thing: {
+          name: requiredText(usage.name, "usage.name"),
+          description: "A context where a caveat enforcer boundary is used.",
+          ...(usage.sourceUrl ? { url: usage.sourceUrl } : {}),
+          usage,
+        },
+      });
+    });
+  }
+  return things;
 }

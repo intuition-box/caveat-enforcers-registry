@@ -149,6 +149,8 @@ export { verifyTermsDecoder, type TermsDecoderCheck } from "./terms-decoder.js";
 export type { Claim, EnforcerRecord, RegistrySignal } from "./types.js";
 export {
   buildReferenceEnrichmentPlan,
+  collectReferenceEnrichmentThings,
+  type EnrichmentThing,
   type ReferenceAuditEvidence,
   type ReferenceEnrichmentPlan,
   type ReferenceMetadataDocument,
