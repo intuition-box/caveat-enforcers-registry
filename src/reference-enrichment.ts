@@ -6,6 +6,11 @@ import {
 import { PROPOSED_ONTOLOGY_MANIFEST } from "./ontology.js";
 import { canonicalJson } from "./submission.js";
 import type { AtomThing } from "./pin.js";
+import {
+  structuredThing,
+  termsSchemaThing,
+  usageThing,
+} from "./atom-content.js";
 import type {
   ReferenceSeedAtom,
   ReferenceSeedDocument,
@@ -445,35 +450,27 @@ export function collectReferenceEnrichmentThings(
     const name = requiredText(entry.name, "enforcer.name");
     things.push({
       key: `terms-schema:${name}`,
-      thing: {
-        name: `${name} — terms schema`,
-        description: `How the encoded caveat terms for ${name} are interpreted.`,
-        termsSchema: entry.termsSchema,
-      },
+      thing: termsSchemaThing(name, entry.termsSchema),
     });
     entry.audits?.forEach((audit, index) => {
+      // Reference audits carry richer provenance than a live submission, so
+      // their name/description are built here; the serialisation primitive is
+      // shared with every other path.
       things.push({
         key: `audit:${name}:${index}`,
-        thing: {
+        thing: structuredThing({
           name: `${requiredText(audit.auditor, "audit.auditor")} audit — ${name}`,
           description: `${audit.scope} · ${audit.qualification}`,
-          audit,
-        },
+          payloadKey: "audit",
+          payload: audit,
+        }),
       });
     });
     entry.usage?.forEach((usage, index) => {
       // Usage contexts are shared identities: keep the Thing content free of
       // enforcer-specific fields so an identical context across enforcers
       // resolves to one atom (as the raw-JSON plan already deduplicates).
-      things.push({
-        key: `usage:${name}:${index}`,
-        thing: {
-          name: requiredText(usage.name, "usage.name"),
-          description: "A context where a caveat enforcer boundary is used.",
-          ...(usage.sourceUrl ? { url: usage.sourceUrl } : {}),
-          usage,
-        },
-      });
+      things.push({ key: `usage:${name}:${index}`, thing: usageThing(usage) });
     });
   }
   return things;

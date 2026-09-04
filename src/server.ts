@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { createPublicClient, http } from "viem";
 import { supersededAtomReplacements } from "./ipfs-superseded.js";
+import { pinataPinner, type Pinner } from "./pin.js";
 import type { ReferenceMetadataDocument } from "./reference-enrichment.js";
 import type { ReferenceSeedDocument } from "./reference-seed.js";
 import {
@@ -97,7 +98,18 @@ function createBackend(): RegistryBackend {
     ontology,
     publicClient,
     supersededReplacements: loadSupersededReplacements(),
+    pinner: loadSubmissionPinner(),
   });
+}
+
+/**
+ * Server-side IPFS pinner for new submissions, when a Pinata JWT is configured.
+ * Absent → the submission plan writes raw JSON atoms (unchanged behaviour), so
+ * the read API and dev setups keep working without a key.
+ */
+function loadSubmissionPinner(): Pinner | undefined {
+  const jwt = envValue("PINATA_JWT");
+  return jwt ? pinataPinner({ jwt }) : undefined;
 }
 
 async function readBody(request: IncomingMessage): Promise<unknown> {

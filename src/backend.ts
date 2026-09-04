@@ -15,7 +15,13 @@ import {
   validateOntologyManifest,
   type OntologyManifest,
 } from "./ontology.js";
-import { buildSubmissionPlan, type SubmissionPlan } from "./submission.js";
+import {
+  buildSubmissionPlan,
+  collectSubmissionThings,
+  type SubmissionIpfsContent,
+  type SubmissionPlan,
+} from "./submission.js";
+import { pinAtomDocument, type Pinner } from "./pin.js";
 import {
   buildSubmissionWriteBatch,
   executeSubmissionWriteBatch,
@@ -76,6 +82,8 @@ export type BackendConfig = {
   rpcFetcher?: RpcFetcher;
   /** Superseded raw atom ID → ipfs replacement atom ID (both lowercased). */
   supersededReplacements?: ReadonlyMap<string, string>;
+  /** Pins a submission's JSON evidence to IPFS. Absent → raw JSON atoms. */
+  pinner?: Pinner;
 };
 
 export type BackendRegistryListOptions = {
@@ -489,6 +497,7 @@ export class RegistryBackend {
     if (decoderIssues.length) {
       return { status: "invalid", issues: decoderIssues };
     }
+    const ipfsContent = await this.pinSubmissionEvidence(validated.value);
     return {
       status: "ready",
       submission: validated.value,
@@ -500,8 +509,37 @@ export class RegistryBackend {
         this.ontology,
         codeCheck,
         chainCheck,
+        ipfsContent,
       ),
     };
+  }
+
+  /**
+   * Pin a submission's JSON evidence (terms schema, audit, usage) to IPFS so
+   * new listings carry ipfs:// atoms like the migrated reference set. Returns
+   * undefined when no pinner is configured, so the plan falls back to raw JSON.
+   */
+  private async pinSubmissionEvidence(
+    submission: NormalizedSubmission,
+  ): Promise<SubmissionIpfsContent | undefined> {
+    if (!this.config.pinner) return undefined;
+    // The legacy submission has structured terms/audit/usage evidence; the
+    // claim-first path carries generic claim objects and is pinned separately.
+    if (isNormalizedClaimFirstSubmission(submission)) return undefined;
+    const pin = this.config.pinner;
+    const things = collectSubmissionThings(submission);
+    const [termsSchema, audit, usage] = await Promise.all([
+      pinAtomDocument(things.termsSchema, pin).then((r) => r.uri),
+      things.audit
+        ? pinAtomDocument(things.audit, pin).then((r) => r.uri)
+        : Promise.resolve(undefined),
+      Promise.all(
+        things.usage.map((thing) =>
+          pinAtomDocument(thing, pin).then((r) => r.uri),
+        ),
+      ),
+    ]);
+    return { termsSchema, audit, usage };
   }
 
   async resolveSubmission(
