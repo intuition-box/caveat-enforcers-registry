@@ -262,6 +262,12 @@ export default function SubmitListingWizard({
             <label>
               <span className="mono-label">Deployed contract address</span>
               <input
+                id="submit-address"
+                className={localError ? "field--invalid" : undefined}
+                aria-invalid={localError ? true : undefined}
+                aria-describedby={
+                  localError ? "submit-identity-error" : "submit-address-hint"
+                }
                 value={identity.contractAddress}
                 onChange={(event) =>
                   setIdentity({
@@ -272,7 +278,7 @@ export default function SubmitListingWizard({
                 placeholder="0x…"
               />
             </label>
-            <p className="form__hint">
+            <p className="form__hint" id="submit-address-hint">
               Caveat Registry checks deployed bytecode on the selected chain
               before continuing.
             </p>
@@ -290,7 +296,11 @@ export default function SubmitListingWizard({
               {importNote && <p role="status">{importNote}</p>}
             </details>
             {localError && (
-              <p className="submit-wizard__error" role="alert">
+              <p
+                className="submit-wizard__error"
+                id="submit-identity-error"
+                role="alert"
+              >
                 {localError}
               </p>
             )}

@@ -7936,11 +7936,41 @@ main > .band:first-child {
 }
 
 .submit-wizard__error {
+  display: flex;
+  gap: 0.6rem;
   margin: 0;
   padding: 0.85rem 1rem;
   border: 1px solid #a73e36;
+  border-left-width: 3px;
+  background: color-mix(in srgb, #a73e36 8%, var(--paper-bright));
   color: #7f251f;
+  font-weight: 550;
   line-height: 1.45;
+}
+
+/* Leading alert glyph so an error reads as an error, not body copy. */
+.submit-wizard__error::before {
+  content: "!";
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #a73e36;
+  color: var(--paper-bright);
+  font: 700 0.8rem/1 var(--body);
+}
+
+/* Win over `.submit-wizard__panel > p` which otherwise mutes the error text. */
+p.submit-wizard__error {
+  color: #7f251f;
+}
+
+/* An input the user must correct: error-coloured underline (idle and focus). */
+.field--invalid,
+.field--invalid:focus {
+  border-bottom-color: #a73e36 !important;
 }
 
 @keyframes submit-panel-enter {
