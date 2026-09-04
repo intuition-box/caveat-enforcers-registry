@@ -17,6 +17,7 @@ import {
 } from "./ontology.js";
 import {
   buildSubmissionPlan,
+  collectClaimFirstSubmissionThings,
   collectSubmissionThings,
   type SubmissionIpfsContent,
   type SubmissionPlan,
@@ -523,10 +524,23 @@ export class RegistryBackend {
     submission: NormalizedSubmission,
   ): Promise<SubmissionIpfsContent | undefined> {
     if (!this.config.pinner) return undefined;
-    // The legacy submission has structured terms/audit/usage evidence; the
-    // claim-first path carries generic claim objects and is pinned separately.
-    if (isNormalizedClaimFirstSubmission(submission)) return undefined;
     const pin = this.config.pinner;
+
+    // Claim-first (v2): pin any claim object that is a JSON object/array.
+    if (isNormalizedClaimFirstSubmission(submission)) {
+      const collected = collectClaimFirstSubmissionThings(submission);
+      if (collected.length === 0) return undefined;
+      const claimObjects = new Map<number, string>();
+      await Promise.all(
+        collected.map(async ({ index, thing }) => {
+          const { uri } = await pinAtomDocument(thing, pin);
+          claimObjects.set(index, uri);
+        }),
+      );
+      return { claimObjects };
+    }
+
+    // Legacy: structured terms/audit/usage evidence.
     const things = collectSubmissionThings(submission);
     const [termsSchema, audit, usage] = await Promise.all([
       pinAtomDocument(things.termsSchema, pin).then((r) => r.uri),

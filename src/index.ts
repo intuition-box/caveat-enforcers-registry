@@ -63,6 +63,7 @@ export {
 export {
   canonicalJson,
   buildSubmissionPlan,
+  collectClaimFirstSubmissionThings,
   collectSubmissionThings,
   simulateSubmissionPlan,
   type SubmissionIpfsContent,
