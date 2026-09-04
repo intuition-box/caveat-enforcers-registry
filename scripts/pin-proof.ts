@@ -82,7 +82,9 @@ async function graphqlAtom(
   });
   if (!response.ok) return null;
   const body = (await response.json()) as {
-    data?: { atoms?: Array<{ term_id: string; label: string | null; data: string }> };
+    data?: {
+      atoms?: Array<{ term_id: string; label: string | null; data: string }>;
+    };
   };
   return body.data?.atoms?.[0] ?? null;
 }
@@ -110,7 +112,10 @@ async function main(): Promise<void> {
     pinned.cid === prepared.cid ? "yes (deterministic)" : "no",
   );
   console.log("Atom data URI:", pinned.uri);
-  console.log("Gateway (eyeball the name):", `https://ipfs.io/ipfs/${pinned.cid}`);
+  console.log(
+    "Gateway (eyeball the name):",
+    `https://ipfs.io/ipfs/${pinned.cid}`,
+  );
 
   const atomId = intuitionAtomIdFromText(pinned.uri);
   console.log("Derived atom ID:", atomId);
@@ -157,7 +162,9 @@ async function main(): Promise<void> {
   }
 
   if (existing) {
-    console.log("\nAtom already exists — skipping create; verifying label only.");
+    console.log(
+      "\nAtom already exists — skipping create; verifying label only.",
+    );
   } else {
     const account = privateKeyToAccount(rawKey as `0x${string}`);
     const walletClient = createWalletClient({
@@ -189,7 +196,12 @@ async function main(): Promise<void> {
     });
     console.log("createAtoms tx:", hash);
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
-    console.log("Confirmed in block", receipt.blockNumber, "status", receipt.status);
+    console.log(
+      "Confirmed in block",
+      receipt.blockNumber,
+      "status",
+      receipt.status,
+    );
     if (receipt.status !== "success") throw new Error("Atom create reverted.");
   }
 

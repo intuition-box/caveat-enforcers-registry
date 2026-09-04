@@ -148,7 +148,11 @@ export function pinataPinner(config: {
   const fetchImpl = config.fetchImpl ?? fetch;
   return async (json: string) => {
     const form = new FormData();
-    form.append("file", new Blob([json], { type: "application/json" }), "atom.json");
+    form.append(
+      "file",
+      new Blob([json], { type: "application/json" }),
+      "atom.json",
+    );
     form.append("pinataOptions", JSON.stringify({ cidVersion: 1 }));
     const response = await fetchImpl(endpoint, {
       method: "POST",

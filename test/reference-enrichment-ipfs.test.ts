@@ -96,7 +96,10 @@ test("ipfsContent rewrites the JSON atoms to ipfs:// pointers deterministically"
     assert.equal(atom!.content, uri);
     assert.match(atom!.content, /^ipfs:\/\/bafkrei[a-z2-7]+$/);
     // The ipfs atom is a brand-new identity, never one from the raw-JSON plan.
-    assert.ok(!baseIds.has(id.toLowerCase()), `${uri} collides with a base atom`);
+    assert.ok(
+      !baseIds.has(id.toLowerCase()),
+      `${uri} collides with a base atom`,
+    );
   }
 
   // Every migrated triple references only atoms present in the migrated plan.

@@ -60,7 +60,8 @@ test("keeps non-ipfs claims for predicates with no ipfs variant", () => {
   assert.ok(result.some((c) => c.predicateId === "0ximplements"));
   assert.ok(
     result.every(
-      (c) => c.predicateId !== "0xterms" || c.objectData === "ipfs://bafkreiabc",
+      (c) =>
+        c.predicateId !== "0xterms" || c.objectData === "ipfs://bafkreiabc",
     ),
   );
 });
