@@ -13,7 +13,7 @@ import type { Claim } from "./types.js";
  */
 export function preferIpfsBackedClaims(
   claims: Claim[],
-  replacements: ReadonlyMap<string, string>,
+  replacements: ReadonlyMap<string, string> = new Map(),
 ): Claim[] {
   if (replacements.size === 0) return claims;
   const presentObjectIds = new Set(

@@ -22,7 +22,33 @@ import {
   type SubmissionIpfsContent,
   type SubmissionPlan,
 } from "./submission.js";
-import { pinAtomDocument, type Pinner } from "./pin.js";
+import { pinAtomDocument, type AtomThing, type Pinner } from "./pin.js";
+
+/** Cap on JSON evidence items pinned per submission; beyond this we fall back
+ * to raw JSON rather than fan out unbounded pinning-service calls. */
+const MAX_SUBMISSION_PINS = 32;
+/** Concurrent pins in flight at once. */
+const PIN_CONCURRENCY = 5;
+
+/** Pin Things preserving input order, with a bounded concurrency pool. */
+async function pinThingsBounded(
+  things: AtomThing[],
+  pin: Pinner,
+): Promise<string[]> {
+  const uris = new Array<string>(things.length);
+  let cursor = 0;
+  const worker = async () => {
+    while (cursor < things.length) {
+      const index = cursor++;
+      const { uri } = await pinAtomDocument(things[index]!, pin);
+      uris[index] = uri;
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(PIN_CONCURRENCY, things.length) }, worker),
+  );
+  return uris;
+}
 import {
   buildSubmissionWriteBatch,
   executeSubmissionWriteBatch,
@@ -516,9 +542,14 @@ export class RegistryBackend {
   }
 
   /**
-   * Pin a submission's JSON evidence (terms schema, audit, usage) to IPFS so
-   * new listings carry ipfs:// atoms like the migrated reference set. Returns
-   * undefined when no pinner is configured, so the plan falls back to raw JSON.
+   * Pin a submission's JSON evidence to IPFS so new listings carry ipfs://
+   * atoms like the migrated reference set. Returns undefined — a raw-JSON
+   * fallback — when no pinner is configured or the submission carries more
+   * pinnable evidence than MAX_SUBMISSION_PINS, so a submission can never fan
+   * out into unbounded pinning-service calls. Pinning is bounded to a small
+   * concurrency pool. It runs at prepare time because the plan must show the
+   * exact ipfs:// atoms; the evidence is user-authored data destined for
+   * public on-chain publication.
    */
   private async pinSubmissionEvidence(
     submission: NormalizedSubmission,
@@ -529,30 +560,31 @@ export class RegistryBackend {
     // Claim-first (v2): pin any claim object that is a JSON object/array.
     if (isNormalizedClaimFirstSubmission(submission)) {
       const collected = collectClaimFirstSubmissionThings(submission);
-      if (collected.length === 0) return undefined;
-      const claimObjects = new Map<number, string>();
-      await Promise.all(
-        collected.map(async ({ index, thing }) => {
-          const { uri } = await pinAtomDocument(thing, pin);
-          claimObjects.set(index, uri);
-        }),
+      if (collected.length === 0 || collected.length > MAX_SUBMISSION_PINS) {
+        return undefined;
+      }
+      const uris = await pinThingsBounded(
+        collected.map((entry) => entry.thing),
+        pin,
       );
+      const claimObjects = new Map<number, string>();
+      collected.forEach((entry, i) => claimObjects.set(entry.index, uris[i]!));
       return { claimObjects };
     }
 
     // Legacy: structured terms/audit/usage evidence.
     const things = collectSubmissionThings(submission);
-    const [termsSchema, audit, usage] = await Promise.all([
-      pinAtomDocument(things.termsSchema, pin).then((r) => r.uri),
-      things.audit
-        ? pinAtomDocument(things.audit, pin).then((r) => r.uri)
-        : Promise.resolve(undefined),
-      Promise.all(
-        things.usage.map((thing) =>
-          pinAtomDocument(thing, pin).then((r) => r.uri),
-        ),
-      ),
-    ]);
+    const ordered = [
+      things.termsSchema,
+      ...(things.audit ? [things.audit] : []),
+      ...things.usage,
+    ];
+    if (ordered.length > MAX_SUBMISSION_PINS) return undefined;
+    const uris = await pinThingsBounded(ordered, pin);
+    let cursor = 0;
+    const termsSchema = uris[cursor++]!;
+    const audit = things.audit ? uris[cursor++]! : undefined;
+    const usage = things.usage.map(() => uris[cursor++]!);
     return { termsSchema, audit, usage };
   }
 
