@@ -7,7 +7,8 @@ import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { createPublicClient, http } from "viem";
 import { supersededAtomReplacements } from "./ipfs-superseded.js";
-import { pinataPinner, type Pinner } from "./pin.js";
+import { pinAtomDocument, pinataPinner } from "./pin.js";
+import type { EvidencePinner } from "./backend.js";
 import type { ReferenceMetadataDocument } from "./reference-enrichment.js";
 import type { ReferenceSeedDocument } from "./reference-seed.js";
 import {
@@ -107,9 +108,11 @@ function createBackend(): RegistryBackend {
  * Absent → the submission plan writes raw JSON atoms (unchanged behaviour), so
  * the read API and dev setups keep working without a key.
  */
-function loadSubmissionPinner(): Pinner | undefined {
+function loadSubmissionPinner(): EvidencePinner | undefined {
   const jwt = envValue("PINATA_JWT");
-  return jwt ? pinataPinner({ jwt }) : undefined;
+  if (!jwt) return undefined;
+  const pin = pinataPinner({ jwt });
+  return (thing) => pinAtomDocument(thing, pin).then((result) => result.uri);
 }
 
 async function readBody(request: IncomingMessage): Promise<unknown> {
