@@ -1,30 +1,31 @@
 import type { Claim } from "./types.js";
 
 /**
- * The IPFS atom migration is additive: when a JSON-valued object atom (terms
- * schema, audit, usage) is re-published as an `ipfs://<CID>` document, the old
- * raw-JSON atom still exists on chain (atoms are immutable), so both produce a
- * claim for the same (subject, predicate). Surface only the ipfs-backed one so
- * the registry never shows an opaque "json object" beside its readable twin.
+ * Hide a raw-JSON object atom only when its exact ipfs-backed replacement is
+ * present in the same claim set. `replacements` maps a superseded raw atom ID
+ * to the ipfs atom ID that replaces it (both lowercased); see
+ * supersededAtomReplacements.
  *
- * Claims for a (subject, predicate) that has no ipfs-backed variant are left
- * untouched, so predicates that were never migrated are unaffected.
+ * Matching on the precise replacement — never a coarse (subject, predicate)
+ * group — means multi-valued predicates (an enforcer with several audits or
+ * usage contexts) and a partially completed migration never drop an unrelated
+ * claim or one whose replacement is not yet on chain.
  */
-export function preferIpfsBackedClaims(claims: Claim[]): Claim[] {
-  const ipfsBackedGroups = new Set<string>();
-  for (const claim of claims) {
-    if (isIpfsBacked(claim)) ipfsBackedGroups.add(groupKey(claim));
-  }
-  if (ipfsBackedGroups.size === 0) return claims;
-  return claims.filter(
-    (claim) => isIpfsBacked(claim) || !ipfsBackedGroups.has(groupKey(claim)),
+export function preferIpfsBackedClaims(
+  claims: Claim[],
+  replacements: ReadonlyMap<string, string>,
+): Claim[] {
+  if (replacements.size === 0) return claims;
+  const presentObjectIds = new Set(
+    claims
+      .map((claim) => claim.objectId?.toLowerCase())
+      .filter((id): id is string => Boolean(id)),
   );
-}
-
-function isIpfsBacked(claim: Claim): boolean {
-  return Boolean(claim.objectData?.startsWith("ipfs://"));
-}
-
-function groupKey(claim: Claim): string {
-  return `${claim.subjectId ?? ""}::${claim.predicateId ?? claim.predicate}`;
+  return claims.filter((claim) => {
+    const objectId = claim.objectId?.toLowerCase();
+    if (!objectId) return true;
+    const replacement = replacements.get(objectId);
+    // Drop this raw claim only when its specific ipfs replacement is visible.
+    return !(replacement && presentObjectIds.has(replacement));
+  });
 }

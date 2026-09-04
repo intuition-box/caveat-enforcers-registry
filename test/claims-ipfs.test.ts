@@ -13,79 +13,60 @@ function claim(overrides: Partial<Claim>): Claim {
   };
 }
 
-test("drops the raw-JSON twin when an ipfs-backed claim exists", () => {
-  const claims = [
-    claim({
-      subjectId: "0xdep",
-      predicateId: "0xterms",
-      object: "json object",
-      objectData: '{"schemaVersion":"1"}',
-    }),
-    claim({
-      subjectId: "0xdep",
-      predicateId: "0xterms",
-      object: "AllowedTimeOfDay — terms schema",
-      objectData: "ipfs://bafkreiabc",
-    }),
-  ];
-  const result = preferIpfsBackedClaims(claims);
-  assert.equal(result.length, 1);
-  assert.equal(result[0]!.objectData, "ipfs://bafkreiabc");
-});
+// raw terms atom 0xraw1 is replaced by ipfs atom 0xipfs1.
+const replacements = new Map([["0xraw1", "0xipfs1"]]);
 
-test("keeps non-ipfs claims for predicates with no ipfs variant", () => {
+test("drops the raw twin only when its ipfs replacement is present", () => {
   const claims = [
+    claim({ objectId: "0xraw1", object: "json object", objectData: "{}" }),
     claim({
-      subjectId: "0xdep",
-      predicateId: "0ximplements",
-      object: "AllowedTimeOfDayEnforcer",
-      objectData: "AllowedTimeOfDayEnforcer",
-    }),
-    claim({
-      subjectId: "0xdep",
-      predicateId: "0xterms",
-      object: "json object",
-      objectData: '{"schemaVersion":"1"}',
-    }),
-    claim({
-      subjectId: "0xdep",
-      predicateId: "0xterms",
+      objectId: "0xipfs1",
       object: "terms schema",
       objectData: "ipfs://bafkreiabc",
     }),
   ];
-  const result = preferIpfsBackedClaims(claims);
-  // implements (no ipfs variant) survives; the raw terms twin is dropped.
-  assert.equal(result.length, 2);
-  assert.ok(result.some((c) => c.predicateId === "0ximplements"));
-  assert.ok(
-    result.every(
-      (c) =>
-        c.predicateId !== "0xterms" || c.objectData === "ipfs://bafkreiabc",
-    ),
-  );
+  const result = preferIpfsBackedClaims(claims, replacements);
+  assert.equal(result.length, 1);
+  assert.equal(result[0]!.objectId, "0xipfs1");
 });
 
-test("a raw twin under a different subject is not dropped", () => {
+test("keeps the raw claim when its replacement is not yet on chain", () => {
+  // Partial migration: the ipfs replacement hasn't been written, so the raw
+  // claim must stay visible rather than vanish.
   const claims = [
-    claim({
-      subjectId: "0xA",
-      predicateId: "0xterms",
-      objectData: "ipfs://bafkreiabc",
-    }),
-    claim({
-      subjectId: "0xB",
-      predicateId: "0xterms",
-      objectData: '{"schemaVersion":"1"}',
-    }),
+    claim({ objectId: "0xraw1", object: "json object", objectData: "{}" }),
   ];
-  const result = preferIpfsBackedClaims(claims);
-  assert.equal(result.length, 2);
+  const result = preferIpfsBackedClaims(claims, replacements);
+  assert.equal(result.length, 1);
+  assert.equal(result[0]!.objectId, "0xraw1");
 });
 
-test("returns the input unchanged when nothing is ipfs-backed", () => {
+test("never drops an unrelated claim under the same subject/predicate", () => {
+  // A second, non-migrated audit under the same predicate must survive even
+  // though a sibling has an ipfs replacement present.
   const claims = [
-    claim({ subjectId: "0xA", predicateId: "0xterms", objectData: "{}" }),
+    claim({ objectId: "0xraw1", objectData: "{}" }), // migrated raw
+    claim({ objectId: "0xipfs1", objectData: "ipfs://bafkreiabc" }), // its twin
+    claim({ objectId: "0xotheraudit", objectData: "{}" }), // unrelated, not migrated
   ];
-  assert.deepEqual(preferIpfsBackedClaims(claims), claims);
+  const result = preferIpfsBackedClaims(claims, replacements);
+  assert.equal(result.length, 2);
+  assert.ok(result.some((c) => c.objectId === "0xipfs1"));
+  assert.ok(result.some((c) => c.objectId === "0xotheraudit"));
+  assert.ok(!result.some((c) => c.objectId === "0xraw1"));
+});
+
+test("matches replacement ids case-insensitively", () => {
+  const claims = [
+    claim({ objectId: "0xRAW1", objectData: "{}" }),
+    claim({ objectId: "0xIPFS1", objectData: "ipfs://bafkreiabc" }),
+  ];
+  const result = preferIpfsBackedClaims(claims, replacements);
+  assert.equal(result.length, 1);
+  assert.equal(result[0]!.objectId, "0xIPFS1");
+});
+
+test("returns the input unchanged when there are no replacements", () => {
+  const claims = [claim({ objectId: "0xraw1", objectData: "{}" })];
+  assert.deepEqual(preferIpfsBackedClaims(claims, new Map()), claims);
 });

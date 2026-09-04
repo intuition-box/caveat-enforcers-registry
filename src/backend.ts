@@ -74,6 +74,8 @@ export type BackendConfig = {
   registry?: Omit<RegistryConfig, "endpoint" | "ontology">;
   publicClient?: IntuitionPublicClient;
   rpcFetcher?: RpcFetcher;
+  /** Superseded raw atom ID → ipfs replacement atom ID (both lowercased). */
+  supersededReplacements?: ReadonlyMap<string, string>;
 };
 
 export type BackendRegistryListOptions = {
@@ -183,10 +185,12 @@ function submissionBatchFingerprint(
 export class RegistryBackend {
   private readonly config: BackendConfig;
   private readonly ontology: OntologyManifest;
+  private readonly supersededReplacements: ReadonlyMap<string, string>;
 
   constructor(config: BackendConfig) {
     this.config = config;
     this.ontology = config.ontology ?? unreviewedOntology();
+    this.supersededReplacements = config.supersededReplacements ?? new Map();
   }
 
   readiness(): BackendReadiness {
@@ -320,9 +324,12 @@ export class RegistryBackend {
       }
     }
 
-    // Hide a raw-JSON object atom when its ipfs-backed twin exists, so the
-    // migrated records never show "json object" beside the readable claim.
-    const visibleClaims = preferIpfsBackedClaims(claims);
+    // Hide a raw-JSON object atom when its exact ipfs replacement is present,
+    // so migrated records never show "json object" beside the readable claim.
+    const visibleClaims = preferIpfsBackedClaims(
+      claims,
+      this.supersededReplacements,
+    );
 
     return {
       kind: "ready" as const,

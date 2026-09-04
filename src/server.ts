@@ -3,8 +3,12 @@ import {
   type IncomingMessage,
   type ServerResponse,
 } from "node:http";
+import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { createPublicClient, http } from "viem";
+import { supersededAtomReplacements } from "./ipfs-superseded.js";
+import type { ReferenceMetadataDocument } from "./reference-enrichment.js";
+import type { ReferenceSeedDocument } from "./reference-seed.js";
 import {
   INTUITION_MAINNET_GRAPHQL,
   INTUITION_MAINNET_RPC,
@@ -31,6 +35,31 @@ class RequestBodyError extends Error {}
 
 function envValue(name: string, fallback = ""): string {
   return process.env[name]?.trim() || fallback;
+}
+
+/**
+ * Compute the raw→ipfs atom replacements from the committed reference data.
+ * Fail-safe: an empty map (filter no-op) if the files are unreadable, so a
+ * data hiccup never takes the read API down.
+ */
+function loadSupersededReplacements(): ReadonlyMap<string, string> {
+  try {
+    const metadata = JSON.parse(
+      readFileSync(
+        new URL("../data/metamask-v1.7.0.metadata.json", import.meta.url),
+        "utf8",
+      ),
+    ) as ReferenceMetadataDocument;
+    const reference = JSON.parse(
+      readFileSync(
+        new URL("../data/metamask-v1.3.0.json", import.meta.url),
+        "utf8",
+      ),
+    ) as ReferenceSeedDocument;
+    return supersededAtomReplacements(metadata, reference);
+  } catch {
+    return new Map();
+  }
 }
 
 function createBackend(): RegistryBackend {
@@ -67,6 +96,7 @@ function createBackend(): RegistryBackend {
     },
     ontology,
     publicClient,
+    supersededReplacements: loadSupersededReplacements(),
   });
 }
 
