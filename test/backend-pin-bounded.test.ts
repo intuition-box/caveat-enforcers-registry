@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { RegistryBackend } from "../src/index.ts";
-import { cidV1Raw } from "../src/pin.ts";
+import { prepareAtomDocument } from "../src/pin.ts";
 
 const ADDRESS = "0x1111111111111111111111111111111111111111";
 const WALLET = "0x2222222222222222222222222222222222222222";
@@ -12,13 +12,13 @@ function trackingPinner() {
   let active = 0;
   let peak = 0;
   let calls = 0;
-  const pin = async (json: string) => {
+  const pin = async (thing: Parameters<typeof prepareAtomDocument>[0]) => {
     calls += 1;
     active += 1;
     peak = Math.max(peak, active);
     await new Promise((resolve) => setTimeout(resolve, 5));
     active -= 1;
-    return { cid: cidV1Raw(new TextEncoder().encode(json)) };
+    return prepareAtomDocument(thing).uri;
   };
   return { pin, stats: () => ({ calls, peak }) };
 }

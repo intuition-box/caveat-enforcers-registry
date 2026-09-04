@@ -22,7 +22,14 @@ import {
   type SubmissionIpfsContent,
   type SubmissionPlan,
 } from "./submission.js";
-import { pinAtomDocument, type AtomThing, type Pinner } from "./pin.js";
+import type { AtomThing } from "./pin.js";
+
+/**
+ * Pins one Thing and returns its ipfs:// URI. Injected by the server so this
+ * module never statically imports the pinning implementation (which pulls
+ * node:crypto) into the browser bundle that also constructs RegistryBackend.
+ */
+export type EvidencePinner = (thing: AtomThing) => Promise<string>;
 
 /** Cap on JSON evidence items pinned per submission; beyond this we fall back
  * to raw JSON rather than fan out unbounded pinning-service calls. */
@@ -33,15 +40,14 @@ const PIN_CONCURRENCY = 5;
 /** Pin Things preserving input order, with a bounded concurrency pool. */
 async function pinThingsBounded(
   things: AtomThing[],
-  pin: Pinner,
+  pin: EvidencePinner,
 ): Promise<string[]> {
   const uris = new Array<string>(things.length);
   let cursor = 0;
   const worker = async () => {
     while (cursor < things.length) {
       const index = cursor++;
-      const { uri } = await pinAtomDocument(things[index]!, pin);
-      uris[index] = uri;
+      uris[index] = await pin(things[index]!);
     }
   };
   await Promise.all(
@@ -110,7 +116,7 @@ export type BackendConfig = {
   /** Superseded raw atom ID → ipfs replacement atom ID (both lowercased). */
   supersededReplacements?: ReadonlyMap<string, string>;
   /** Pins a submission's JSON evidence to IPFS. Absent → raw JSON atoms. */
-  pinner?: Pinner;
+  pinner?: EvidencePinner;
 };
 
 export type BackendRegistryListOptions = {
