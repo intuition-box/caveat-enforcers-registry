@@ -30,6 +30,21 @@ async function documents(): Promise<{
   };
 }
 
+test("collected Things reproduce the CIDs already pinned on chain", async () => {
+  // Guards the atom-content builders against byte drift: this exact CID is the
+  // AllowedCalldataEnforcer terms-schema atom created by the live migration.
+  const { metadata } = await documents();
+  const things = collectReferenceEnrichmentThings(metadata);
+  const terms = things.find(
+    ({ key }) => key === "terms-schema:AllowedCalldataEnforcer",
+  );
+  assert.ok(terms, "AllowedCalldataEnforcer terms Thing missing");
+  assert.equal(
+    prepareAtomDocument(terms!.thing).uri,
+    "ipfs://bafkreibbjrqhposf5zpssn3dctgvti3v3h3ofaa274gtkvqz4myamqq6jm",
+  );
+});
+
 test("collected keys pin exactly the JSON-valued atom families", async () => {
   const { metadata, reference } = await documents();
   const things = collectReferenceEnrichmentThings(metadata);

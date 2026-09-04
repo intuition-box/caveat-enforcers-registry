@@ -7,12 +7,20 @@ import {
 import type { RpcChainCheck } from "./chain.js";
 import type {
   NormalizedClaimFirstSubmission,
+  NormalizedLegacySubmission,
   NormalizedSubmission,
   ContractCodeCheck,
+  SubmissionClaim,
   SubmissionCompositionEvidence,
 } from "./validation.js";
 import { isNormalizedClaimFirstSubmission } from "./validation.js";
 import { intuitionAtomIdFromText } from "./intuition.js";
+import type { AtomThing } from "./pin.js";
+import {
+  structuredThing,
+  termsSchemaThing,
+  usageThing,
+} from "./atom-content.js";
 
 function canonicalJsonValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalJsonValue);
@@ -134,7 +142,14 @@ function buildClaimFirstSubmissionPlan(
   ontology: OntologyManifest,
   codeCheck: ContractCodeCheck,
   chainCheck?: RpcChainCheck,
+  ipfsContent?: SubmissionIpfsContent,
 ): SubmissionPlan {
+  // An ipfs:// pointer for a JSON-object claim replaces its raw value in both
+  // the object atom and the triple, so the indexer resolves a readable name.
+  const claimObjectContent = (claim: SubmissionClaim, index: number): string =>
+    claim.object.kind === "value"
+      ? (ipfsContent?.claimObjects?.get(index) ?? claim.object.value)
+      : claim.object.termId;
   const ontologyIssues = validateOntologyManifest(ontology);
   const missingOntologyKeys = [
     ...ontologyIssues.map((issue) => issue.path),
@@ -227,7 +242,7 @@ function buildClaimFirstSubmissionPlan(
             {
               kind: "ensure-atom" as const,
               key: `claim-object:${index}`,
-              content: claim.object.value,
+              content: claimObjectContent(claim, index),
               note: "Contributor created a readable claim object.",
             },
           ]
@@ -254,8 +269,7 @@ function buildClaimFirstSubmissionPlan(
         claim.predicate.kind === "term"
           ? claim.predicate.termId
           : intuitionAtomIdFromText(claim.predicate.value),
-      object:
-        claim.object.kind === "term" ? claim.object.termId : claim.object.value,
+      object: claimObjectContent(claim, index),
       note:
         claim.predicate.kind === "term"
           ? `Contributor-selected ${claim.predicate.label} claim.`
@@ -282,11 +296,93 @@ function buildClaimFirstSubmissionPlan(
   };
 }
 
+export type SubmissionIpfsContent = {
+  termsSchema?: string;
+  audit?: string;
+  usage?: (string | undefined)[];
+  /** Claim index → ipfs:// pointer, for JSON-object claim objects (v2). */
+  claimObjects?: ReadonlyMap<number, string>;
+};
+
+/** Parse a value only when it is a JSON object or array — never a primitive. */
+function parseStructuredValue(value: string): unknown | null {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed !== null && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The JSON-object claim objects a claim-first submission would pin to IPFS.
+ * Any claim whose object value parses as a JSON object/array is pinned so the
+ * indexer renders a readable name instead of "json object"; plain-text objects
+ * (addresses, URLs, labels) stay canonical text atoms.
+ */
+export function collectClaimFirstSubmissionThings(
+  submission: NormalizedClaimFirstSubmission,
+): { index: number; thing: AtomThing }[] {
+  const label = submission.identity.displayName?.trim() || "Caveat enforcer";
+  const things: { index: number; thing: AtomThing }[] = [];
+  submission.claims.forEach((claim, index) => {
+    if (claim.object.kind !== "value") return;
+    const parsed = parseStructuredValue(claim.object.value);
+    if (parsed === null) return;
+    const predicateLabel =
+      claim.predicate.kind === "term"
+        ? claim.predicate.label
+        : claim.predicate.value;
+    things.push({
+      index,
+      thing: structuredThing({
+        name: `${label} — ${predicateLabel}`,
+        description: `A ${predicateLabel} claim published for ${label}.`,
+        payloadKey: "value",
+        payload: parsed,
+      }),
+    });
+  });
+  return things;
+}
+
+export type SubmissionThings = {
+  termsSchema: AtomThing;
+  audit: AtomThing | null;
+  usage: AtomThing[];
+};
+
+/**
+ * The JSON-valued Things a submission would pin to IPFS, built through the
+ * shared atom-content authority so a live submission serialises identically to
+ * the reference migration. The caller pins these and threads the resulting
+ * ipfs:// pointers back through `buildSubmissionPlan`'s `ipfsContent`.
+ */
+export function collectSubmissionThings(
+  submission: NormalizedLegacySubmission,
+): SubmissionThings {
+  const audit = submission.evidence?.audit;
+  return {
+    termsSchema: termsSchemaThing(submission.type, submission.termsSchema),
+    audit: audit
+      ? structuredThing({
+          name: `${submission.type} — audit`,
+          description: audit.scope,
+          url: audit.sourceUrl,
+          payloadKey: "audit",
+          payload: audit,
+        })
+      : null,
+    usage: (submission.evidence?.usage ?? []).map((usage) => usageThing(usage)),
+  };
+}
+
 export function buildSubmissionPlan(
   submission: NormalizedSubmission,
   ontology: OntologyManifest,
   codeCheck: ContractCodeCheck,
   chainCheck?: RpcChainCheck,
+  ipfsContent?: SubmissionIpfsContent,
 ): SubmissionPlan {
   if (isNormalizedClaimFirstSubmission(submission)) {
     return buildClaimFirstSubmissionPlan(
@@ -294,6 +390,7 @@ export function buildSubmissionPlan(
       ontology,
       codeCheck,
       chainCheck,
+      ipfsContent,
     );
   }
   const ontologyIssues = validateOntologyManifest(ontology);
@@ -304,17 +401,21 @@ export function buildSubmissionPlan(
   const deployment = submission.caip10;
   const sourceVersion =
     submission.sourceVersion?.trim() || "version not supplied";
-  const termsContent = canonicalJson(submission.termsSchema);
+  // When an IPFS pointer is supplied for a JSON-valued object, it replaces the
+  // raw JSON everywhere downstream (atom content and triple object), so the
+  // indexer resolves a readable name instead of "json object".
+  const termsContent =
+    ipfsContent?.termsSchema ?? canonicalJson(submission.termsSchema);
   const sourceReleasePredicate = ontology.predicates.partOfRelease?.trim();
   const predicate = (key: PredicateKey) => predicateIdFor(ontology, key);
   const hasSourceRelease =
     Boolean(submission.sourceVersion?.trim()) &&
     Boolean(sourceReleasePredicate);
   const auditContent = submission.evidence?.audit
-    ? canonicalJson(submission.evidence.audit)
+    ? (ipfsContent?.audit ?? canonicalJson(submission.evidence.audit))
     : null;
-  const usageContent = (submission.evidence?.usage ?? []).map((usage) =>
-    canonicalJson(usage),
+  const usageContent = (submission.evidence?.usage ?? []).map(
+    (usage, index) => ipfsContent?.usage?.[index] ?? canonicalJson(usage),
   );
   const compositions = submission.evidence?.compositions ?? [];
   const additionalClaims = submission.additionalClaims ?? [];

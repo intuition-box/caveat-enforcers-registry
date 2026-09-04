@@ -63,11 +63,20 @@ export {
 export {
   canonicalJson,
   buildSubmissionPlan,
+  collectClaimFirstSubmissionThings,
+  collectSubmissionThings,
   simulateSubmissionPlan,
+  type SubmissionIpfsContent,
   type SubmissionPlan,
   type SubmissionPlanOperation,
   type SubmissionSimulation,
+  type SubmissionThings,
 } from "./submission.js";
+export {
+  structuredThing,
+  termsSchemaThing,
+  usageThing,
+} from "./atom-content.js";
 export {
   confirmedOnchainIndexingMessage,
   pollRegistryForDeployment,
