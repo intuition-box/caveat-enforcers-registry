@@ -396,7 +396,7 @@ export default function SubmitListingWizard({
                 Back
               </button>
               <button
-                className="cta cta--dark"
+                className="cta cta--dark web3-action web3-action--primary"
                 type="button"
                 disabled={
                   !state.draft.predicateLabel.trim() ||
@@ -424,7 +424,7 @@ export default function SubmitListingWizard({
                 Back
               </button>
               <button
-                className="cta cta--dark"
+                className="cta cta--dark web3-action web3-action--primary"
                 type="button"
                 onClick={() => dispatch({ type: "confirm-claim" })}
               >
@@ -451,7 +451,7 @@ export default function SubmitListingWizard({
                 Add another claim
               </button>
               <button
-                className="cta cta--dark"
+                className="cta cta--dark web3-action web3-action--primary"
                 type="button"
                 onClick={() => dispatch({ type: "review" })}
               >
