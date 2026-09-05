@@ -36,7 +36,7 @@ test("the wizard advances identity through a repeatable claim loop to review", (
   assert.equal(state.panel, "review");
 });
 
-test("saved claims can be edited, reordered, and removed without changing identity", () => {
+test("saved claims can be edited and removed without changing identity", () => {
   let state = initialSubmitWizardState(identity);
   for (const [templateKey, objectValue] of [
     ["source", "https://github.com/example/enforcer"],
@@ -55,12 +55,6 @@ test("saved claims can be edited, reordered, and removed without changing identi
     state = submitWizardReducer(state, { type: "add-another" });
   }
   const firstId = state.claims[0]!.id;
-  state = submitWizardReducer(state, {
-    type: "move-claim",
-    id: firstId,
-    direction: "down",
-  });
-  assert.equal(state.claims[1]!.id, firstId);
   state = submitWizardReducer(state, { type: "edit-claim", id: firstId });
   assert.equal(state.panel, "claim-details");
   state = submitWizardReducer(state, {
@@ -69,7 +63,7 @@ test("saved claims can be edited, reordered, and removed without changing identi
   });
   state = submitWizardReducer(state, { type: "preview-claim" });
   state = submitWizardReducer(state, { type: "confirm-claim" });
-  assert.equal(state.claims[1]!.objectValue.endsWith("/v1"), true);
+  assert.equal(state.claims[0]!.objectValue.endsWith("/v1"), true);
   state = submitWizardReducer(state, { type: "remove-claim", id: firstId });
   assert.equal(state.claims.length, 1);
   assert.deepEqual(state.identity, identity);

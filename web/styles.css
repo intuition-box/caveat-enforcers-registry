@@ -2689,6 +2689,38 @@ a:hover .arrow,
   transform: translateY(-2px);
 }
 
+/* Solid dark primary action (wizard advance, curation review). */
+.cta--dark {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.cta--dark:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 86%, var(--paper));
+  transform: translateY(-2px);
+}
+
+/* Outlined companion action when it sits outside an ink/paper section. */
+.cta--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: rgba(5, 5, 5, 0.3);
+}
+
+.cta--ghost:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  transform: translateY(-2px);
+}
+
+.cta:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .cta:focus-visible {
   outline: 2px solid var(--signal);
   outline-offset: 4px;
@@ -7225,11 +7257,25 @@ main > .band:first-child {
   opacity: 0.45;
 }
 
+/* Inline deposit panel rendered directly under the selected claim. */
+.claim-ledger__curation {
+  grid-column: 1 / -1;
+}
+
 .claim-curation {
   margin-top: 1.5rem;
   padding: clamp(1.15rem, 3vw, 1.5rem);
   border: 1px solid var(--ink);
   background: color-mix(in srgb, var(--paper-bright) 88%, var(--signal));
+}
+
+.claim-curation__connect-note {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.85rem;
+  border-left: 2px solid var(--signal);
+  background: color-mix(in srgb, var(--paper-bright) 90%, var(--signal));
+  font-size: 0.85rem;
+  line-height: 1.45;
 }
 
 .claim-curation__object {

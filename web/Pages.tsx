@@ -673,6 +673,13 @@ function RegistryDetailDrawer({
     setSignalPlan(undefined);
     setSignalResult(null);
     setSignalStatus(null);
+    // The deposit panel renders inline under the clicked claim; bring it fully
+    // into view so the action is never off-screen below the ledger.
+    requestAnimationFrame(() => {
+      document
+        .querySelector(".claim-ledger__curation")
+        ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
   }
 
   async function previewSignal() {
@@ -745,6 +752,110 @@ function RegistryDetailDrawer({
     } finally {
       setSignalBusy(false);
     }
+  }
+
+  function renderCuration() {
+    if (!selection) return null;
+    return (
+      <section className="claim-curation" aria-live="polite">
+        <div className="registry-drawer__section-heading">
+          <span className="mono-sub">
+            {selection.action === "support" ? "Support" : "Dispute"} claim
+          </span>
+          <h3>{selection.claim.predicate}</h3>
+        </div>
+        <p className="claim-curation__object">{selection.claim.object}</p>
+        {!wallet && (
+          <p className="claim-curation__connect-note">
+            Connect a wallet on Intuition mainnet to sign this deposit. The
+            connected wallet is a separate actor from the deployer.
+          </p>
+        )}
+        <label>
+          <span className="mono-label">Deposit amount (TRUST)</span>
+          <input
+            inputMode="decimal"
+            value={amountTrust}
+            onChange={(event) => {
+              setAmountTrust(event.target.value);
+              setSignalPlan(undefined);
+              setSignalResult(null);
+            }}
+            placeholder="0.1"
+          />
+        </label>
+        <Spec
+          rows={[
+            ["Claim ID", <code>{selection.claim.id}</code>],
+            ["Curve", "1"],
+            [
+              "Wallet",
+              wallet ? shortAddress(wallet.address) : "Connect to review",
+            ],
+            ...(signalPlan
+              ? ([
+                  ["Target vault", <code>{signalPlan.targetTermId}</code>],
+                  [
+                    "Deposit",
+                    `${formatEther(BigInt(signalPlan.amount))} TRUST`,
+                  ],
+                ] as Array<[string, React.ReactNode]>)
+              : []),
+          ]}
+        />
+        <div className="claim-curation__actions">
+          {wallet ? (
+            <button
+              className="web3-action web3-action--primary"
+              type="button"
+              onClick={previewSignal}
+              disabled={signalBusy}
+            >
+              {signalBusy ? "Checking…" : "Review deposit"}
+            </button>
+          ) : (
+            <CaveatConnectButton compact disabled={signalBusy} />
+          )}
+          {signalPlan && (
+            <button
+              className="web3-action web3-action--primary"
+              type="button"
+              onClick={approveSignal}
+              disabled={signalBusy}
+            >
+              Approve {selection.action === "support" ? "support" : "dispute"}
+            </button>
+          )}
+          <button
+            className="web3-action web3-action--quiet"
+            type="button"
+            onClick={() => {
+              setSelection(null);
+              setSignalPlan(undefined);
+              setSignalResult(null);
+              setSignalStatus(null);
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+        {signalStatus && (
+          <p className="claim-curation__status">{signalStatus}</p>
+        )}
+        {signalResult &&
+          "transactionHash" in signalResult &&
+          signalResult.transactionHash && (
+            <a
+              className="claim-curation__receipt"
+              href={`https://explorer.intuition.systems/tx/${signalResult.transactionHash}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View confirmed transaction ↗
+            </a>
+          )}
+      </section>
+    );
   }
 
   return createPortal(
@@ -849,6 +960,11 @@ function RegistryDetailDrawer({
                         </a>
                       )}
                     </div>
+                    {selection && selection.claim.id === claim.id && (
+                      <div className="claim-ledger__curation">
+                        {renderCuration()}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ol>
@@ -924,105 +1040,6 @@ function RegistryDetailDrawer({
               <pre>{formattedTermsSchema(row.terms)}</pre>
             </details>
           </section>
-
-          {selection && (
-            <section className="claim-curation" aria-live="polite">
-              <div className="registry-drawer__section-heading">
-                <span className="mono-sub">
-                  {selection.action === "support" ? "Support" : "Dispute"} claim
-                </span>
-                <h3>{selection.claim.predicate}</h3>
-              </div>
-              <p className="claim-curation__object">{selection.claim.object}</p>
-              <label>
-                <span className="mono-label">Deposit amount (TRUST)</span>
-                <input
-                  inputMode="decimal"
-                  value={amountTrust}
-                  onChange={(event) => {
-                    setAmountTrust(event.target.value);
-                    setSignalPlan(undefined);
-                    setSignalResult(null);
-                  }}
-                  placeholder="0.1"
-                />
-              </label>
-              <Spec
-                rows={[
-                  ["Claim ID", <code>{selection.claim.id}</code>],
-                  ["Curve", "1"],
-                  [
-                    "Wallet",
-                    wallet ? shortAddress(wallet.address) : "Connect to review",
-                  ],
-                  ...(signalPlan
-                    ? ([
-                        [
-                          "Target vault",
-                          <code>{signalPlan.targetTermId}</code>,
-                        ],
-                        [
-                          "Deposit",
-                          `${formatEther(BigInt(signalPlan.amount))} TRUST`,
-                        ],
-                      ] as Array<[string, React.ReactNode]>)
-                    : []),
-                ]}
-              />
-              <div className="claim-curation__actions">
-                {wallet ? (
-                  <button
-                    className="web3-action web3-action--primary"
-                    type="button"
-                    onClick={previewSignal}
-                    disabled={signalBusy}
-                  >
-                    {signalBusy ? "Checking…" : "Review deposit"}
-                  </button>
-                ) : (
-                  <CaveatConnectButton compact disabled={signalBusy} />
-                )}
-                {signalPlan && (
-                  <button
-                    className="web3-action web3-action--primary"
-                    type="button"
-                    onClick={approveSignal}
-                    disabled={signalBusy}
-                  >
-                    Approve{" "}
-                    {selection.action === "support" ? "support" : "dispute"}
-                  </button>
-                )}
-                <button
-                  className="web3-action web3-action--quiet"
-                  type="button"
-                  onClick={() => {
-                    setSelection(null);
-                    setSignalPlan(undefined);
-                    setSignalResult(null);
-                    setSignalStatus(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-              {signalStatus && (
-                <p className="claim-curation__status">{signalStatus}</p>
-              )}
-              {signalResult &&
-                "transactionHash" in signalResult &&
-                signalResult.transactionHash && (
-                  <a
-                    className="claim-curation__receipt"
-                    href={`https://explorer.intuition.systems/tx/${signalResult.transactionHash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    View confirmed transaction ↗
-                  </a>
-                )}
-            </section>
-          )}
 
           {row.classificationSource === "derived" && (
             <div className="registry-drawer__classification">
